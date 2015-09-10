@@ -101,7 +101,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&rotary_pins_opinicus>;
 		compatible = "rotary-encoder";
-		gpios = <&pio 7 8 GPIO_ACTIVE_LOW>, <&pio 7 7 GPIO_ACTIVE_LOW>; /* todo; named gpios!! */
+		gpios = <&pio 7 7 GPIO_ACTIVE_LOW>, <&pio 7 0 GPIO_ACTIVE_LOW>; /* todo; named gpios!! */
 		linux,axis = <8>; /* REL_Z: TODO add to dt-include and possible add 'LEFT' axis */
 		rotary-encoder,relative-axis;
 		status = "okay";
@@ -250,7 +250,7 @@
 	};
 
 	rotary_pins_opinicus: rotary_pins@0 {
-		allwinner,pins = "PH7", "PH8";
+		allwinner,pins = "PH0", "PH7";
 		allwinner,function = "gpio_in";
 		allwinner,drive = <SUN4I_PINCTRL_10_MA>;
 		allwinner,pull = <SUN4I_PINCTRL_PULL_UP>;
