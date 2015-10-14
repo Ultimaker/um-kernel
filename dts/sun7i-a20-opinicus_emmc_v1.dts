@@ -104,6 +104,7 @@
 		gpios = <&pio 7 7 GPIO_ACTIVE_LOW>, <&pio 7 0 GPIO_ACTIVE_LOW>; /* todo; named gpios!! */
 		linux,axis = <8>; /* REL_Z: TODO add to dt-include and possible add 'LEFT' axis */
 		rotary-encoder,relative-axis;
+		rotary-encoder,quarter-period;
 		status = "okay";
 	};
 };
