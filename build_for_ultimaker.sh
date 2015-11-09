@@ -77,7 +77,7 @@ mkimage -A arm -O linux -T script -C none -a 0x43100000 -n "Boot script" -d "${D
 # Create a debian control file to pack up a debian package
 mkdir -p "${DEB_DIR}/DEBIAN"
 cat > "${DEB_DIR}/DEBIAN/control" <<-EOT
-Package: linux
+Package: linux-sunxi
 Source: linux-upstream
 Version: ${RELEASE_VERSION}
 Architecture: armhf
