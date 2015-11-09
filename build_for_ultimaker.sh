@@ -10,7 +10,7 @@ git submodule init
 git submodule update
 
 if [ -z ${RELEASE_VERSION+x} ]; then
-	RELEASE_VERSION=0.0.0
+	RELEASE_VERSION=9999.99.99
 fi
 
 # Which kernel to build
