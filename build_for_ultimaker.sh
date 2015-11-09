@@ -89,4 +89,4 @@ Description: Linux kernel, kernel modules, binary device trees and boot scripts.
 EOT
 
 fakeroot dpkg-deb --build "${DEB_DIR}"
-mv "${DEB_DIR}.deb" linux-opinicus-${RELEASE_VERSION}.deb
+mv "${DEB_DIR}.deb" linux-sunxi-${RELEASE_VERSION}.deb
