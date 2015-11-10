@@ -88,5 +88,4 @@ Homepage: http://www.kernel.org/
 Description: Linux kernel, kernel modules, binary device trees and boot scripts. All in a single package.
 EOT
 
-fakeroot dpkg-deb --build "${DEB_DIR}"
-mv "${DEB_DIR}.deb" linux-sunxi-${RELEASE_VERSION}.deb
+fakeroot dpkg-deb --build "${DEB_DIR}" linux-sunxi-${RELEASE_VERSION}.deb
