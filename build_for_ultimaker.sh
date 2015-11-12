@@ -64,7 +64,7 @@ EOT
 mkimage -A arm -O linux -T script -C none -a 0x43100000 -n "Boot script" -d "${DEB_DIR}/boot/boot_mtd.cmd" "${DEB_DIR}/boot/boot_mtd.scr"
 
 cat > "${DEB_DIR}/boot/boot_mmc.cmd" <<-EOT
-setenv bootargs console=tty0 root=/dev/mmcblk0p2 ro rootwait rootfstype=ext4 console=ttyS0,115200 earlyprintk
+setenv bootargs console=tty0 root=/dev/mmcblk0p2 ro rootwait rootfstype=f2fs console=ttyS0,115200 earlyprintk
 setenv fdt_high 0xffffffff
 ext4load mmc 0 0x43200000 "ultimaker_logo.bmp"
 bmp d 0x43200000
