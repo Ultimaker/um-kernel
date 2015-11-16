@@ -64,7 +64,7 @@ EOT
 mkimage -A arm -O linux -T script -C none -a 0x43100000 -n "Boot script" -d "${DEB_DIR}/boot/boot_mtd.cmd" "${DEB_DIR}/boot/boot_mtd.scr"
 
 cat > "${DEB_DIR}/boot/boot_mmc.cmd" <<-EOT
-setenv bootargs console=tty0 root=/dev/mmcblk0p2 ro rootwait rootfstype=f2fs console=ttyS0,115200 earlyprintk
+setenv bootargs console=tty0 root=/dev/mmcblk0p2 ro rootwait rootfstype=ext4 console=ttyS0,115200 earlyprintk
 setenv fdt_high 0xffffffff
 ext4load mmc 0 0x43200000 "ultimaker_logo.bmp"
 bmp d 0x43200000
@@ -73,6 +73,17 @@ ext4load mmc 0 0x49000000 sun7i-a20-opinicus_nand_v1.dtb
 bootm 0x46000000 - 0x49000000
 EOT
 mkimage -A arm -O linux -T script -C none -a 0x43100000 -n "Boot script" -d "${DEB_DIR}/boot/boot_mmc.cmd" "${DEB_DIR}/boot/boot_mmc.scr"
+
+cat > "${DEB_DIR}/boot/boot_emmc.cmd" <<-EOT
+setenv bootargs console=tty0 root=/dev/mmcblk0p2 ro rootwait rootfstype=f2fs console=ttyS0,115200 earlyprintk
+setenv fdt_high 0xffffffff
+ext4load mmc 0 0x43200000 "ultimaker_logo.bmp"
+bmp d 0x43200000
+ext4load mmc 0 0x46000000 uImage-sun7i-a20-opinicus_v1
+ext4load mmc 0 0x49000000 sun7i-a20-opinicus_emmc_v1.dtb
+bootm 0x46000000 - 0x49000000
+EOT
+mkimage -A arm -O linux -T script -C none -a 0x43100000 -n "Boot script" -d "${DEB_DIR}/boot/boot_emmc.cmd" "${DEB_DIR}/boot/boot_emmc.scr"
 
 # Create a debian control file to pack up a debian package
 mkdir -p "${DEB_DIR}/DEBIAN"
