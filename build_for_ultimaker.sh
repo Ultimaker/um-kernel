@@ -69,6 +69,7 @@ setenv fdt_high 0xffffffff
 ext4load mmc 0 0x43200000 "ultimaker_logo.bmp"
 bmp d 0x43200000
 ext4load mmc 0 0x46000000 uImage-sun7i-a20-opinicus_v1
+ext4load mmc 0 0x49000000 sun7i-a20-opinicus_v1.dtb
 ext4load mmc 0 0x49000000 sun7i-a20-opinicus_nand_v1.dtb
 bootm 0x46000000 - 0x49000000
 EOT
