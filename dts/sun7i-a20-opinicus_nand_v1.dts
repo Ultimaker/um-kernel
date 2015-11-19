@@ -59,7 +59,7 @@
 	beeper {
 		pwm-names = "opinicus-board-beeper";
 		compatible = "pwm-beeper";
-		pwms = <&pwm_gpio 0 500000 0>;
+		pwms = <&pwm 1 500000 0>;
 		status = "okay";
 	};
 
@@ -84,7 +84,7 @@
 	pwm_fan {
 		pwm-names = "opinicus-board-fan";
 		compatible = "pwm-fan";
-		pwms = <&pwm 1 500000 0>;
+		pwms = <&pwm_gpio 0 500000 0>;
 		status = "okay";
 	};
 
