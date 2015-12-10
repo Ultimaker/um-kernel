@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <assert.h>
 
 /* GIMP RGB C-Source image dump (splash.c) */
 static const struct {
@@ -973,67 +974,88 @@ static const struct {
   "\377\377\377",
 };
 
+//Address of memory which we can use, later in u-boot the kernel is stored here, so we know for sure this memory is free to use right now.
+const unsigned int scratchpad_address = 0x43100000;
+
+//Address of the LCD on the I2C bus
+const unsigned int lcd_i2c_address = 0x3C;
+
+//Value we need to give as i2c "write address" for commands to be accepted
+const unsigned int lcd_command = 0x00;
+//Value we need to give as i2c "write address" for display data to be accepted
+const unsigned int lcd_data = 0x40;
+
+//Height of a single row of 1bpp pixels.
+const unsigned int row_height = 8;
+
+void i2cLcdCommands(const unsigned char* bytes, int count)
+{
+    //First write the I2C commands to memory, and then as a single write write this to the I2C bus.
+    //The LCD controller needs certain commands in a single write or else it will not accept them.
+    for(int n = 0; n < count; n++)
+    {
+        printf("mw.b 0x%08x 0x%02x\n", scratchpad_address + n, bytes[n]);
+    }
+    printf("i2c write 0x%08x 0x%02x 0x%02x 0x%02x -s\n", scratchpad_address, lcd_i2c_address, lcd_command, count);
+}
+
 int main(int argc, char** argv)
 {
+    //Check if the width and height of the image match our display.
+    //Bytes per pixel does not matter as that is handled properly in the conversion code.
+    assert(gimp_image.width == 128);
+    assert(gimp_image.height == 64);
+
+    //Reset the LCD display by toggling the reset pin
     printf("gpio clear PI13\n");
     printf("gpio set PI13\n");
+
+    //Switch to I2C bus 2 on u-boot, which is actually I2C3 in hardware.
     printf("i2c dev 2\n");
-    printf("mw.b 0x43100000 0xDF\n");
-    printf("mw.b 0x43100001 0x12\n");
-    printf("mw.b 0x43100002 0xAE\n");
-    printf("mw.b 0x43100003 0xD5\n");
-    printf("mw.b 0x43100004 0xA0\n");
-    printf("mw.b 0x43100005 0xA8\n");
-    printf("mw.b 0x43100006 0x3F\n");
-    printf("mw.b 0x43100007 0xD3\n");
-    printf("mw.b 0x43100008 0x00\n");
-    printf("mw.b 0x43100009 0x40\n");
-    printf("mw.b 0x4310000a 0xA1\n");
-    printf("mw.b 0x4310000b 0xC8\n");
-    printf("mw.b 0x4310000c 0xDA\n");
-    printf("mw.b 0x4310000d 0x12\n");
-    printf("mw.b 0x4310000e 0x81\n");
-    printf("mw.b 0x4310000f 0xDF\n");
-    printf("mw.b 0x43100010 0xD9\n");
-    printf("mw.b 0x43100011 0x82\n");
-    printf("mw.b 0x43100012 0xDB\n");
-    printf("mw.b 0x43100013 0x34\n");
-    printf("mw.b 0x43100014 0x20\n");
-    printf("mw.b 0x43100015 0xA4\n");
-    printf("mw.b 0x43100016 0xA6\n");
-    printf("i2c write 0x43100000 0x3C 0x00 0x17 -s\n");
-    printf("mw.b 0x43100000 0x00\n");
-    printf("mw.b 0x43100001 0x10\n");
-    printf("mw.b 0x43100002 0xB0\n");
-    printf("i2c write 0x43100000 0x3C 0x00 0x03 -s\n");
-    unsigned int output_long = 0;
-    unsigned int long_count = 0;
-    for(unsigned int y=0; y<64; y+=8)
+    //Write the initialization sequence to memory so we can send it as 1 i2c command.
+    //The magic values come from the SSD1307 datasheet
+    //This sets up the display properly, and turns the display off so nothing is shown.
+    i2cLcdCommands("\xDF\x12\xAE\xD5\xA0\xA8\x3F\xD3\x00\x40\xA1\xC8\xDA\x12\x81\xDF\xD9\x82\xDB\x34\x20\xA4\xA6", 23);
+    //Write the memory location where the display image will be written.
+    //This 3 byte command sets the write location to 0,0
+    i2cLcdCommands("\x00\x10\xB0", 3);
+
+    for(unsigned int row_y = 0; row_y < gimp_image.height; row_y += row_height)
     {
-        for(unsigned int x=0; x<128; x++)
+        unsigned int output_long = 0;
+        unsigned int long_count = 0;
+
+        for(unsigned int x = 0; x < gimp_image.width; x++)
         {
+            //Display data is stored 1 bit per pixel. Where 1 vertical row of 8 pixels is stored in 1 byte, and every byte is the next column.
+            //So we need to output data per 8 pixel row, and then 128 bytes per 8 pixel row for 128 columns.
             int output = 0;
-            for(unsigned int _y=0; _y<8; _y++)
+            for(unsigned int pixel_y = 0; pixel_y < row_height; pixel_y++)
             {
-                if (gimp_image.pixel_data[(x + (y + _y) * 128) * gimp_image.bytes_per_pixel] > 128)
+                if (gimp_image.pixel_data[(x + (row_y + pixel_y) * gimp_image.width) * gimp_image.bytes_per_pixel] > 128)
                 {
-                    output |= (0x01 << _y);
+                    output |= (0x01 << pixel_y);
                 }
             }
 
+            //Store 4 bytes in a single long for u-boot. This reduces the overal file size of the boot script.
             output_long |= output << (long_count * 8);
             long_count++;
             if (long_count == 4)
             {
-                printf("mw.l 0x%08x 0x%08x\n", 0x43100000 + x + (y / 8) * 128 - long_count + 1, output_long);
+                printf("mw.l 0x%08x 0x%08x\n", scratchpad_address + x + (row_y / 8) * gimp_image.width - long_count + 1, output_long);
                 output_long = 0;
                 long_count = 0;
             }
         }
     }
+
+    //Write the final image to the display memory in 4 I2C commands. A simple command seems to confuse the u-boot code.
+    // Could be hardware buffers that are not large enough. Did not investigate.
     for(unsigned int n=0; n<4; n++)
-        printf("i2c write 0x%08x 0x3C 0x40 0x100 -s\n", 0x43100000 + 0x100 * n);
-    printf("mw.b 0x43100000 0xAF\n");
-    printf("i2c write 0x43100000 0x3C 0x00 0x01 -s\n");
+        printf("i2c write 0x%08x 0x3C 0x40 0x100 -s\n", scratchpad_address + 0x100 * n);
+
+    //Write the command for "display on" so the image is displayed.
+    i2cLcdCommands("\xAF", 1);
     return 0;
 }
