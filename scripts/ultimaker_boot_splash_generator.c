@@ -988,13 +988,13 @@ const unsigned int lcd_data = 0x40;
 //Height of a single row of 1bpp pixels.
 const unsigned int row_height = 8;
 
-void i2cLcdCommands(const unsigned char* bytes, int count)
+void i2cLcdCommands(const char* bytes, int count)
 {
     //First write the I2C commands to memory, and then as a single write write this to the I2C bus.
     //The LCD controller needs certain commands in a single write or else it will not accept them.
     for(int n = 0; n < count; n++)
     {
-        printf("mw.b 0x%08x 0x%02x\n", scratchpad_address + n, bytes[n]);
+        printf("mw.b 0x%08x 0x%02x\n", scratchpad_address + n, bytes[n] & 0xFF);
     }
     printf("i2c write 0x%08x 0x%02x 0x%02x 0x%02x -s\n", scratchpad_address, lcd_i2c_address, lcd_command, count);
 }
