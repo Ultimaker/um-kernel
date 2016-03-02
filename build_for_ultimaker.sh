@@ -2,6 +2,25 @@
 
 # This script builds the kernel, kernel modules, device trees and boot scripts for the A20 linux system that we use.
 
+# Check for a valid cross compiler. When unset, the kernel tries to build itself
+# using arm-none-eabi-gcc, so we need to ensure it exists. Because printenv and
+# which can cause bash -e to exit, so run this before setting this up.
+CROSS_COMPILE=$(printenv CROSS_COMPILE)
+if [ ${CROSS_COMPILE+x} ]; then
+    _CROSS_COMPILE=`which arm-none-eabi-gcc`
+    if [ -z ${_CROSS_COMPILE} ]; then
+        _CROSS_COMPILE=`which arm-linux-gnueabihf-gcc`
+        if [ ${_CROSS_COMPILE} ]; then
+            CROSS_COMPILE="arm-linux-gnueabihf-"
+            export CROSS_COMPILE=${CROSS_COMPILE}
+        else
+            echo "No suiteable cross-compiler found."
+            echo "One can be set explicitly via the environment variable CROSS_COMPILE='arm-linux-gnueabihf-' for example."
+	    exit
+        fi
+    fi
+fi
+
 set -e
 set -u
 
