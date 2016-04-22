@@ -81,22 +81,6 @@
 		};
 	};
 
-	pwm_fan {
-		pwm-names = "opinicus-board-fan";
-		compatible = "pwm-fan";
-		pwms = <&pwm_gpio 0 500000 0>;
-		status = "okay";
-	};
-
-	pwm_gpio: pwm_gpio@0 {
-		pinctrl-names = "default";
-		pinctrl-0 = <&pwm_gpio_pins_opinicus>;
-		compatible = "pwm-gpio";
-		#pwm-cells = <3>;
-		pwm-gpios = <&pio 8 2 GPIO_ACTIVE_HIGH>;
-		status = "okay";
-	};
-
 	rotary {
 		pinctrl-names = "default";
 		pinctrl-0 = <&rotary_pins_opinicus>;
@@ -196,13 +180,6 @@
 		allwinner,function = "gpio_out";
 		allwinner,drive = <SUN4I_PINCTRL_10_MA>;
 		allwinner,pull = <SUN4I_PINCTRL_PULL_DOWN>;
-	};
-
-	pwm_gpio_pins_opinicus: pwm_gpio_pins@0 {
-		allwinner,pins = "PI2", "PI7", "PI8";
-		allwinner,function = "gpio_out";
-		allwinner,drive = <SUN4I_PINCTRL_20_MA>;
-		allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
 	};
 
 	rotary_pins_opinicus: rotary_pins@0 {
