@@ -815,7 +815,7 @@ static const struct {
   "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
   "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
   "\0",
-}
+};
 
 //Address of memory which we can use, later in u-boot the kernel is stored here, so we know for sure this memory is free to use right now.
 const unsigned int scratchpad_address = 0x43100000;
