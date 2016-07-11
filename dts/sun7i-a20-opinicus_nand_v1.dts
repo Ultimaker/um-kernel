@@ -116,6 +116,13 @@
 	status = "okay";
 };
 
+&i2c2 {
+    pinctrl-names = "default";
+    pinctrl-0 = <&i2c2_pins_a>;
+    clock-frequency = <50000>;
+    status = "okay";
+};
+
 &i2c3 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c3_pins_a>;
