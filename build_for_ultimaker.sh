@@ -20,19 +20,20 @@ KERNEL=`pwd`/linux
 BUILDCONFIG="opinicus"
 
 # Build the kernel
+KCONFIG=`pwd`/configs/${BUILDCONFIG}_defconfig
 pushd ${KERNEL}
 # Configure the kernel
-ARCH=arm make "${BUILDCONFIG}_defconfig"
+ARCH=arm make KCONFIG_CONFIG=${KCONFIG}
 # Build the uImage file for a bootable kernel
-ARCH=arm LOADADDR=0x40008000 make uImage
+ARCH=arm LOADADDR=0x40008000 make KCONFIG_CONFIG=${KCONFIG} uImage
 # Build modules
-ARCH=arm make modules
+ARCH=arm make KCONFIG_CONFIG=${KCONFIG} modules
 # Build the device trees that we need
-ARCH=arm make sun7i-a20-olinuxino-lime2.dtb
-ARCH=arm make sun7i-a20-olinuxino-lime2-nand-4gb.dtb
-ARCH=arm make sun7i-a20-olinuxino-lime2-emmc.dtb
-ARCH=arm make sun7i-a20-opinicus_nand_v1.dtb
-ARCH=arm make sun7i-a20-opinicus_emmc_v1.dtb
+ARCH=arm make KCONFIG_CONFIG=${KCONFIG} sun7i-a20-olinuxino-lime2.dtb
+ARCH=arm make KCONFIG_CONFIG=${KCONFIG} sun7i-a20-olinuxino-lime2-nand-4gb.dtb
+ARCH=arm make KCONFIG_CONFIG=${KCONFIG} sun7i-a20-olinuxino-lime2-emmc.dtb
+ARCH=arm make KCONFIG_CONFIG=${KCONFIG} sun7i-a20-opinicus_nand_v1.dtb
+ARCH=arm make KCONFIG_CONFIG=${KCONFIG} sun7i-a20-opinicus_emmc_v1.dtb
 popd
 
 # Build the debian package
@@ -45,7 +46,7 @@ cp ${KERNEL}/arch/arm/boot/dts/sun7i-a20-olinuxino-lime2-emmc.dtb "${DEB_DIR}/bo
 cp ${KERNEL}/arch/arm/boot/dts/sun7i-a20-opinicus_nand_v1.dtb "${DEB_DIR}/boot"
 cp ${KERNEL}/arch/arm/boot/dts/sun7i-a20-opinicus_emmc_v1.dtb "${DEB_DIR}/boot"
 pushd ${KERNEL}
-ARCH=arm make INSTALL_MOD_PATH="${DEB_DIR}" modules_install
+ARCH=arm make KCONFIG_CONFIG=${KCONFIG} INSTALL_MOD_PATH="${DEB_DIR}" modules_install
 popd
 
 # Create the bootscripts for these kernels
