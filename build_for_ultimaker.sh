@@ -5,13 +5,22 @@
 set -e
 set -u
 
+# Initialize repositories
+git submodule init
+git submodule update
+
 if [ -z ${RELEASE_VERSION+x} ]; then
 	RELEASE_VERSION=0.0.0
 fi
 
+# Which kernel to build
+KERNEL=`pwd`/linux
+
 # Which kernel config to build.
 BUILDCONFIG="opinicus"
 
+# Build the kernel
+pushd ${KERNEL}
 # Configure the kernel
 ARCH=arm make "${BUILDCONFIG}_defconfig"
 # Build the uImage file for a bootable kernel
@@ -24,17 +33,20 @@ ARCH=arm make sun7i-a20-olinuxino-lime2-nand-4gb.dtb
 ARCH=arm make sun7i-a20-olinuxino-lime2-emmc.dtb
 ARCH=arm make sun7i-a20-opinicus_nand_v1.dtb
 ARCH=arm make sun7i-a20-opinicus_emmc_v1.dtb
+popd
 
 # Build the debian package
 DEB_DIR=`pwd`/debian
 mkdir -p "${DEB_DIR}/boot"
-cp arch/arm/boot/uImage "${DEB_DIR}/boot/uImage-sun7i-a20-opinicus_v1"
-cp arch/arm/boot/dts/sun7i-a20-olinuxino-lime2.dtb "${DEB_DIR}/boot"
-cp arch/arm/boot/dts/sun7i-a20-olinuxino-lime2-nand-4gb.dtb "${DEB_DIR}/boot"
-cp arch/arm/boot/dts/sun7i-a20-olinuxino-lime2-emmc.dtb "${DEB_DIR}/boot"
-cp arch/arm/boot/dts/sun7i-a20-opinicus_nand_v1.dtb "${DEB_DIR}/boot"
-cp arch/arm/boot/dts/sun7i-a20-opinicus_emmc_v1.dtb "${DEB_DIR}/boot"
+cp ${KERNEL}/arch/arm/boot/uImage "${DEB_DIR}/boot/uImage-sun7i-a20-opinicus_v1"
+cp ${KERNEL}/arch/arm/boot/dts/sun7i-a20-olinuxino-lime2.dtb "${DEB_DIR}/boot"
+cp ${KERNEL}/arch/arm/boot/dts/sun7i-a20-olinuxino-lime2-nand-4gb.dtb "${DEB_DIR}/boot"
+cp ${KERNEL}/arch/arm/boot/dts/sun7i-a20-olinuxino-lime2-emmc.dtb "${DEB_DIR}/boot"
+cp ${KERNEL}/arch/arm/boot/dts/sun7i-a20-opinicus_nand_v1.dtb "${DEB_DIR}/boot"
+cp ${KERNEL}/arch/arm/boot/dts/sun7i-a20-opinicus_emmc_v1.dtb "${DEB_DIR}/boot"
+pushd ${KERNEL}
 ARCH=arm make INSTALL_MOD_PATH="${DEB_DIR}" modules_install
+popd
 
 # Create the bootscripts for these kernels
 cat > "${DEB_DIR}/boot/boot_mtd.cmd" <<-EOT
