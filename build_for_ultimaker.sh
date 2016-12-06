@@ -39,7 +39,7 @@ KERNEL=`pwd`/linux
 BUILDCONFIG="opinicus"
 
 # Build the kernel
-KCONFIG=`pwd`/configs/${BUILDCONFIG}_defconfig
+KCONFIG=`pwd`/configs/${BUILDCONFIG}_config
 KERNEL_BUILD=`pwd`/_build_armhf/${BUILDCONFIG}-linux
 mkdir -p ${KERNEL_BUILD}
 pushd ${KERNEL}
