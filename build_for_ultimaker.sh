@@ -53,6 +53,8 @@ popd
 
 # Build the debian package
 DEB_DIR=`pwd`/debian
+# Remove old modules
+rm -r ${DEB_DIR}/lib 2> /dev/null || true
 mkdir -p "${DEB_DIR}/boot"
 cp ${KERNEL_BUILD}/arch/arm/boot/uImage "${DEB_DIR}/boot/uImage-sun7i-a20-opinicus_v1"
 pushd ${KERNEL}
