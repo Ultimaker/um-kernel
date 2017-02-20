@@ -7,10 +7,10 @@
 # which can cause bash -e to exit, so run this before setting this up.
 if [ "${CROSS_COMPILE}" == "" ]; then
     if [ "$(which arm-none-eabi-gcc)" != "" ]; then
-        CROSS_COMPILE=arm-none-eabi-
+        CROSS_COMPILE="arm-none-eabi-"
     fi
     if [ "$(which arm-linux-gnueeabihf-gcc)" != "" ]; then
-        CROSS_COMPILE=arm-linux-gnueeabihf-
+        CROSS_COMPILE="arm-linux-gnueabihf-"
     fi
     if [ "${CROSS_COMPILE}" == "" ]; then
         echo "No suiteable cross-compiler found."
