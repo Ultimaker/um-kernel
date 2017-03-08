@@ -110,7 +110,7 @@
 &i2c3 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c3_pins_a>;
-	clock-frequency = <200000>;
+	clock-frequency = <400000>;
 	status = "okay";
 
 	ssd1309: oled@3c {
