@@ -49,11 +49,11 @@ kernel_build() {
 	pushd ${KERNEL}
 
 	# Configure the kernel
-	ARCH=arm make O=${KERNEL_BUILD} KCONFIG_CONFIG=${KCONFIG}
+	ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}" make O=${KERNEL_BUILD} KCONFIG_CONFIG=${KCONFIG}
 	# Build the uImage file for a bootable kernel
-	ARCH=arm LOADADDR=0x40008000 make O=${KERNEL_BUILD} KCONFIG_CONFIG=${KCONFIG} uImage
+	ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}" LOADADDR=0x40008000 make O=${KERNEL_BUILD} KCONFIG_CONFIG=${KCONFIG} uImage
 	# Build modules
-	ARCH=arm make O=${KERNEL_BUILD} KCONFIG_CONFIG=${KCONFIG} modules
+	ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}" make O=${KERNEL_BUILD} KCONFIG_CONFIG=${KCONFIG} modules
 	popd
 
 	# Build the debian package
@@ -64,7 +64,7 @@ kernel_build() {
 	mkdir -p "${DEB_DIR}/boot"
 	cp ${KERNEL_BUILD}/arch/arm/boot/uImage "${DEB_DIR}/boot/uImage-sun7i-a20-opinicus_v1"
 	pushd ${KERNEL}
-	ARCH=arm make O=${KERNEL_BUILD} KCONFIG_CONFIG=${KCONFIG} INSTALL_MOD_PATH="${DEB_DIR}" modules_install
+	ARCH=arm make CROSS_COMPILE="${CROSS_COMPILE}" O=${KERNEL_BUILD} KCONFIG_CONFIG=${KCONFIG} INSTALL_MOD_PATH="${DEB_DIR}" modules_install
 	popd
 
 	# Build the device trees that we need
@@ -133,7 +133,7 @@ kernel_build() {
 
 if [ ${#} -gt 0 ]; then
 	pushd ${KERNEL}
-	ARCH=arm make O=${KERNEL_BUILD} KCONFIG_CONFIG=${KCONFIG} "${@}"
+	ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}" make O=${KERNEL_BUILD} KCONFIG_CONFIG=${KCONFIG} "${@}"
 	popd
 else
 	kernel_build
