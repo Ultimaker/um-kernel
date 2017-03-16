@@ -44,7 +44,7 @@ kernel_build() {
 		RELEASE_VERSION=9999.99.99
 	fi
 
-	# Build the kernel
+	# Prepare the build environment
 	mkdir -p ${KERNEL_BUILD}
 	pushd ${KERNEL}
 
@@ -128,6 +128,7 @@ kernel_build() {
 		Description: Linux kernel, kernel modules, binary device trees and boot scripts. All in a single package.
 	EOT
 
+	# Build the debian package
 	fakeroot dpkg-deb --build "${DEB_DIR}" um-kernel-${RELEASE_VERSION}.deb
 }
 
