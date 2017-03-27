@@ -224,6 +224,7 @@
 &uart3 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart3_pins_a>;
+	cts-override;
 	status = "okay";
 };
 
