@@ -23,7 +23,7 @@ export CROSS_COMPILE=${CROSS_COMPILE}
 if [ "${MAKEFLAGS}" == "" ]; then
 	echo -e -n "\e[1m"
 	echo "Makeflags not set, hint, to speed up compilation time, increase the number of jobs. For example:"
-	echo "MAKEFLAGS='-j 4' ${0}."
+	echo "MAKEFLAGS='-j 4' ${0}"
 	echo -e "\e[0m"
 fi
 
