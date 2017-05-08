@@ -46,10 +46,7 @@ git submodule init
 git submodule update
 
 kernel_build() {
-
-	if [ -z ${RELEASE_VERSION+x} ]; then
-		RELEASE_VERSION=9999.99.99
-	fi
+	RELEASE_VERSION=${RELEASE_VERSION:-9999.99.99}
 
 	# Prepare the build environment
 	mkdir -p ${KERNEL_BUILD}
