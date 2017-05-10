@@ -42,8 +42,7 @@ KCONFIG=`pwd`/configs/${BUILDCONFIG}_config
 KERNEL_BUILD=`pwd`/_build_armhf/${BUILDCONFIG}-linux
 
 # Initialize repositories
-git submodule init
-git submodule update
+git submodule update --init
 
 kernel_build() {
 
