@@ -202,6 +202,7 @@
 
 &rtp {
 	allwinner,ts-attached;
+	touchscreen-inverted-x;
 };
 
 &spi1 {
