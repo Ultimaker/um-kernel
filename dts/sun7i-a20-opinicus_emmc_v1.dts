@@ -53,7 +53,7 @@
 	compatible = "ultimaker,opinicus-emmcv1", "olimex,a20-olinuxino-lime2", "allwinner,sun7i-a20";
 
 	aliases {
-		serial1 = &uart3;
+		serial1 = &uart7;
 	};
 
 	beeper {
@@ -100,6 +100,42 @@
 	status = "okay";
 };
 
+&i2c1 {
+	pca96322: pca9632@60 {
+		compatible = "nxp,pca9632";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x60>;
+		nxp,totem-pole;
+		nxp,inverted-out;
+		nxp,hw-blink;
+
+		red@0 {
+			label = "red";
+			reg = <0>;
+			linux,default-trigger = "none";
+		};
+
+		green@1 {
+			label = "green";
+			reg = <1>;
+			linux,default-trigger = "none";
+		};
+
+		blue@2 {
+			label = "blue";
+			reg = <2>;
+			linux,default-trigger = "none";
+		};
+
+		white@3 {
+			label = "white";
+			reg = <3>;
+			linux,default-trigger = "default-on";
+		};
+	};
+};
+
 &i2c2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c2_pins_a>;
@@ -118,7 +154,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&oled_pins_opinicus>;
 		reg = <0x3c>;
-		reset-gpios = <&pio 8 13 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&pio 8 4 GPIO_ACTIVE_HIGH>;
 		solomon,width = <128>;
 		solomon,height = <64>;
 		solomon,com-invdir;
@@ -183,7 +219,7 @@
 	};
 
 	oled_pins_opinicus: oled_pins@0 {
-		allwinner,pins = "PI13";
+		allwinner,pins = "PI4";
 		allwinner,function = "gpio_out";
 		allwinner,drive = <SUN4I_PINCTRL_10_MA>;
 		allwinner,pull = <SUN4I_PINCTRL_PULL_DOWN>;
@@ -221,9 +257,9 @@
 	};
 };
 
-&uart3 {
+&uart7 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&uart3_pins_a>;
+	pinctrl-0 = <&uart7_pins_a>;
 	cts-override;
 	status = "okay";
 };
