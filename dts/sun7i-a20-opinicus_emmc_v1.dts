@@ -101,11 +101,11 @@
 };
 
 &i2c1 {
-	pca96322: pca9632@60 {
+	pca96322: pca9632@61 {
 		compatible = "nxp,pca9632";
 		#address-cells = <1>;
 		#size-cells = <0>;
-		reg = <0x60>;
+		reg = <0x61>;
 		nxp,totem-pole;
 		nxp,inverted-out;
 		nxp,hw-blink;
