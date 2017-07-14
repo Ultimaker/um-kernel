@@ -260,7 +260,6 @@
 &uart7 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart7_pins_a>;
-	cts-override;
 	status = "okay";
 };
 
