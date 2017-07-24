@@ -68,15 +68,21 @@
 			linux,default-trigger = "mmc0";
 		};
 
-		d1 {
-			label = "opinicus:orange:d1";
-			gpios = <&pio 7 20 GPIO_ACTIVE_HIGH>;
+		ol1 {
+			label = "opinicus:orange:ol1";
+			gpios = <&pio 1 11 GPIO_ACTIVE_HIGH>;
 			default-state = "on";
 		};
 
-		d2 {
-			label = "opinicus:orange:d2";
-			gpios = <&pio 7 21 GPIO_ACTIVE_HIGH>;
+		ol2 {
+			label = "opinicus:orange:ol2";
+			gpios = <&pio 1 10 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+		};
+
+		ol3 {
+			label = "opinicus:orange:ol3";
+			gpios = <&pio 1 9 GPIO_ACTIVE_HIGH>;
 			default-state = "on";
 		};
 	};
@@ -212,7 +218,7 @@
 
 &pio {
 	led_pins_opinicus: led_pins@0 {
-		allwinner,pins = "PH20";
+		allwinner,pins = "PB9", "PB10", "PB11";
 		allwinner,function = "gpio_out";
 		allwinner,drive = <SUN4I_PINCTRL_20_MA>;
 		allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
