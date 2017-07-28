@@ -92,9 +92,9 @@ dts_build() {
             ARTICLE_REV_HEX=$(printf "%x\n" ${ARTICLE_REV})
             
             if [[ ${ARTICLE_REV} == "" ]]; then
-                NAME=${ARTICLE_ID_HEX}.dts
+                NAME=${ARTICLE_ID_HEX}.dtb
             else
-                NAME=${ARTICLE_ID_HEX}-${ARTICLE_REV_HEX}.dts
+                NAME=${ARTICLE_ID_HEX}-${ARTICLE_REV_HEX}.dtb
             fi
             ln -s ${DTS}.dtb ${DEB_DIR}/boot/${NAME}
             echo "Created link for article ${ARTICLE_ID} ${ARTICLE_REV}"
