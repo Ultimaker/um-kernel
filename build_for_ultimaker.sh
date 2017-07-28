@@ -43,6 +43,9 @@ DEB_DIR=`pwd`/debian
 KCONFIG=`pwd`/configs/${BUILDCONFIG}_config
 KERNEL_BUILD=`pwd`/_build_armhf/${BUILDCONFIG}-linux
 
+# Set the release version if it's not passed to the script
+RELEASE_VERSION=${RELEASE_VERSION:-9999.99.99}
+
 # Initialize repositories
 git submodule init
 git submodule update
@@ -55,8 +58,6 @@ kernel_build_command() {
 }
 
 kernel_build() {
-    RELEASE_VERSION=${RELEASE_VERSION:-9999.99.99}
-
     # Configure the kernel
     kernel_build_command
     # Build the uImage file for a bootable kernel
@@ -67,8 +68,8 @@ kernel_build() {
 
 dts_build() {
     mkdir -p ${KERNEL_BUILD}/dtb
-    rm -rf ${DEB_DIR}/boot/dtb
-    mkdir -p ${DEB_DIR}/boot/dtb
+    rm -rf ${DEB_DIR}/boot/*.dtb
+    mkdir -p ${DEB_DIR}/boot
     # Build the device trees that we need
     for dts in $(find dts/ -name '*.dts' -exec basename {} \;); do
         dt=${dts%.dts}
@@ -76,7 +77,7 @@ dts_build() {
         cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
             -I${KERNEL}/include -I${KERNEL}/arch/arm/boot/dts \
             -o ${KERNEL_BUILD}/dtb/.${dt}.dtb.tmp dts/${dts}
-        dtc -I dts -o "${DEB_DIR}/boot/dtb/${dt}.dtb" -O dtb ${KERNEL_BUILD}/dtb/.${dt}.dtb.tmp
+        dtc -I dts -o "${DEB_DIR}/boot/${dt}.dtb" -O dtb ${KERNEL_BUILD}/dtb/.${dt}.dtb.tmp
     done
 
     while IFS='' read -r LINE || [[ -n "$LINE" ]]; do
@@ -95,7 +96,7 @@ dts_build() {
             else
                 NAME=${ARTICLE_ID_HEX}-${ARTICLE_REV_HEX}.dts
             fi
-            ln -s ${DTS}.dtb ${DEB_DIR}/boot/dtb/${NAME}
+            ln -s ${DTS}.dtb ${DEB_DIR}/boot/${NAME}
             echo "Created link for article ${ARTICLE_ID} ${ARTICLE_REV}"
         fi
     done < "dts/article.links"
@@ -131,16 +132,16 @@ deb_build() {
     # Create a debian control file to pack up a debian package
     mkdir -p "${DEB_DIR}/DEBIAN"
     cat > "${DEB_DIR}/DEBIAN/control" <<-EOT
-        Package: um-kernel
-        Conflicts: linux-sunxi
-        Replaces: linux-sunxi
-        Version: ${RELEASE_VERSION}
-        Architecture: armhf
-        Maintainer: Anonymous <root@monolith.ultimaker.com>
-        Section: kernel
-        Priority: optional
-        Homepage: http://www.kernel.org/
-        Description: Linux kernel, kernel modules, binary device trees and boot scripts. All in a single package.
+Package: um-kernel
+Conflicts: linux-sunxi
+Replaces: linux-sunxi
+Version: ${RELEASE_VERSION}
+Architecture: armhf
+Maintainer: Anonymous <root@monolith.ultimaker.com>
+Section: kernel
+Priority: optional
+Homepage: http://www.kernel.org/
+Description: Linux kernel, kernel modules, binary device trees and boot scripts. All in a single package.
 EOT
 
     # Build the debian package

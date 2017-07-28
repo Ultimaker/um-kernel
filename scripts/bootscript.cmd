@@ -5,6 +5,7 @@ ${BOOTSPLASH_COMMANDS}
 setenv article_num_r 0x43300000
 setenv article_rev_r 0x43300004
 
+# Load the article and revision number, these are in different byte order, so we need to swap them while reading.
 i2c dev 1
 i2c read 0x51 0 1 0x43300003
 i2c read 0x51 1 1 0x43300002
@@ -19,13 +20,16 @@ setexpr.l article_number *${article_num_r}
 setexpr.l article_rev *${article_rev_r}
 echo Article number: ${article_number}-${article_rev}
 
-setenv dtb_list dtb/${article_num}-${article_rev}.dtb dtb/${article_num}.dtb dtb/bare-lime2.dtb sun7i-a20-opinicus_emmc_v1.dtb
+# Build the possible dtb list from the article numbers with a fallback.
+# We fall back to the v1 electronics with display right now, as these are most common, and required for the production installer software.
+setenv dtb_list ${article_number}-${article_rev}.dtb ${article_number}.dtb um3v1-128x64-oled.dtb bare-lime2.dtb sun7i-a20-opinicus_emmc_v1.dtb
 
 load mmc 0 0x46000000 uImage-sun7i-a20-opinicus_v1
 for dtb in ${dtb_list}; do
     if load mmc 0 0x49000000 ${dtb}; then
         bootm 0x46000000 - 0x49000000
-    end
+    fi
 done
 echo "No devicetree found!"
+sleep 5
 reset
