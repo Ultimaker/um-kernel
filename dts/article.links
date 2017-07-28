@@ -1,0 +1,8 @@
+#ID:dts:descriptionum
+#These articles links are converted to hex representation sym links to be used in the u-boot script to load the proper device tree for this article.
+1797:um3v1-ulticontroller-128x64:programming station
+9066:um3v1-ulticontroller-128x64:UM3
+9511:um3v1-ulticontroller-128x64:UM3 extended
+9051:um3v2-ulticontroller-128x64:UM3 XL
+9051-999:um3v1-ulticontroller-128x64:UM3 XL proto 1
+9051-1000:um3v1-ulticontroller-128x64:UM3 XL proto 2
