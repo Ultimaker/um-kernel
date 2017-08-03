@@ -41,75 +41,17 @@
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "bare-lime2.dts"
+#include "Part1000897-Ultimainboard3.1.dtsi"
+#include "Part1994-UltiController.dtsi"
 
-#include "ulticontroler_128x64.dtsi"
-
-/ {
-    model = "Opinicus v1 addon board to the Olimex OLinuXino Lime2-A20-eMMC";
-    compatible = "ultimaker,opinicus-emmcv1", "olimex,a20-olinuxino-lime2", "allwinner,sun7i-a20";
-
-    aliases {
-        serial1 = &uart3;
-    };
-
-    leds {
-        green {
-            linux,default-trigger = "mmc0";
-        };
-
-        d1 {
-            label = "opinicus:orange:d1";
-            gpios = <&pio 7 20 GPIO_ACTIVE_HIGH>;
-            default-state = "on";
-        };
-
-        d2 {
-            label = "opinicus:orange:d2";
-            gpios = <&pio 7 21 GPIO_ACTIVE_HIGH>;
-            default-state = "on";
-        };
-    };
+&ssd1309 {
+    reset-gpios = <&pio 8 4 GPIO_ACTIVE_HIGH>;
 };
-
-&i2c2 {
-    pinctrl-names = "default";
-    pinctrl-0 = <&i2c2_pins_a>;
-    clock-frequency = <50000>;
-    status = "okay";
-};
-
 &pio {
-    led_pins_opinicus: led_pins@0 {
-        allwinner,pins = "PH20";
+    oled_pins_opinicus: oled_pins@0 {
+        allwinner,pins = "PI4";
         allwinner,function = "gpio_out";
-        allwinner,drive = <SUN4I_PINCTRL_20_MA>;
-        allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+        allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+        allwinner,pull = <SUN4I_PINCTRL_PULL_DOWN>;
     };
 };
-
-&spi1 {
-    pinctrl-names = "default";
-    pinctrl-0 = <&spi1_pins_a>;
-    status = "okay";
-};
-
-&spi2 {
-    pinctrl-names = "default";
-    pinctrl-0 = <&spi2_pins_a>;
-    status = "okay";
-
-    spidev@0 {
-        compatible = "spidev";
-        spi-max-frequency = <25000000>;
-        reg = <0>;
-    };
-};
-
-&uart3 {
-    pinctrl-names = "default";
-    pinctrl-0 = <&uart3_pins_a>;
-    cts-override;
-    status = "okay";
-};
-

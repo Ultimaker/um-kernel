@@ -22,12 +22,12 @@ echo Article number: ${article_number}-${article_rev}
 
 # Build the possible dtb list from the article numbers with a fallback.
 # We fall back to the v1 electronics with display right now, as these are most common, and required for the production installer software.
-setenv dtb_list ${article_number}-${article_rev}.dtb ${article_number}.dtb um3v1-128x64-oled.dtb bare-lime2.dtb sun7i-a20-opinicus_emmc_v1.dtb
+setenv dtb_list ${article_number}-${article_rev}.dtb ${article_number}.dtb Part2005-WithPart1994.dts Jedi-common.dtb sun7i-a20-opinicus_emmc_v1.dtb
 
-load mmc 0 0x46000000 uImage-sun7i-a20-opinicus_v1
+load mmc 0 ${kernel_addr_r} uImage-sun7i-a20-opinicus_v1
 for dtb in ${dtb_list}; do
-    if load mmc 0 0x49000000 ${dtb}; then
-        bootm 0x46000000 - 0x49000000
+    if load mmc 0 ${fdt_addr_r} ${dtb}; then
+        bootm ${kernel_addr_r} - ${fdt_addr_r}
     fi
 done
 echo "No devicetree found!"

@@ -66,7 +66,8 @@ kernel_build() {
     kernel_build_command modules
 }
 
-dts_build() {
+dtb_build() {
+    rm -rf ${KERNEL_BUILD}/dtb
     mkdir -p ${KERNEL_BUILD}/dtb
     rm -rf ${DEB_DIR}/boot/*.dtb
     mkdir -p ${DEB_DIR}/boot
@@ -82,37 +83,37 @@ dts_build() {
 
     while IFS='' read -r LINE || [[ -n "$LINE" ]]; do
         if [[ $LINE != "#"* && $LINE != "" ]]; then
-            ARTICLE_FULL=$(cut -d':' -f1 <<<"${LINE}")
+            ARTICLE_FULL=$(cut -d':' -f1 <<< "${LINE}")
             DTS=$(cut -d':' -f2 <<<"${LINE}")
-            
-            ARTICLE_ID=$(cut -d'-' -f1 <<<"${ARTICLE_FULL}")
-            ARTICLE_REV=$(cut -d'-' -s -f2 <<<"${ARTICLE_FULL}")
-            
-            ARTICLE_ID_HEX=$(printf "%x\n" ${ARTICLE_ID})
+
+            ARTICLE_NUMBER=$(cut -d'-' -f1 <<< "${ARTICLE_FULL}")
+            ARTICLE_REV=$(cut -d'-' -s -f2 <<< "${ARTICLE_FULL}")
+
+            ARTICLE_NUMBER_HEX=$(printf "%x\n" ${ARTICLE_NUMBER})
             ARTICLE_REV_HEX=$(printf "%x\n" ${ARTICLE_REV})
-            
-            if [[ ${ARTICLE_REV} == "" ]]; then
-                NAME=${ARTICLE_ID_HEX}.dtb
+
+            if [[ -z "${ARTICLE_REV}" ]]; then
+                NAME=${ARTICLE_NUMBER_HEX}.dtb
             else
-                NAME=${ARTICLE_ID_HEX}-${ARTICLE_REV_HEX}.dtb
+                NAME=${ARTICLE_NUMBER_HEX}-${ARTICLE_REV_HEX}.dtb
             fi
             ln -s ${DTS}.dtb ${DEB_DIR}/boot/${NAME}
-            echo "Created link for article ${ARTICLE_ID} ${ARTICLE_REV}"
+            echo "Created link for article ${ARTICLE_NUMBER} ${ARTICLE_REV}"
         fi
     done < "dts/article.links"
 }
 
-script_build() {
+bootscript_build() {
     mkdir -p ${DEB_DIR}/boot
-    
+
     # Generate the boot splash script
     gcc -Wall -Werror -std=c99 scripts/ultimaker_boot_splash_generator.c -o scripts/ultimaker_boot_splash_generator
-    export BOOTSPLASH_COMMANDS=$(scripts/ultimaker_boot_splash_generator)
+    BOOTSPLASH_COMMANDS=$(scripts/ultimaker_boot_splash_generator)
 
     # Create the bootscripts for these kernels
-    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${DEB_DIR}/boot/boot_mmc.cmd"
-    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${DEB_DIR}/boot/boot_installer.cmd"
-    ROOT_DEV=mmcblk1p2 ROOT_FS=f2fs envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${DEB_DIR}/boot/boot_emmc.cmd"
+    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${DEB_DIR}/boot/boot_mmc.cmd"
+    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${DEB_DIR}/boot/boot_installer.cmd"
+    ROOT_DEV=mmcblk1p2 ROOT_FS=f2fs BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${DEB_DIR}/boot/boot_emmc.cmd"
 
     # Convert the bootscripts into proper u-boot script images
     for CMD_FILE in $(find ${DEB_DIR}/boot/ -name '*.cmd' -exec basename {} \;); do
@@ -131,43 +132,42 @@ deb_build() {
 
     # Create a debian control file to pack up a debian package
     mkdir -p "${DEB_DIR}/DEBIAN"
-    cat > "${DEB_DIR}/DEBIAN/control" <<-EOT
-Package: um-kernel
-Conflicts: linux-sunxi
-Replaces: linux-sunxi
-Version: ${RELEASE_VERSION}
-Architecture: armhf
-Maintainer: Anonymous <root@monolith.ultimaker.com>
-Section: kernel
-Priority: optional
-Homepage: http://www.kernel.org/
-Description: Linux kernel, kernel modules, binary device trees and boot scripts. All in a single package.
-EOT
+    RELEASE_VERSION="${RELEASE_VERSION}" envsubst '${RELEASE_VERSION}' < scripts/debian_control > "${DEB_DIR}/DEBIAN/control"
 
     # Build the debian package
     fakeroot dpkg-deb --build "${DEB_DIR}" um-kernel-${RELEASE_VERSION}.deb
 }
 
 case ${1-} in
-kernel)
+um-kernel)
     kernel_build
     ;;
-dts)
-    dts_build
+um-dtbs)
+    dtb_build
     ;;
-script)
-    script_build
+um-bootscript)
+    bootscript_build
     ;;
-deb)
+um-deb)
     deb_build
     ;;
 "")
     kernel_build
-    dts_build
+    dtb_build
     script_build
     deb_build
     ;;
+um-*)
+    echo "Unknown argument to build script."
+    echo "Use:"
+    echo "\t$1 um-kernel"
+    echo "\t$1 um-dtbs"
+    echo "\t$1 um-bootscript"
+    echo "\t$1 um-deb"
+    echo "\t$1 menuconfig"
+    echo "\t$1"
+    ;;
 *)
-    kernel_build_command ${1}
+    kernel_build_command ${*}
     ;;
 esac

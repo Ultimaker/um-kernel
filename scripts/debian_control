@@ -1,0 +1,10 @@
+Package: um-kernel
+Conflicts: linux-sunxi
+Replaces: linux-sunxi
+Version: ${RELEASE_VERSION}
+Architecture: armhf
+Maintainer: Ultimaker <root@monolith.ultimaker.com>
+Section: kernel
+Priority: optional
+Homepage: http://www.kernel.org/
+Description: Linux kernel, kernel modules, binary device trees and boot scripts. All in a single package.
