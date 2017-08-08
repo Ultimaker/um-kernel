@@ -41,11 +41,11 @@
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "Jedi-common.dts"
+#include "jedi-common.dts"
 
 / {
     aliases {
-        serial1 = &uart7;
+        serial1 = &uart3;
     };
 
     leds {
@@ -53,58 +53,16 @@
             linux,default-trigger = "mmc0";
         };
 
-        ol1 {
-            label = "opinicus:orange:ol1";
-            gpios = <&pio 1 11 GPIO_ACTIVE_HIGH>;
+        d1 {
+            label = "opinicus:orange:d1";
+            gpios = <&pio 7 20 GPIO_ACTIVE_HIGH>;
             default-state = "on";
         };
 
-        ol2 {
-            label = "opinicus:orange:ol2";
-            gpios = <&pio 1 10 GPIO_ACTIVE_HIGH>;
+        d2 {
+            label = "opinicus:orange:d2";
+            gpios = <&pio 7 21 GPIO_ACTIVE_HIGH>;
             default-state = "on";
-        };
-
-        ol3 {
-            label = "opinicus:orange:ol3";
-            gpios = <&pio 1 9 GPIO_ACTIVE_HIGH>;
-            default-state = "on";
-        };
-    };
-};
-
-&i2c1 {
-    cabin_light: pca9632@61 {
-        compatible = "nxp,pca9632";
-        #address-cells = <1>;
-        #size-cells = <0>;
-        reg = <0x61>;
-        nxp,totem-pole;
-        nxp,inverted-out;
-        nxp,hw-blink;
-
-        red@0 {
-            label = "red:cabin_light";
-            reg = <0>;
-            linux,default-trigger = "none";
-        };
-
-        green@1 {
-            label = "green:cabin_light";
-            reg = <1>;
-            linux,default-trigger = "none";
-        };
-
-        blue@2 {
-            label = "blue:cabin_light";
-            reg = <2>;
-            linux,default-trigger = "none";
-        };
-
-        white@3 {
-            label = "white:cabin_light";
-            reg = <3>;
-            linux,default-trigger = "default-on";
         };
     };
 };
@@ -117,21 +75,8 @@
 };
 
 &pio {
-    nfc_irq: nfc_irq {
-        allwinner,pins = "PI11";
-        allwinner,function = "gpio_in";
-        allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
-    };
-
-    nfc_hreq: nfc_hreq {
-        allwinner,pins = "PI10";
-        allwinner,function = "gpio_out";
-        allwinner,drive = <SUN4I_PINCTRL_10_MA>;
-        allwinner,pull = <SUN4I_PINCTRL_PULL_UP>;
-    };
-
     led_pins_opinicus: led_pins@0 {
-        allwinner,pins = "PB9", "PB10", "PB11";
+        allwinner,pins = "PH20", "PH21";
         allwinner,function = "gpio_out";
         allwinner,drive = <SUN4I_PINCTRL_20_MA>;
         allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
@@ -156,8 +101,9 @@
     };
 };
 
-&uart7 {
+&uart3 {
     pinctrl-names = "default";
-    pinctrl-0 = <&uart7_pins_a>;
+    pinctrl-0 = <&uart3_pins_a>;
+    cts-override;
     status = "okay";
 };
