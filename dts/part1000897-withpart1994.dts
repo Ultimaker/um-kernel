@@ -44,9 +44,6 @@
 #include "part1000897-ultimainboard3.1.dtsi"
 #include "part1994-ulticontroller.dtsi"
 
-&ssd1309 {
-    reset-gpios = <&pio 8 4 GPIO_ACTIVE_HIGH>;
-};
 &pio {
     oled_pins_opinicus: oled_pins@0 {
         allwinner,pins = "PI4";
@@ -54,4 +51,8 @@
         allwinner,drive = <SUN4I_PINCTRL_10_MA>;
         allwinner,pull = <SUN4I_PINCTRL_PULL_DOWN>;
     };
+};
+
+&ssd1309 {
+    reset-gpios = <&pio 8 4 GPIO_ACTIVE_HIGH>;
 };
