@@ -67,6 +67,8 @@ kernel_build() {
 }
 
 dtb_build() {
+    if [[ -z $DEB_DIR ]]; then echo "You are an idiot"; exit 1; fi
+
     rm -rf ${KERNEL_BUILD}/dtb
     mkdir -p ${KERNEL_BUILD}/dtb
     rm -rf ${DEB_DIR}/boot/*.dtb
@@ -104,6 +106,8 @@ dtb_build() {
 }
 
 bootscript_build() {
+    if [[ -z $DEB_DIR ]]; then echo "You are an idiot"; exit 1; fi
+
     mkdir -p ${DEB_DIR}/boot
 
     # Generate the boot splash script
@@ -123,6 +127,8 @@ bootscript_build() {
 }
 
 deb_build() {
+    if [[ -z $DEB_DIR ]]; then echo "You are an idiot"; exit 1; fi
+
     # Remove old modules
     rm -r ${DEB_DIR}/lib 2> /dev/null || true
     mkdir -p "${DEB_DIR}/boot"

@@ -3,7 +3,7 @@ Conflicts: linux-sunxi
 Replaces: linux-sunxi
 Version: ${RELEASE_VERSION}
 Architecture: armhf
-Maintainer: Ultimaker <root@monolith.ultimaker.com>
+Maintainer: Ultimaker <info@ultimaker.com>
 Section: kernel
 Priority: optional
 Homepage: http://www.kernel.org/
