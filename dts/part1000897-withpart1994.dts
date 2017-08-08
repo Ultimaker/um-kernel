@@ -41,8 +41,8 @@
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "Part1000897-Ultimainboard3.1.dtsi"
-#include "Part1994-UltiController.dtsi"
+#include "part1000897-ultimainboard3.1.dtsi"
+#include "part1994-ulticontroller.dtsi"
 
 &ssd1309 {
     reset-gpios = <&pio 8 4 GPIO_ACTIVE_HIGH>;
