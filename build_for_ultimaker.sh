@@ -166,12 +166,12 @@ um-deb)
 um-*)
     echo "Unknown argument to build script."
     echo "Use:"
-    echo "\t$1 um-kernel"
-    echo "\t$1 um-dtbs"
-    echo "\t$1 um-bootscript"
-    echo "\t$1 um-deb"
-    echo "\t$1 menuconfig"
-    echo "\t$1"
+    echo -e "\t$0 um-kernel"
+    echo -e "\t$0 um-dtbs"
+    echo -e "\t$0 um-bootscript"
+    echo -e "\t$0 um-deb"
+    echo -e "\t$0 menuconfig"
+    echo -e "\t$0"
     ;;
 *)
     kernel_build_command ${*}
