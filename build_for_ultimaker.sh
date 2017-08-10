@@ -160,7 +160,7 @@ um-deb)
 "")
     kernel_build
     dtb_build
-    script_build
+    bootscript_build
     deb_build
     ;;
 um-*)
