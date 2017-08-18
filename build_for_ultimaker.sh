@@ -131,7 +131,7 @@ deb_build() {
 
     # Remove old modules
     rm -r ${DEB_DIR}/lib 2> /dev/null || true
-    mkdir -p "${DEB_DIR}/boot"
+    mkdir -p "${DEB_DIR}/boot" "${DEB_DIR}/usr/sbin" "${DEB_DIR}/etc/systemd/system"
     # Install kernel image and modules
     cp ${KERNEL_BUILD}/arch/arm/boot/uImage "${DEB_DIR}/boot/uImage-sun7i-a20-opinicus_v1"
     kernel_build_command INSTALL_MOD_PATH="${DEB_DIR}" modules_install
@@ -139,6 +139,13 @@ deb_build() {
     # Create a debian control file to pack up a debian package
     mkdir -p "${DEB_DIR}/DEBIAN"
     RELEASE_VERSION="${RELEASE_VERSION}" envsubst '${RELEASE_VERSION}' < scripts/debian_control > "${DEB_DIR}/DEBIAN/control"
+
+    # Add the post install script
+    cp scripts/postinst "${DEB_DIR}/DEBIAN/"
+    
+    # Add the script and service which will setup our gpios at startup
+    cp scripts/gpio.export.sh "${DEB_DIR}/usr/sbin/"
+    cp scripts/rc.gpio.service "${DEB_DIR}/etc/systemd/system"
 
     # Build the debian package
     fakeroot dpkg-deb --build "${DEB_DIR}" um-kernel-${RELEASE_VERSION}.deb

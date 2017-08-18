@@ -1,0 +1,11 @@
+[Unit]
+Description=Startup service which populates /dev/gpio
+
+[Service]
+Type=forking
+ExecStart=/usr/sbin/gpio.export.sh
+TimeoutSec=0
+RemainAfterExit=yes
+
+[Install]
+WantedBy=basic.target

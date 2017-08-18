@@ -48,6 +48,25 @@
         serial1 = &uart7;
     };
 
+    gpio_exports {
+        avr_reset {
+            pin_nr = "87";
+            direction = "output";
+        };
+        avr_sck {
+            pin_nr = "84";
+            direction = "output";
+        };
+        avr_mosi {
+            pin_nr = "85";
+            direction = "output";
+        };
+        avr_miso {
+            pin_nr = "86";
+            direction = "input";
+        };
+    };
+
     leds {
         green {
             linux,default-trigger = "mmc0";
