@@ -56,6 +56,28 @@
 		serial1 = &uart3;
 	};
 
+	vdd_hd_display: vdd_hd_display_reg {
+		compatible ="regulator-fixed";
+		regulator-name = "vdd-hd-display-supply";
+		pinctrl-names = "default";
+		pinctrl-0 = <&hd_display_power>;
+		gpio = <&pio 7 8 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+	};
+
+	hd_display_bl: hd_display_bl {
+		compatible = "pwm-backlight";
+		//pinctrl-names = "default";
+		//pinctrl-0 = <&bl_power_opinicus>;
+		//enable-gpios = <&pio 7 8 GPIO_ACTIVE_HIGH>;
+		power-supply = <&vdd_hd_display>;
+		pwms = <&pwm 0 8333334 PWM_POLARITY_INVERTED>;
+		brightness-levels = <0 1 2 4 6 8 11 15 20 25 31 39 47 56 67
+				     79 92 107 123 141 160 181 204 228 255>;
+		default-brightness-level = <20>;
+	};
+
 	beeper {
 		pwm-names = "opinicus-board-beeper";
 		compatible = "pwm-beeper";
@@ -81,6 +103,36 @@
 		};
 	};
 
+	max98357a: max98357a {
+		compatible = "maxim,max98357a";
+		status = "okay";
+	};
+
+
+//	panel: panel {
+//		compatible = "olimex,lcd-olinuxino-43-ts";
+//		#address-cells = <1>;
+//		#size-cells = <0>;
+//		pinctrl-names = "default";
+//		pinctrl-0 = <&lcd0_rgb888_pins>;
+//		backlight = <&hd_display_bl>;
+
+//		port {
+//			#address-cells = <1>;
+//			#size-cells = <0>;
+
+//			rgb_in_tcon0: endpoint@0 {
+//				reg = <0>;
+//				remote-endpoint = <&tcon0_out_rgb>;
+//			};
+
+		//	rgb_in_tcon1: endpoint@1 {
+		//		reg = <1>;
+		//		remote-endpoint = <&tcon1_out_rgb>;
+		//	};
+//		};
+//	};
+
 	rotary {
 		pinctrl-names = "default";
 		pinctrl-0 = <&rotary_pins_opinicus>;
@@ -91,9 +143,31 @@
 		rotary-encoder,steps-per-period = <4>;
 		status = "okay";
 	};
+
+	sound {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "Main speaker output";
+		simple-audio-card-format = "i2s";
+		simple-audio-card,mclk-fs = <256>;
+		status = "okay";
+		simple-audio-card,cpu {
+			sound-dai = <&i2s0>;
+		};
+		simple-audio-card,codec {
+			sound-dai = <&max98357a>;
+		};
+	};
 };
 
 &codec {
+	status = "okay";
+};
+
+&de {
+	status = "okay";
+};
+
+&hdmi {
 	status = "okay";
 };
 
@@ -124,8 +198,9 @@
 		solomon,prechargep2 = <8>;
 	};
 
-	pca9632: pca9632@60 {
+	br: button@60 {
 		compatible = "nxp,pca9632";
+		label = "button_ring";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x60>;
@@ -134,69 +209,127 @@
 		nxp,hw-blink;
 
 		red@0 {
-			label = "red";
+		//	label = "red";
 			reg = <0>;
 			linux,default-trigger = "none";
 		};
 
 		green@1 {
-			label = "green";
+		//	label = "green";
 			reg = <1>;
 			linux,default-trigger = "default-on";
 		};
 
 		blue@2 {
-			label = "blue";
+		//	label = "blue";
 			reg = <2>;
 			linux,default-trigger = "default-on";
 		};
 
 		unused@3 {
-			label = "unused";
+		//	label = "unused";
 			reg = <3>;
-			linux,default-trigger = "none";
+			linux,default-trigger = "backlight";
 		};
 	};
+};
+
+&i2s0 {
+	pinctrl-names = "default";
+//	pinctrl-0 = <&i2s0_bclk_pins_a>, <&i2s0_lrclk_pins_a>, <&i2s0_sdo_pins_a>;
+	status = "okay";
 };
 
 &lradc {
 	vref-supply = <&reg_vcc3v0>; /* move to lime define, maybe whole thing */
 	status = "okay";
 
-	button@0 {
+	button {
 		label = "Encoder click";
 		linux,code = <KEY_ENTER>;
 		channel = <0>;
 		voltage = <0>;
 	};
+
+	button@191 {
+		label = "Volume Up";
+		linux,code = <KEY_VOLUMEUP>;
+		channel = <0>;
+		voltage = <191274>;
+	};
+
+	button@392 {
+		label = "Volume Down";
+		linux,code = <KEY_VOLUMEDOWN>;
+		channel = <0>;
+		voltage = <392644>;
+	};
+
+	button@601 {
+		label = "Menu";
+		linux,code = <KEY_MENU>;
+		channel = <0>;
+		voltage = <601151>;
+	};
+
+	button@795 {
+		label = "Search";
+		linux,code = <KEY_SEARCH>;
+		channel = <0>;
+		voltage = <795090>;
+	};
+
+	button@987 {
+		label = "Home";
+		linux,code = <KEY_HOMEPAGE>;
+		channel = <0>;
+		voltage = <987387>;
+	};
+
+	button@1184 {
+		label = "Esc";
+		linux,code = <KEY_ESC>;
+		channel = <0>;
+		voltage = <1184678>;
+	};
+
+	button@1398 {
+		label = "Enter";
+		linux,code = <KEY_ENTER>;
+		channel = <0>;
+		voltage = <1398804>;
+	};
 };
 
 &pio {
-	led_pins_opinicus: led_pins@0 {
-		allwinner,pins = "PH20";
-		allwinner,function = "gpio_out";
-		allwinner,drive = <SUN4I_PINCTRL_20_MA>;
-		allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+	led_pins_opinicus: led_pins {
+		pins = "PH20", "PH21";
+		function = "gpio_out";
+		drive = <SUN4I_PINCTRL_20_MA>;
+		pull = <SUN4I_PINCTRL_NO_PULL>;
 	};
 
-	oled_pins_opinicus: oled_pins@0 {
-		allwinner,pins = "PI13";
-		allwinner,function = "gpio_out";
-		allwinner,drive = <SUN4I_PINCTRL_10_MA>;
-		allwinner,pull = <SUN4I_PINCTRL_PULL_DOWN>;
+	oled_pins_opinicus: oled_pins {
+		pins = "PI13";
+		function = "gpio_out";
+		pull = <SUN4I_PINCTRL_PULL_DOWN>;
 	};
 
-	rotary_pins_opinicus: rotary_pins@0 {
-		allwinner,pins = "PH0", "PH7";
-		allwinner,function = "gpio_in";
-		allwinner,drive = <SUN4I_PINCTRL_10_MA>;
-		allwinner,pull = <SUN4I_PINCTRL_PULL_UP>;
+	hd_display_power: hd_display_power_pins {
+		pins = "PH8";
+		function = "gpio_out";
+		drive = <SUN4I_PINCTRL_10_MA>;
+	};
+
+	rotary_pins_opinicus: rotary_pins {
+		pins = "PH0", "PH7";
+		function = "gpio_in";
 	};
 };
 
 &pwm {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pwm1_pins_a>;
+	pinctrl-0 = <&pwm0_pins_a>, <&pwm1_pins_a>;
 	status = "okay";
 };
 
@@ -222,6 +355,22 @@
 		reg = <0>;
 	};
 };
+
+//&tcon0_out {
+//	tcon0_out_rgb: endpoint@0 {
+//		reg = <0>;
+//		remote-endpoint = <&rgb_in_tcon0>;
+//		allwinner,tcon-channel = <0>;
+//	};
+//};
+
+//&tcon1_out {
+//	tcon1_out_rgb: endpoint@0 {
+//		reg = <0>;
+//		remote-endpoint = <&rgb_in_tcon1>;
+//		allwinner,tcon-channel = <0>;
+//	};
+//};
 
 &uart3 {
 	pinctrl-names = "default";
