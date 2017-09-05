@@ -200,7 +200,6 @@
 
 	br: button@60 {
 		compatible = "nxp,pca9632";
-		label = "button_ring";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x60>;
@@ -209,25 +208,25 @@
 		nxp,hw-blink;
 
 		red@0 {
-		//	label = "red";
+			label = "red";
 			reg = <0>;
 			linux,default-trigger = "none";
 		};
 
 		green@1 {
-		//	label = "green";
+			label = "green";
 			reg = <1>;
 			linux,default-trigger = "default-on";
 		};
 
 		blue@2 {
-		//	label = "blue";
+			label = "blue";
 			reg = <2>;
 			linux,default-trigger = "default-on";
 		};
 
 		unused@3 {
-		//	label = "unused";
+			label = "unused";
 			reg = <3>;
 			linux,default-trigger = "backlight";
 		};
@@ -305,25 +304,27 @@
 	led_pins_opinicus: led_pins {
 		pins = "PH20", "PH21";
 		function = "gpio_out";
-		drive = <SUN4I_PINCTRL_20_MA>;
-		pull = <SUN4I_PINCTRL_NO_PULL>;
+		allwinner,drive = <SUN4I_PINCTRL_20_MA>;
+		allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
 	};
 
 	oled_pins_opinicus: oled_pins {
 		pins = "PI13";
 		function = "gpio_out";
-		pull = <SUN4I_PINCTRL_PULL_DOWN>;
+		allwinner,pull = <SUN4I_PINCTRL_PULL_DOWN>;
 	};
 
 	hd_display_power: hd_display_power_pins {
 		pins = "PH8";
 		function = "gpio_out";
-		drive = <SUN4I_PINCTRL_10_MA>;
+		allwinner,drive = <SUN4I_PINCTRL_10_MA>;
 	};
 
 	rotary_pins_opinicus: rotary_pins {
 		pins = "PH0", "PH7";
 		function = "gpio_in";
+		allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+		allwinner,pull = <SUN4I_PINCTRL_PULL_UP>;
 	};
 };
 
