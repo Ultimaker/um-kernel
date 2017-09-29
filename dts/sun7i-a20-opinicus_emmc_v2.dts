@@ -54,6 +54,7 @@
 
 	aliases {
 		serial1 = &uart3;
+		serial2 = &uart7;
 	};
 
 	vdd_hd_display: vdd_hd_display_reg {
@@ -171,6 +172,59 @@
 	status = "okay";
 };
 
+&hdmi_i2c {
+	clock-frequency = <400000>;
+
+	hy4613: hy461x@38 {
+		compatible = "hycon,hy4613";
+		reg = <0x38>;
+		poll-interval = <50>;
+		touchscreen-max-size-x = <800>;
+		touchscreen-min-size-y = <320>;
+	};
+};
+
+&i2c1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c1_pins_a>;
+	clock-frequency = <400000>;
+	status = "okay";
+
+	cabin_lights: button@61 {
+		compatible = "nxp,pca9632";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x61>;
+		nxp,totem-pole;
+		nxp,inverted-out;
+		nxp,hw-blink;
+
+		red@0 {
+			label = "red:cabin_lights";
+			reg = <0>;
+			linux,default-trigger = "none";
+		};
+
+		green@1 {
+			label = "green:cabin_lights";
+			reg = <1>;
+			linux,default-trigger = "none";
+		};
+
+		blue@2 {
+			label = "blue:cabin_lights";
+			reg = <2>;
+			linux,default-trigger = "none";
+		};
+
+		unused@3 {
+			label = "white:cabin_lights";
+			reg = <3>;
+			linux,default-trigger = "default-on";
+		};
+	};
+};
+
 &i2c2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c2_pins_a>;
@@ -184,7 +238,7 @@
 	clock-frequency = <400000>;
 	status = "okay";
 
-	ssd1309: oled@3c {
+	ssd1309fb: ssd130x@3c {
 		compatible = "solomon,ssd1309fb-i2c";
 		pinctrl-names = "default";
 		pinctrl-0 = <&oled_pins_opinicus>;
@@ -208,19 +262,19 @@
 		nxp,hw-blink;
 
 		red@0 {
-			label = "red";
+			label = "red:button_ring";
 			reg = <0>;
 			linux,default-trigger = "none";
 		};
 
 		green@1 {
-			label = "green";
+			label = "green:button_green";
 			reg = <1>;
 			linux,default-trigger = "default-on";
 		};
 
 		blue@2 {
-			label = "blue";
+			label = "blue:button_blue";
 			reg = <2>;
 			linux,default-trigger = "default-on";
 		};
@@ -301,6 +355,12 @@
 };
 
 &pio {
+	hy4613_reset_pin_opinicus: reset_pins {
+		pins = "PI16";
+		function = "gpio_out";
+		bias-pull-up;
+	};
+
 	led_pins_opinicus: led_pins {
 		pins = "PH20", "PH21";
 		function = "gpio_out";
@@ -377,6 +437,12 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart3_pins_a>;
 	cts-override;
+	status = "okay";
+};
+
+&uart7 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart7_pins_a>;
 	status = "okay";
 };
 

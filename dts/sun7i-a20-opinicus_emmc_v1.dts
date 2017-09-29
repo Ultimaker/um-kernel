@@ -100,6 +100,42 @@
 	status = "okay";
 };
 
+&i2c1 {
+	cabin_light: pca9632@61 {
+		compatible = "nxp,pca9632";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x60>;
+		nxp,totem-pole;
+		nxp,inverted-out;
+		nxp,hw-blink;
+
+		red@0 {
+			label = "red:cabin_light";
+			reg = <0>;
+			linux,default-trigger = "none";
+		};
+
+		green@1 {
+			label = "green:cabin_light";
+			reg = <1>;
+			linux,default-trigger = "default-on";
+		};
+
+		blue@2 {
+			label = "blue:cabin_light";
+			reg = <2>;
+			linux,default-trigger = "default-on";
+		};
+
+		white@3 {
+			label = "white:cabin_light";
+			reg = <3>;
+			linux,default-trigger = "none";
+		};
+	};
+};
+
 &i2c2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c2_pins_a>;
@@ -127,7 +163,7 @@
 		solomon,prechargep2 = <8>;
 	};
 
-	pca9632: pca9632@60 {
+	button_ring: pca9632@60 {
 		compatible = "nxp,pca9632";
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -137,25 +173,25 @@
 		nxp,hw-blink;
 
 		red@0 {
-			label = "red";
+			label = "red:button_ring";
 			reg = <0>;
 			linux,default-trigger = "none";
 		};
 
 		green@1 {
-			label = "green";
+			label = "green:button_ring";
 			reg = <1>;
 			linux,default-trigger = "default-on";
 		};
 
 		blue@2 {
-			label = "blue";
+			label = "blue:button_ring";
 			reg = <2>;
 			linux,default-trigger = "default-on";
 		};
 
 		unused@3 {
-			label = "unused";
+			label = "unused:button_ring";
 			reg = <3>;
 			linux,default-trigger = "none";
 		};
