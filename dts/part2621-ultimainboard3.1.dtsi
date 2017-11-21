@@ -53,21 +53,21 @@
 			linux,default-trigger = "mmc0";
 		};
 
-		ol1 {
-			label = "opinicus:orange:ol1";
-			gpios = <&pio 1 11 GPIO_ACTIVE_HIGH>;
+		ol0 {
+			label = "opinicus:red:ol0";
+			gpios = <&pio 1 9 GPIO_ACTIVE_HIGH>;
 			default-state = "on";
 		};
 
-		ol2 {
-			label = "opinicus:orange:ol2";
+		ol1 {
+			label = "opinicus:red:ol1";
 			gpios = <&pio 1 10 GPIO_ACTIVE_HIGH>;
 			default-state = "on";
 		};
 
-		ol3 {
-			label = "opinicus:orange:ol3";
-			gpios = <&pio 1 9 GPIO_ACTIVE_HIGH>;
+		ol2 {
+			label = "opinicus:red:ol2";
+			gpios = <&pio 1 11 GPIO_ACTIVE_HIGH>;
 			default-state = "on";
 		};
 	};
