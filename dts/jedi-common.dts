@@ -1,6 +1,6 @@
 #include "sun7i-a20-olinuxino-lime2-emmc.dts"
 
-&vcc_csi1 {
+&reg_ldo4 {
     regulator-min-microvolt = <3300000>;
     regulator-max-microvolt = <3300000>;
 };
