@@ -1,5 +1,10 @@
 #include "sun7i-a20-olinuxino-lime2-emmc.dts"
 
+&reg_ldo3 {
+    regulator-min-microvolt = <3300000>;
+    regulator-max-microvolt = <3300000>;
+};
+
 &usb_otg {
     dr_mode = "host";
 };
