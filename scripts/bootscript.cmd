@@ -1,4 +1,4 @@
-setenv bootargs console=tty0 root=/dev/${ROOT_DEV} ro rootwait rootfstype=${ROOT_FS} console=ttyS0,115200 earlyprintk
+setenv bootargs fbcon=map:64 root=/dev/${ROOT_DEV} ro rootwait rootfstype=${ROOT_FS} console=ttyS0,115200 earlyprintk
 setenv fdt_high 0xffffffff
 ${BOOTSPLASH_COMMANDS}
 
