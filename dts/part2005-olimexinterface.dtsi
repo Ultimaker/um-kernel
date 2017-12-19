@@ -76,10 +76,10 @@
 
 &pio {
     led_pins_opinicus: led_pins@0 {
-        pins = "PH20", "PH21";
-        function = "gpio_out";
-        drive-strength = <20>;
-        bias-disabled;
+        allwinner,pins = "PH20", "PH21";
+        allwinner,function = "gpio_out";
+        allwinner,drive = <SUN4I_PINCTRL_20_MA>;
+        allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
     };
 };
 
