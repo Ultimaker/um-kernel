@@ -1,0 +1,119 @@
+/*
+ * Copyright 2017 - Ultimaker B.V.
+ * Author Olliver Schinagl <o.schinagl@ultimaker.com>
+ *
+ * This file is dual-licensed: you can use it either under the terms
+ * of the GPL or the X11 license, at your option. Note that this dual
+ * licensing only applies to this file, and not this project as a
+ * whole.
+ *
+ *  a) This file is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License as
+ *     published by the Free Software Foundation; either version 2 of the
+ *     License, or (at your option) any later version.
+ *
+ *     This file is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ * Or, alternatively,
+ *
+ *  b) Permission is hereby granted, free of charge, to any person
+ *     obtaining a copy of this software and associated documentation
+ *     files (the "Software"), to deal in the Software without
+ *     restriction, including without limitation the rights to use,
+ *     copy, modify, merge, publish, distribute, sublicense, and/or
+ *     sell copies of the Software, and to permit persons to whom the
+ *     Software is furnished to do so, subject to the following
+ *     conditions:
+ *
+ *     The above copyright notice and this permission notice shall be
+ *     included in all copies or substantial portions of the Software.
+ *
+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *     OTHER DEALINGS IN THE SOFTWARE.
+ */
+#include <dt-bindings/input/input.h>
+
+/ {
+	model = "Ulticontroller 3.0 (201258-0)";
+	compatible = "ultimaker,201258-0";
+};
+
+&de {
+	status = "okay";
+};
+
+&hdmi {
+	status = "okay";
+};
+
+&hdmi_i2c {
+	clock-frequency = <400000>;
+	status = "okay";
+
+	panel_touchscreen: ft5426@38 {
+		compatible = "edt,edt-ft5426";
+		reg = <0x38>;
+		poll-interval = <50>;
+		reset-gpios = <&panel_gpio 0 GPIO_ACTIVE_LOW>;
+
+		touchscreen-min-size-x = <0>;
+		touchscreen-max-size-x = <800>;
+		touchscreen-min-size-y = <0>;
+		touchscreen-max-size-y = <320>;
+	};
+
+	panel_gpio: pca9570@24 {
+		compatible = "nxp,pca9570";
+		gpio-controller;
+		#gpio-cells = <2>;
+		reg = <0x24>;
+	};
+
+	panel_eeprom: at24c16@50 {
+		compatibe = "atmel,24c16";
+		page = <0x50>;
+		pagesize = <16>;
+	};
+
+	panel_lights: pca9632@60 {
+		compatible = "nxp,pca9632";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x60>;
+		nxp,totem-pole;
+		nxp,hw-blink;
+
+		red@0 {
+			label = "red:panel_indicator";
+			reg = <0>;
+			linux,default-trigger = "none";
+		};
+
+		green@1 {
+			label = "green:panel_indicator";
+			reg = <1>;
+			linux,default-trigger = "none";
+		};
+
+		blue@2 {
+			label = "blue:panel_indicator";
+			reg = <2>;
+			linux,default-trigger = "none";
+		};
+
+		panel_backlight: backlight@3 {
+			label = "white:panel_backlight";
+			reg = <3>;
+			linux,default-trigger = "default-on";
+		};
+	};
+};
