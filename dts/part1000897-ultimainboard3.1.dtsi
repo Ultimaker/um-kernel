@@ -118,23 +118,23 @@
 
 &pio {
     nfc_irq: nfc_irq {
-        pins = "PI11";
-        function = "gpio_in";
-        bias-disabled;
+        allwinner,pins = "PI11";
+        allwinner,function = "gpio_in";
+        allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
     };
 
     nfc_hreq: nfc_hreq {
-        pins = "PI10";
-        function = "gpio_out";
-        drive-strength = <10>;
-        bias-pullup;
+        allwinner,pins = "PI10";
+        allwinner,function = "gpio_out";
+        allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+        allwinner,pull = <SUN4I_PINCTRL_PULL_UP>;
     };
 
     led_pins_opinicus: led_pins@0 {
-        pins = "PB9", "PB10", "PB11";
-        function = "gpio_out";
-        drive-strength = <20>;
-        bias-disabled;
+        allwinner,pins = "PB9", "PB10", "PB11";
+        allwinner,function = "gpio_out";
+        allwinner,drive = <SUN4I_PINCTRL_20_MA>;
+        allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
     };
 };
 

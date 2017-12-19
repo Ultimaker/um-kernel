@@ -45,15 +45,15 @@
 #include "part1994-ulticontroller.dtsi"
 
 &pio {
-	oled_pins_opinicus: oled_pins@0 {
-		pins = "PI13";
-		function = "gpio_out";
-		drive-strength = <10>;
-		bias-pulldown;
-	};
+    oled_pins_opinicus: oled_pins@0 {
+        allwinner,pins = "PI13";
+        allwinner,function = "gpio_out";
+        allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+        allwinner,pull = <SUN4I_PINCTRL_PULL_DOWN>;
+    };
 };
 
 &ssd1309 {
-	reset-gpios = <&pio 8 4 GPIO_ACTIVE_HIGH>;
+    reset-gpios = <&pio 8 4 GPIO_ACTIVE_HIGH>;
 };
 
