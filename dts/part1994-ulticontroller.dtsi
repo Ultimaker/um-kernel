@@ -136,10 +136,10 @@ It does not configure the reset line of the OLED display, as this differs per ha
 
 &pio {
     rotary_pins_opinicus: rotary_pins@0 {
-        allwinner,pins = "PH0", "PH7";
-        allwinner,function = "gpio_in";
-        allwinner,drive = <SUN4I_PINCTRL_10_MA>;
-        allwinner,pull = <SUN4I_PINCTRL_PULL_UP>;
+        pins = "PH0", "PH7";
+        function = "gpio_in";
+        drive-strength = <10>;
+        bias-pullup;
     };
 };
 
