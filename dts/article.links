@@ -2,6 +2,7 @@
 #These articles links are converted to hex representation sym links to be used in the u-boot script to load the proper device tree for this article.
 1797:part2005-withpart1994:programming station
 9066:part2005-withpart1994:UM3
+9066-9051:UM3m:UM3 Hybrid
 9511:part2005-withpart1994:UM3 extended
 9051:2621-UM3XL:UM3 XL
 9051-999:part2005-withpart1994:UM3 XL proto 1
