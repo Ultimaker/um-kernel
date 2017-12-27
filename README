@@ -34,3 +34,7 @@ stable linux kernel. The repository currently has a few branches.
 
 * opinicus-4.9.13_0			Our current kernel based on 4.9.13 tag
 * opinicus-4.10.1_0			An experimental future kernel
+
+dependencies
+------------
+* debian: device-tree-compiler gcc-arm-linux-gnueabihf u-boot-tools
