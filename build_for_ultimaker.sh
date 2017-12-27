@@ -47,8 +47,7 @@ KERNEL_BUILD=`pwd`/_build_armhf/${BUILDCONFIG}-linux
 RELEASE_VERSION=${RELEASE_VERSION:-9999.99.99}
 
 # Initialize repositories
-git submodule init
-git submodule update
+git submodule update --init
 
 kernel_build_command() {
     mkdir -p ${KERNEL_BUILD}
