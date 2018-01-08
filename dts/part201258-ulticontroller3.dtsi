@@ -62,7 +62,7 @@
 	panel_touchscreen: ft5426@38 {
 		compatible = "edt,edt-ft5426";
 		reg = <0x38>;
-		poll-interval = <50>;
+		poll-interval = <10>;
 		reset-gpios = <&panel_gpio 0 GPIO_ACTIVE_LOW>;
 
 		touchscreen-min-size-x = <0>;
