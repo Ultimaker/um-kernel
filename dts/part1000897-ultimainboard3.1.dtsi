@@ -104,7 +104,7 @@
         white@3 {
             label = "white:cabin_light";
             reg = <3>;
-            linux,default-trigger = "default-on";
+            linux,default-trigger = "none";
         };
     };
 };
