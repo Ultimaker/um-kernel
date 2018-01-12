@@ -127,7 +127,7 @@
         pins = "PI10";
         function = "gpio_out";
         drive-strength = <10>;
-        bias-pullup;
+        bias-pull-up;
     };
 
     led_pins_opinicus: led_pins@0 {

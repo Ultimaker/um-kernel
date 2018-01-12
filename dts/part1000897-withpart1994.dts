@@ -49,7 +49,7 @@
 		pins = "PI4";
 		function = "gpio_out";
 		drive-strength = <10>;
-		bias-pulldown;
+		bias-pull-down;
 	};
 };
 
