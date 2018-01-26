@@ -139,7 +139,7 @@ It does not configure the reset line of the OLED display, as this differs per ha
         pins = "PH0", "PH7";
         function = "gpio_in";
         drive-strength = <10>;
-        bias-pullup;
+        bias-pull-up;
     };
 };
 
