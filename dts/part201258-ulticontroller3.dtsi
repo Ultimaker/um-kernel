@@ -75,12 +75,6 @@
 		reg = <0x24>;
 	};
 
-	panel_eeprom: at24c16@50 {
-		compatibe = "atmel,24c16";
-		page = <0x50>;
-		pagesize = <16>;
-	};
-
 	panel_lights: pca9632@60 {
 		compatible = "nxp,pca9632";
 		#address-cells = <1>;
