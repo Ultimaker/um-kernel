@@ -47,14 +47,6 @@
 	compatible = "ultimaker,201258-0";
 };
 
-&de {
-	status = "okay";
-};
-
-&hdmi {
-	status = "okay";
-};
-
 &hdmi_i2c {
 	panel_touchscreen: ft5426@38 {
 		compatible = "edt,edt-ft5426";
