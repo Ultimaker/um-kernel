@@ -49,3 +49,7 @@
 	compatible = "ultimaker,202970", "olimex,a20-olinuxino-lime2",
 		     "allwinner,sun7i-a20";
 };
+
+&hdmi_i2c {
+	clock-frequency = <50000>;
+};
