@@ -48,6 +48,8 @@
 };
 
 &hdmi_i2c {
+	clock-frequency = <400000>;
+
 	panel_touchscreen: ft5426@38 {
 		compatible = "edt,edt-ft5426";
 		reg = <0x38>;
