@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 - Ultimaker B.V.
+ * Copyright 2018 - Ultimaker B.V.
  * Author Olliver Schinagl <o.schinagl@ultimaker.com>
  *
  * This file is dual-licensed: you can use it either under the terms
@@ -40,63 +40,12 @@
  *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <dt-bindings/input/input.h>
+
+#include "sun7i-a20-olinuxino-lime2-emmc.dts"
+#include "part201258-ulticontroller3.dtsi"
 
 / {
-	model = "Ulticontroller 3.0 (201258-0)";
-	compatible = "ultimaker,201258-0";
-};
-
-&hdmi_i2c {
-	panel_touchscreen: ft5426@38 {
-		compatible = "edt,edt-ft5426";
-		reg = <0x38>;
-		poll-interval = <10>;
-		reset-gpios = <&panel_gpio 0 GPIO_ACTIVE_LOW>;
-
-		touchscreen-min-size-x = <0>;
-		touchscreen-max-size-x = <800>;
-		touchscreen-min-size-y = <0>;
-		touchscreen-max-size-y = <320>;
-	};
-
-	panel_gpio: pca9570@24 {
-		compatible = "nxp,pca9570";
-		gpio-controller;
-		#gpio-cells = <2>;
-		reg = <0x24>;
-	};
-
-	panel_lights: pca9632@60 {
-		compatible = "nxp,pca9632";
-		#address-cells = <1>;
-		#size-cells = <0>;
-		reg = <0x60>;
-		nxp,totem-pole;
-		nxp,hw-blink;
-
-		red@0 {
-			label = "red:panel_indicator";
-			reg = <0>;
-			linux,default-trigger = "none";
-		};
-
-		green@1 {
-			label = "green:panel_indicator";
-			reg = <1>;
-			linux,default-trigger = "none";
-		};
-
-		blue@2 {
-			label = "blue:panel_indicator";
-			reg = <2>;
-			linux,default-trigger = "none";
-		};
-
-		panel_backlight: backlight@3 {
-			label = "white:panel_backlight";
-			reg = <3>;
-			linux,default-trigger = "default-on";
-		};
-	};
+	model = "Ultimaker touchscreen workstation (202970)";
+	compatible = "ultimaker,202970", "olimex,a20-olinuxino-lime2",
+		     "allwinner,sun7i-a20";
 };
