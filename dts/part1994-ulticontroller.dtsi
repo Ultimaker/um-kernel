@@ -79,6 +79,7 @@ It does not configure the reset line of the OLED display, as this differs per ha
         pinctrl-names = "default";
         pinctrl-0 = <&oled_pins_opinicus>;
         reg = <0x3c>;
+	no-clear-on-probe;
         solomon,width = <128>;
         solomon,height = <64>;
         solomon,com-invdir;
