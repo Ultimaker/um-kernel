@@ -43,12 +43,111 @@ DEB_DIR=`pwd`/debian
 KCONFIG=`pwd`/configs/${BUILDCONFIG}_config
 KERNEL_BUILD=`pwd`/_build_armhf/${BUILDCONFIG}-linux
 
+INITRAMFS_COMPRESSION="${INITRAMFS_COMPRESSION:-.lzo}"
+INITRAMFS_ROOT_GID=${INITRAMFS_ROOT_GID:-0}
+INITRAMFS_ROOT_UID=${INITRAMFS_ROOT_UID:-0}
+INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
+INITRAMFS_IMG="${KERNEL_BUILD}/initramfs.cpio${INITRAMFS_COMPRESSION}"
+
+GEN_INIT_CPIO="${KERNEL_BUILD}/usr/gen_init_cpio"
+GEN_INITRAMFS_LIST="${KERNEL}/scripts/gen_initramfs_list.sh"
+
+BB_PKG="http://ftp.nl.debian.org/debian/pool/main/b/busybox/busybox-static_1.22.0-19+b3_armhf.deb"
+BB_BIN="busybox"
+
 # Set the release version if it's not passed to the script
 RELEASE_VERSION=${RELEASE_VERSION:-9999.99.99}
 
 # Initialize repositories
 git submodule init
 git submodule update
+
+##
+# busybox_get() - Obtain a statically linked busybox binary
+# param1:	Writable path where to store the retrieved binary
+#
+# Busybox is downloaded from the global variable ${BB_PKG}.
+#
+busybox_get()
+{
+    local BB_DIR=$(mktemp -d)
+    local BB_AR="${BB_DIR}/busybox-static_armhf.deb"
+    local DEST_DIR="${1}"
+    local cwd=$(pwd)
+
+    if [ ! -d "${DEST_DIR}" ]; then
+        echo "No initramfs dir set to download busybox into."
+        exit 1
+    fi
+
+    if [ -z "${BB_DIR}" ]; then
+        echo "Unable to create temporary directory to get busybox."
+        exit 1
+    fi
+
+    wget -q "${BB_PKG}" -O "${BB_AR}"
+    cd "${BB_DIR}" # ar always extracts to the cwd
+    ar -x "${BB_AR}" "data.tar.xz"
+    cd "${cwd}"
+    tar -xf "${BB_DIR}/data.tar.xz" --strip=2 -C "${DEST_DIR}" "./bin/${BB_BIN}"
+    rm -r "${BB_DIR}"
+    if [ ! -x "${DEST_DIR}/${BB_BIN}" ]; then
+        echo "Failed to get busybox."
+        exit 1
+    fi
+}
+
+##
+# initramfs_prepare() - Prepare the initramfs tree
+#
+# To be able to create a initramfs in the temporary build directory, where
+# the kernel expects these files due to INITRAMFS_SOURCE being set, we need
+# to copy the source initramfs files and put some expected binaries in place.
+#
+initramfs_prepare()
+{
+    local INITRAMFS_SRC_DIR="$(pwd)/initramfs"
+    local INITRAMFS_DST_DIR="${KERNEL_BUILD}/initramfs"
+
+    if [ -d "${INITRAMFS_DST_DIR}" ]; then
+        rm -rf "${INITRAMFS_DST_DIR}"
+    fi
+    cp -a "${INITRAMFS_SRC_DIR}/" "${INITRAMFS_DST_DIR}"
+
+    if [ ! -x "${INITRAMFS_DST_DIR}/${BB_BIN}" ]; then
+        busybox_get "${INITRAMFS_DST_DIR}"
+    fi
+}
+
+##
+# initramfs_build() - Build an initramfs cpio archive
+#
+# Create a initramfs archive file to be loaded separately. This is useful
+# when not using a built-in initramfs.
+#
+initramfs_build()
+{
+    local cwd=""
+
+    initramfs_prepare
+
+    if [ ! -x "${GEN_INIT_CPIO}" ]; then
+        kernel_build
+    fi
+    if [ ! -x "${GEN_INIT_CPIO}" ]; then
+        echo "Kernel failed to create gen_init_cpio."
+        exit 1
+    fi
+
+    cwd=$(pwd)
+    cd "${KERNEL_BUILD}"
+    ${GEN_INITRAMFS_LIST} \
+        -o "${INITRAMFS_IMG}" \
+        -u "${INITRAMFS_ROOT_UID}" \
+        -g "${INITRAMFS_ROOT_GID}" \
+        "${INITRAMFS_SOURCE}"
+    cd "${cwd}"
+}
 
 kernel_build_command() {
     mkdir -p ${KERNEL_BUILD}
@@ -58,6 +157,7 @@ kernel_build_command() {
 }
 
 kernel_build() {
+    initramfs_prepare
     # Configure the kernel
     kernel_build_command
     # Build the uImage file for a bootable kernel
@@ -148,6 +248,9 @@ case ${1-} in
 um-kernel)
     kernel_build
     ;;
+um-initramfs)
+    initramfs_build
+    ;;
 um-dtbs)
     dtb_build
     ;;
@@ -161,12 +264,14 @@ um-deb)
     kernel_build
     dtb_build
     bootscript_build
+    initramfs_build
     deb_build
     ;;
 um-*)
     echo "Unknown argument to build script."
     echo "Use:"
     echo -e "\t$0 um-kernel"
+    echo -e "\t$0 um-initramfs"
     echo -e "\t$0 um-dtbs"
     echo -e "\t$0 um-bootscript"
     echo -e "\t$0 um-deb"
