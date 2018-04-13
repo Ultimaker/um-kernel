@@ -33,6 +33,9 @@ restart()
 	echo "Rebooting in 5 seconds ..."
 	sleep 5s
 	reboot
+	modprobe sunxi_wdt || true
+	watchdog -T 1 -t 60 -F /dev/watchdog || true
+	echo "Failed to reboot, shutting down instead."
 	shutdown
 }
 
