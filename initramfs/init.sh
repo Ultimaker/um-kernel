@@ -88,6 +88,47 @@ boot_root()
 	exec switch_root /mnt/root "${init}"
 }
 
+find_and_run_update()
+{
+	echo "Checking for updates ..."
+	for dev in ${UPDATE_DEVICES}; do
+		if [ ! -b "${dev}" ]; then
+			continue
+		fi
+
+		echo "Attempting to mount ${dev}."
+		if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_MOUNT}"; then
+			continue
+		fi
+
+		if [ ! -x "${UPDATE_SCRIPT}" ]; then
+			umount "${dev}"
+			echo "No executable update '${UPDATE_SCRIPT}' found on ${dev}, trying next."
+			continue
+		fi
+
+		echo "Found update on ${dev}, executing update ${UPDATE_SCRIPT}."
+		if ! "${UPDATE_SCRIPT}"; then
+			umount "${dev}"
+			echo "Update failed!"
+			critical_error
+			break;
+		fi
+
+		echo "Update finished, cleaning up."
+		if ! chmod -x "${UPDATE_SCRIPT}" || [ -x "${UPDATE_SCRIPT}" ]; then
+			umount "${dev}"
+			echo "Please remove update medium and power off."
+			shutdown
+			break;
+		fi
+
+		umount "${dev}"
+		restart
+	done
+	echo "No updates found."
+}
+
 parse_cmdline()
 {
 	if [ ! -r "/proc/cmdline" ]; then
@@ -156,6 +197,8 @@ trap critical_error EXIT
 busybox_setup
 kernel_mount
 parse_cmdline
+
+find_and_run_update
 
 boot_root
 
