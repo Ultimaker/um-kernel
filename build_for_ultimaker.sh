@@ -43,6 +43,7 @@ DEB_DIR=`pwd`/debian
 KCONFIG=`pwd`/configs/${BUILDCONFIG}_config
 KERNEL_BUILD=`pwd`/_build_armhf/${BUILDCONFIG}-linux
 
+INITRAMFS_MODULES=""
 INITRAMFS_COMPRESSION="${INITRAMFS_COMPRESSION:-.lzo}"
 INITRAMFS_ROOT_GID=${INITRAMFS_ROOT_GID:-0}
 INITRAMFS_ROOT_UID=${INITRAMFS_ROOT_UID:-0}
@@ -54,6 +55,15 @@ GEN_INITRAMFS_LIST="${KERNEL}/scripts/gen_initramfs_list.sh"
 
 BB_PKG="http://ftp.nl.debian.org/debian/pool/main/b/busybox/busybox-static_1.22.0-19+b3_armhf.deb"
 BB_BIN="busybox"
+
+DEPMOD="${DEPMOD:-/sbin/depmod}"
+if [ ! -x "${DEPMOD}" ]; then
+    DEPMOD="busybox depmod"
+    if [ ! -x "${DEPMOD}" ]; then
+        echo "No depmod binary available. Cannot continue."
+        exit 1
+    fi
+fi
 
 # Set the release version if it's not passed to the script
 RELEASE_VERSION=${RELEASE_VERSION:-9999.99.99}
@@ -108,6 +118,16 @@ initramfs_prepare()
 {
     local INITRAMFS_SRC_DIR="$(pwd)/initramfs"
     local INITRAMFS_DST_DIR="${KERNEL_BUILD}/initramfs"
+    local INITRAMFS_MODULES_DIR="${KERNEL_BUILD}/initramfs/lib/modules"
+    local INITRAMFS_DEST="${INITRAMFS_DST_DIR}/$(basename ${INITRAMFS_SOURCE})"
+    local KERNELRELEASE=""
+
+    kernel_build_modules
+    KERNELRELEASE=$(cat "${KERNEL_BUILD}/include/config/kernel.release")
+    if [ -z "${KERNELRELEASE}" ]; then
+        echo "Unable to get kernel release version."
+        exit 1
+    fi
 
     if [ -d "${INITRAMFS_DST_DIR}" ]; then
         rm -rf "${INITRAMFS_DST_DIR}"
@@ -117,6 +137,35 @@ initramfs_prepare()
     if [ ! -x "${INITRAMFS_DST_DIR}/${BB_BIN}" ]; then
         busybox_get "${INITRAMFS_DST_DIR}"
     fi
+
+    if [ -d "${INITRAMFS_MODULES_DIR}" ]; then
+        rm -rf "${INITRAMFS_MODULES_DIR}"
+    fi
+    if [ -n "${INITRAMFS_MODULES}" ]; then
+        mkdir -p "${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}"
+        echo -e "\n# kernel modules" >> "${INITRAMFS_DEST}"
+        echo "dir /lib/modules/ 0755 0 0" >> "${INITRAMFS_DEST}"
+        echo "dir /lib/modules/${KERNELRELEASE}/ 0755 0 0" >> "${INITRAMFS_DEST}"
+    fi
+
+    for module in ${INITRAMFS_MODULES}; do
+        if [ -z "$(find "${KERNEL_BUILD}/drivers/" -name "${module}" -print -exec cp "{}" "${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}" \;)" ]; then
+            echo "Kernel ${module} not available."
+            exit 1
+        fi
+        echo "file /lib/modules/${KERNELRELEASE}/${module} ${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}/${module} 0755 0 0" >> "${INITRAMFS_DEST}"
+    done
+
+    if [ -n "${INITRAMFS_MODULES}" ] && ! ${DEPMOD} -b "${INITRAMFS_DST_DIR}" ${KERNELRELEASE}; then
+        echo "Failed to generate module dependencies."
+        exit 1
+    fi
+    for moddep in ${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}/modules.*; do
+        if [ -f "${moddep}" ]; then
+            moddep=$(basename ${moddep})
+            echo "file /lib/modules/${KERNELRELEASE}/${moddep} ${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}/${moddep} 0755 0 0" >> "${INITRAMFS_DEST}"
+        fi
+    done
 }
 
 ##
@@ -162,7 +211,16 @@ kernel_build() {
     kernel_build_command
     # Build the uImage file for a bootable kernel
     kernel_build_command LOADADDR=0x40008000 uImage
-    # Build modules
+}
+
+##
+# kernel_build_modules() - Build the kernel modules
+#
+# Compiles only the kernel modules, not the kernel itself, as they may be
+# needed to be put in the initramfs image.
+#
+kernel_build_modules()
+{
     kernel_build_command modules
 }
 
@@ -245,6 +303,9 @@ deb_build() {
 }
 
 case ${1-} in
+um-kernel_modules)
+    kernel_build_modules
+    ;;
 um-kernel)
     kernel_build
     ;;
@@ -261,6 +322,7 @@ um-deb)
     deb_build
     ;;
 "")
+    kernel_build_modules
     kernel_build
     dtb_build
     bootscript_build
@@ -270,6 +332,7 @@ um-deb)
 um-*)
     echo "Unknown argument to build script."
     echo "Use:"
+    echo -e "\t$0 um-kernel_modules"
     echo -e "\t$0 um-kernel"
     echo -e "\t$0 um-initramfs"
     echo -e "\t$0 um-dtbs"
