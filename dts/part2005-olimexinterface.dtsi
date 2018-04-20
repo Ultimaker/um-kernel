@@ -65,6 +65,24 @@
             default-state = "on";
         };
     };
+
+    usb0-kill {
+        compatible = "linux,rfkill-gpio";
+        type = "fm";
+        shutdown-gpios = <&pio 2 17 GPIO_ACTIVE_HIGH>;
+    };
+
+    usb1-kill {
+        compatible = "linux,rfkill-gpio";
+        type = "fm";
+        shutdown-gpios = <&pio 7 6 GPIO_ACTIVE_HIGH>;
+    };
+
+    usb2-kill {
+        compatible = "linux,rfkill-gpio";
+        type = "fm";
+        shutdown-gpios = <&pio 7 3 GPIO_ACTIVE_HIGH>;
+    };
 };
 
 &i2c2 {
@@ -81,6 +99,18 @@
         drive-strength = <20>;
         bias-disabled;
     };
+};
+
+&reg_usb0_vbus {
+    /delete-property/ gpio;
+};
+
+&reg_usb1_vbus {
+    /delete-property/ gpio;
+};
+
+&reg_usb2_vbus {
+    /delete-property/ gpio;
 };
 
 &spi1 {
