@@ -147,6 +147,9 @@ parse_cmdline()
 		rw)
 			rwmode="rw"
 		;;
+		rootdelay=*)
+			sleep ${cmd#*=}
+		;;
 		root=*)
 			local _root="${cmd#*=}"
 			local _prefix="${_root%%=*}"
