@@ -34,7 +34,7 @@ set -u
 KERNEL=`pwd`/linux
 
 # Which kernel config to build.
-BUILDCONFIG="opinicus"
+BUILDCONFIG="${BUILDCONFIG:-opinicus}"
 
 # Location of the debian package contents
 DEB_DIR=`pwd`/debian
