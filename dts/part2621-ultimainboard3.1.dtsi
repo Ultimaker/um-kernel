@@ -90,7 +90,7 @@
 		shutdown-gpios = <&pio 7 3 GPIO_ACTIVE_HIGH>;
 	};
 };
-
+/*
 &i2c1 {
 	cabin_light: pca9632@61 {
 		compatible = "nxp,pca9632";
@@ -155,7 +155,7 @@
 		bias-disabled;
 	};
 };
-
+*/
 &reg_usb0_vbus {
 	/delete-property/ gpio;
 };

@@ -46,7 +46,7 @@
 	model = "Ulticontroller 3.0 (201258-0)";
 	compatible = "ultimaker,201258-0";
 };
-
+/*
 &hdmi_i2c {
 	clock-frequency = <400000>;
 
@@ -102,3 +102,4 @@
 		};
 	};
 };
+*/
