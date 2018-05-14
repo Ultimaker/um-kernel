@@ -3,18 +3,67 @@
 # Copyright (C) 2018 Ultimaker B.V.
 # Copyright (C) 2018 Olliver Schinagl <oliver@schinagl.nl>
 #
+# GitLab CI package build is split up into two parts.
+# * Build environment: creates the docker image that is needed for package generation
+# * Package generation: creates the final artifact
 
 stages:
+- prepare
+- push
 - build
+- cleanup
+
+# Common requisites
+# ==========
+.parameters_template: &parameters_common
+  tags:
+  - embedded
+  - docker
+
+# Build environment
+# =================
+.build environment template: &buildenv_common
+  <<: *parameters_common
+  image: registry.hub.docker.com/library/docker:stable
+  only:
+    variables:
+    - $CI_COMMIT_MESSAGE =~ /dockerfile/i
+
+prepare build environment:
+  <<: *buildenv_common
+  stage: prepare
+  script:
+  - docker build --rm -t "$CI_COMMIT_SHA:$CI_PIPELINE_ID" .
+
+push build environment:
+  <<: *buildenv_common
+  except:
+  - /^(?!master$)/
+  stage: push
+  script:
+  - docker login -u gitlab-ci-token -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
+  - docker tag  "$CI_COMMIT_SHA:$CI_PIPELINE_ID" "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+  - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+  - docker tag  "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA" "$CI_REGISTRY_IMAGE:latest"
+  - docker push "$CI_REGISTRY_IMAGE:latest"
+
+cleanup build environment:
+  <<: *buildenv_common
+  stage: cleanup
+  when: always
+  script:
+  - |
+    if docker inspect --type image "$CI_COMMIT_SHA:$CI_PIPELINE_ID" 1> /dev/null; then
+      docker rmi "$CI_COMMIT_SHA:$CI_PIPELINE_ID"
+    fi
 
 # Package generation
 # ==================
 .build pkg template: &pkg_common
-  tags:
-  - embedded
-  - shell
+  <<: *parameters_common
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
+  image: "$CI_REGISTRY_IMAGE:latest"
 
 build package:
   <<: *pkg_common
