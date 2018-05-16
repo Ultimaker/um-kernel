@@ -41,7 +41,9 @@
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <dt-bindings/input/input.h>
-
+#ifdef IMX6DL_ULTIMAKER
+#include <dt-bindings/gpio/gpio.h>
+#endif
 /**
 This include configures the 1994 Ulticontroller for use on the Ultimaker with Olimex.
 This configures the OLED 128x64 display, as well as the button with LED ring.
@@ -52,32 +54,67 @@ It does not configure the reset line of the OLED display, as this differs per ha
     beeper {
         pwm-names = "opinicus-board-beeper";
         compatible = "pwm-beeper";
+#ifdef IMX6DL_ULTIMAKER
+        pwms = <&pwm3 1 500000 0>;
+#else
         pwms = <&pwm 1 500000 0>;
+#endif
         status = "okay";
     };
 
     rotary {
         pinctrl-names = "default";
-        pinctrl-0 = <&rotary_pins_opinicus>;
         compatible = "rotary-encoder";
+#ifdef IMX6DL_ULTIMAKER
+        //        SMARC GPIO_8=ROT_OUTSE1,     SMARC GPIO_9=ROT_OUTSE2
+        pinctrl-0 = <&button_wheel_pins_a>;
+        gpios = <&gpio2 10 GPIO_ACTIVE_LOW>, <&gpio2 11 GPIO_ACTIVE_LOW>;
+#else
+        pinctrl-0 = <&rotary_pins_opinicus>;
         gpios = <&pio 7 0 GPIO_ACTIVE_LOW>, <&pio 7 7 GPIO_ACTIVE_LOW>;
+#endif
         linux,axis = <8>;
         rotary-encoder,relative-axis;
         rotary-encoder,steps-per-period = <4>;
         status = "okay";
     };
+#ifdef IMX6DL_ULTIMAKER
+	button_center {
+		pinctrl-names = "default";
+		pinctrl-0 = <&button_center_pins_a>;
+		compatible = "gpio-keys";
+		status = "okay";
+
+		button_enter {
+			label = "Button ring enter";
+            //        SMARC GPIO_7=ROT_OUTSEC
+			gpios = <&gpio2 14 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_ENTER>;
+			wakeup-source;
+		};
+	};
+#endif
 };
 
+
+#ifdef IMX6DL_ULTIMAKER
+// some stuff already defined in 'msc-sm2-imx6x.dtsi'
+&i2c1 { // 'CAM0' tapped off for D&L
+#else
 &i2c3 {
     pinctrl-names = "default";
     pinctrl-0 = <&i2c3_pins_a>;
-    clock-frequency = <400000>;
+#endif
+    clock-frequency = <100000>;
     status = "okay";
 
     ssd1309: oled@3c {
         compatible = "solomon,ssd1309fb-i2c";
         pinctrl-names = "default";
+#ifdef IMX6DL_ULTIMAKER
+#else
         pinctrl-0 = <&oled_pins_opinicus>;
+#endif
         reg = <0x3c>;
 	no-clear-on-probe;
         solomon,width = <128>;
@@ -123,6 +160,22 @@ It does not configure the reset line of the OLED display, as this differs per ha
     };
 };
 
+#ifdef IMX6DL_ULTIMAKER
+&iomuxc {
+	button_wheel_pins_a: butwheelgrp {
+		fsl,pins = <
+			MX6QDL_PAD_SD4_DAT2__GPIO2_IO10		0x1b0b1 // ?
+			MX6QDL_PAD_SD4_DAT3__GPIO2_IO11		0x1b0b1 // ?
+		>;
+	};
+
+	button_center_pins_a: butcentgrp {
+		fsl,pins = <
+			MX6QDL_PAD_SD4_DAT6__GPIO2_IO14	0x1b0b1 // ?
+		>;
+	};
+};
+#else
 &lradc {
     vref-supply = <&reg_vcc3v0>;
     status = "okay";
@@ -149,3 +202,5 @@ It does not configure the reset line of the OLED display, as this differs per ha
     pinctrl-0 = <&pwm1_pins_a>;
     status = "okay";
 };
+#endif
+

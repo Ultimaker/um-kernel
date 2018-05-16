@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 - Ultimaker B.V.
+ * Copyright 2015 - Ultimaker B.V.
  * Author Olliver Schinagl <o.schinagl@ultimaker.com>
  *
  * This file is dual-licensed: you can use it either under the terms
@@ -40,66 +40,63 @@
  *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <dt-bindings/input/input.h>
-#include <dt-bindings/gpio/gpio.h>
-
 / {
-	model = "Ulticontroller 3.0 (201258-0)";
-	compatible = "ultimaker,201258-0";
+	leds {
+		green {
+			linux,default-trigger = "mmc0";
+		};
+
+	};
+
+	usb0-kill {
+		compatible = "linux,rfkill-gpio";
+		type = "fm";
+	};
+
+	usb1-kill {
+		compatible = "linux,rfkill-gpio";
+		type = "fm";
+	};
+
+	usb2-kill {
+		compatible = "linux,rfkill-gpio";
+		type = "fm";
+	};
 };
-// the folowing is also correct when working with the MSC SMARC board:
-&i2c2	{
-	clock-frequency = <100000>;
-	panel_touchscreen: ft5426@38 {
-		compatible = "edt,edt-ft5426";
-		reg = <0x38>;
-		poll-interval = <10>;
-		reset-gpios = <&panel_gpio 0 GPIO_ACTIVE_LOW>;
 
-		touchscreen-min-size-x = <0>;
-		touchscreen-max-size-x = <800>;
-		touchscreen-min-size-y = <0>;
-		touchscreen-max-size-y = <320>;
-	};
-
-	panel_gpio: pca9570@24 {
-		compatible = "nxp,pca9570";
-		gpio-controller;
-		#gpio-cells = <2>;
-		reg = <0x24>;
-	};
-
-	panel_lights: pca9632@60 {
+&i2c1 {
+	cabin_light: pca9632@61 {
 		compatible = "nxp,pca9632";
 		#address-cells = <1>;
 		#size-cells = <0>;
-		reg = <0x60>;
+		reg = <0x61>;
 		nxp,totem-pole;
+		nxp,inverted-out;
 		nxp,hw-blink;
 
 		red@0 {
-			label = "red:panel_indicator";
+			label = "red:cabin_light";
 			reg = <0>;
 			linux,default-trigger = "none";
 		};
 
 		green@1 {
-			label = "green:panel_indicator";
+			label = "green:cabin_light";
 			reg = <1>;
 			linux,default-trigger = "none";
 		};
 
 		blue@2 {
-			label = "blue:panel_indicator";
+			label = "blue:cabin_light";
 			reg = <2>;
 			linux,default-trigger = "none";
 		};
 
-		panel_backlight: backlight@3 {
-			label = "white:panel_backlight";
+		white@3 {
+			label = "white:cabin_light";
 			reg = <3>;
 			linux,default-trigger = "default-on";
 		};
-  };
+	};
 };
 

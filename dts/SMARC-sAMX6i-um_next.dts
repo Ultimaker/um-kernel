@@ -1,6 +1,6 @@
 /*
  * Copyright 2017 - Ultimaker B.V.
- * Author Olliver Schinagl <o.schinagl@ultimaker.com>
+ * Author Olliver Schinagl <oliver@schinagl.nl>
  *
  * This file is dual-licensed: you can use it either under the terms
  * of the GPL or the X11 license, at your option. Note that this dual
@@ -40,66 +40,27 @@
  *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <dt-bindings/input/input.h>
-#include <dt-bindings/gpio/gpio.h>
 
-/ {
-	model = "Ulticontroller 3.0 (201258-0)";
-	compatible = "ultimaker,201258-0";
+#define SMX6_CPU_IMX6Q
+
+#define SMX6_PANEL_LCD
+#define SMX6_PANEL_18BIT
+
+#define SMX6_SSI1_AUDIO
+#define SMX6_SSI1_AUDIO_OUTPUT 0
+
+#define SMX6_SERIAL_CAMERA
+#define SMX6_SERIAL_CAMERA_ENDPOINT ov5640_to_mipi_csi2
+#define SMX6_SERIAL_CAMERA_DATA_LANES 1 2
+#define SMX6_SERIAL_CAMERA_CLOCK_LANES 0
+#define SMX6_MODEL "Ultimaker NeXT Kontron SMARC-sAMX6i"
+
+/dts-v1/;
+#include "imx6qdl-smx6.dtsi"
+#include "kontron-smarc-evaluation-carrier.dtsi"
+#include "smx6-ov5640-camera.dtsi"
+#include "part201258-ulticontroller3.dtsi"
+
+&ldb {
+	status = "disabled";
 };
-// the folowing is also correct when working with the MSC SMARC board:
-&i2c2	{
-	clock-frequency = <100000>;
-	panel_touchscreen: ft5426@38 {
-		compatible = "edt,edt-ft5426";
-		reg = <0x38>;
-		poll-interval = <10>;
-		reset-gpios = <&panel_gpio 0 GPIO_ACTIVE_LOW>;
-
-		touchscreen-min-size-x = <0>;
-		touchscreen-max-size-x = <800>;
-		touchscreen-min-size-y = <0>;
-		touchscreen-max-size-y = <320>;
-	};
-
-	panel_gpio: pca9570@24 {
-		compatible = "nxp,pca9570";
-		gpio-controller;
-		#gpio-cells = <2>;
-		reg = <0x24>;
-	};
-
-	panel_lights: pca9632@60 {
-		compatible = "nxp,pca9632";
-		#address-cells = <1>;
-		#size-cells = <0>;
-		reg = <0x60>;
-		nxp,totem-pole;
-		nxp,hw-blink;
-
-		red@0 {
-			label = "red:panel_indicator";
-			reg = <0>;
-			linux,default-trigger = "none";
-		};
-
-		green@1 {
-			label = "green:panel_indicator";
-			reg = <1>;
-			linux,default-trigger = "none";
-		};
-
-		blue@2 {
-			label = "blue:panel_indicator";
-			reg = <2>;
-			linux,default-trigger = "none";
-		};
-
-		panel_backlight: backlight@3 {
-			label = "white:panel_backlight";
-			reg = <3>;
-			linux,default-trigger = "default-on";
-		};
-  };
-};
-

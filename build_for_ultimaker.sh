@@ -9,6 +9,8 @@ set -eu
 
 CI_REGISTRY_IMAGE="${CI_REGISTRY_IMAGE:-registry.gitlab.com/ultimaker/embedded/platform/um-kernel}"
 CI_REGISTRY_IMAGE_TAG="${CI_REGISTRY_IMAGE_TAG:-latest}"
+# Which kernel config to build.
+BUILDCONFIG=${BUILDCONFIG:-opinicus}
 
 ARCH="${ARCH:-armhf}"
 
