@@ -1,20 +1,19 @@
-setenv bootargs console=tty0 fbcon=map:63 root=/dev/${ROOT_DEV} ro rootwait rootdelay=2 rootfstype=${ROOT_FS} console=ttyS0,115200 earlyprintk
+setenv bootargs console=tty0 fbcon=map:63 root=/dev/${ROOT_DEV} ro rootwait rootdelay=2 rootfstype=${ROOT_FS} console=ttymxc3,115200 earlyprintk rescue
 setenv fdt_high 0xffffffff
-${BOOTSPLASH_COMMANDS}
 
 setenv article_num_r 0x43300000
 setenv article_rev_r 0x43300004
 
 # Load the article and revision number, these are in different byte order, so we need to swap them while reading.
-i2c dev 1
-i2c read 0x51 0 1 0x43300003
-i2c read 0x51 1 1 0x43300002
-i2c read 0x51 2 1 0x43300001
-i2c read 0x51 3 1 0x43300000
-i2c read 0x51 4 1 0x43300007
-i2c read 0x51 5 1 0x43300006
-i2c read 0x51 6 1 0x43300005
-i2c read 0x51 7 1 0x43300004
+#i2c dev 1
+#i2c read 0x51 0 1 0x43300003
+#i2c read 0x51 1 1 0x43300002
+#i2c read 0x51 2 1 0x43300001
+#i2c read 0x51 3 1 0x43300000
+#i2c read 0x51 4 1 0x43300007
+#i2c read 0x51 5 1 0x43300006
+#i2c read 0x51 6 1 0x43300005
+#i2c read 0x51 7 1 0x43300004
 
 setexpr.l article_number *${article_num_r}
 setexpr.l article_rev *${article_rev_r}
