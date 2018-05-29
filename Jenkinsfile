@@ -39,9 +39,17 @@ pipeline
         {
             steps
             {
+                script
+                {
+                    env.userId = sh (
+                        script: 'id -u',
+                        returnStdout: true
+                    ).trim()
+                }
+
                 echo "Starting build of ${PACKAGE_NAME}"
                 sh "mkdir -p ${BUILD_OUTPUT_DIR}"
-                sh "docker run --name ${DOCKER_CONTAINER_NAME}_${BUILD_NUMBER} --rm -e MAKEFLAGS='-j 3' -v ${WORKSPACE}/${BUILD_OUTPUT_DIR}:/workspace/${BUILD_OUTPUT_DIR} ${DOCKER_IMAGE_NAME}_50 all"
+                sh "docker run --name ${DOCKER_CONTAINER_NAME}_${BUILD_NUMBER} --rm -e MAKEFLAGS='-j 3' -v ${WORKSPACE}/${BUILD_OUTPUT_DIR}:/workspace/${BUILD_OUTPUT_DIR} -u ${env.userId} ${DOCKER_IMAGE_NAME}_${BUILD_NUMBER} all"
             }
             post
             {
@@ -49,7 +57,7 @@ pipeline
                 {
                     echo "Build of ${PACKAGE_NAME} successful"
                     // We need to find a solution for artifact storage, for now leave it commented
-                    //archiveArtifacts artifacts: "${BUILD_OUTPUT_DIR}/*.deb", fingerprint: true
+                    // archiveArtifacts artifacts: "${BUILD_OUTPUT_DIR}/*.deb", fingerprint: true
 
                 }
             }
@@ -69,8 +77,16 @@ pipeline
         }
         failure
         {
+            script
+            {
+                env.committerEmailAddress = sh (
+                    script: 'git --no-pager show -s --format=\'%ae\'',
+                    returnStdout: true
+                ).trim()
+            }
+
             echo "Build of ${PACKAGE_NAME} failed"
-            mail to: 'software-embedded-platform@ultimaker.com',
+            mail to: "${env.committerEmailAddress}",
                 subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
                 body: "Please go to ${env.BUILD_URL}/consoleText for more details.";
         }

@@ -4,6 +4,7 @@ REPO_ROOT=$(pwd)
 PACKAGE_NAME="um-kernel"
 DOCKER_IMAGE_NAME="${PACKAGE_NAME}_build"
 DOCKER_CONTAINER_NAME="kernel_build"
+BUILD_OUTPUT_DIR="_build_armhf"
 
 if ! ( which docker ); then
     echo -e -n "\e[1;31m"
@@ -43,6 +44,10 @@ if [ "${MAKEFLAGS}" == "" ]; then
     export MAKEFLAGS="-j $(expr `nproc` + 1)"
 fi
 
+if [[ -d "${BUILD_OUTPUT_DIR}" ]]; then
+    mkdir -p ${BUILD_OUTPUT_DIR}
+fi
+
 docker build . -t ${DOCKER_IMAGE_NAME}
-docker run --name ${DOCKER_CONTAINER_NAME} --rm -e MAKEFLAGS="${MAKEFLAGS}" -v "${REPO_ROOT}/_build_armhf":/workspace/_build_armhf  ${DOCKER_IMAGE_NAME} all
-cp _build_armhf/*.deb .
+docker run --name ${DOCKER_CONTAINER_NAME} --rm -e MAKEFLAGS="${MAKEFLAGS}" \
+    -v "${REPO_ROOT}/${BUILD_OUTPUT_DIR}":/workspace/${BUILD_OUTPUT_DIR} -u=${UID} ${DOCKER_IMAGE_NAME} all

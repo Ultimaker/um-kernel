@@ -18,7 +18,10 @@ KERNEL_SRC_DIR="${CWD}/linux"
 BUILDCONFIG="opinicus"
 
 # Location of the debian package contents
-DEB_DIR="${CWD}/debian"
+DEB_DIR="${BUILD_OUTPUT_DIR}/debian"
+
+# Location of the build generated file from the scripts directory
+SCRIPTS_OUTPUT_DIR="${BUILD_OUTPUT_DIR}/scripts"
 
 # Setup internal variables
 KCONFIG="${CWD}/configs/${BUILDCONFIG}_config"
@@ -241,10 +244,11 @@ bootscript_build() {
     if [[ -z $DEB_DIR ]]; then echo "You are an idiot"; exit 1; fi
 
     mkdir -p ${DEB_DIR}/boot
+    mkdir -p ${SCRIPTS_OUTPUT_DIR}
 
     # Generate the boot splash script
-    gcc -Wall -Werror -std=c99 scripts/ultimaker_boot_splash_generator.c -o scripts/ultimaker_boot_splash_generator
-    BOOTSPLASH_COMMANDS=$(scripts/ultimaker_boot_splash_generator)
+    gcc -Wall -Werror -std=c99 scripts/ultimaker_boot_splash_generator.c -o ${SCRIPTS_OUTPUT_DIR}/ultimaker_boot_splash_generator
+    BOOTSPLASH_COMMANDS=$(${SCRIPTS_OUTPUT_DIR}/ultimaker_boot_splash_generator)
 
     # Create the bootscripts for these kernels
     ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${DEB_DIR}/boot/boot_mmc.cmd"
