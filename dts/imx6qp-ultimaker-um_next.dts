@@ -303,8 +303,8 @@
 	pinctrl-0 = <&usdhc3_pins_a>;
 	vmmc-supply = <&reg_vcc3v3>;
 	bus-width = <4>;
-	wp-gpios = <&gpio7 0 GPIO_ACTIVE_LOW>;
-	cd-gpios = <&gpio7 1 GPIO_ACTIVE_LOW>;
+/*	wp-gpios = <&gpio7 0 GPIO_ACTIVE_LOW>; */
+/*	cd-gpios = <&gpio7 1 GPIO_ACTIVE_LOW>; */
 	no-1-8-v;
 	status = "okay";
 };
