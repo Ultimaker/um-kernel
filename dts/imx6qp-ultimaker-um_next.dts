@@ -93,10 +93,10 @@
 };
 
 &ecspi2 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&ecspi2_pins_a>, <&ecspi2_cs_pins>;
-	cs-gpios = <&gpio3 25 GPIO_ACTIVE_LOW>;
-	status = "okay";
+//	pinctrl-names = "default";
+//	pinctrl-0 = <&ecspi2_pins_a>, <&ecspi2_cs_pins>;
+//	cs-gpios = <&gpio3 25 GPIO_ACTIVE_LOW>;
+	status = "disabled";
 
 	spidev@0 {
 		compatible = "linux,spidev";
@@ -112,25 +112,25 @@
 		>;
 	};
 
-	display_reset_pins: displayresetgrp {
-		fsl,pins = <
-			MX6QDL_PAD_ENET_CRS_DV__GPIO1_IO25	0x02030
-		>;
-	};
+//	display_reset_pins: displayresetgrp {
+//		fsl,pins = <
+//			MX6QDL_PAD_ENET_CRS_DV__GPIO1_IO25	0x02030
+//		>;
+//	};
 
-	ecspi2_cs_pins: spi2csgrp {
-		fsl,pins = <
-			MX6QDL_PAD_EIM_D25__GPIO3_IO25		0x06031
-		>;
-	};
+//	ecspi2_cs_pins: spi2csgrp {
+//		fsl,pins = <
+//			MX6QDL_PAD_EIM_D25__GPIO3_IO25		0x06031
+//		>;
+//	};
 
-	ecspi2_pins_a: spi2grp {
-		fsl,pins = <
-			MX6QDL_PAD_EIM_OE__ECSPI2_MISO		0x10081
-			MX6QDL_PAD_EIM_CS1__ECSPI2_MOSI		0x000b1
-			MX6QDL_PAD_EIM_CS0__ECSPI2_SCLK		0x000b1
-		>;
-	};
+//	ecspi2_pins_a: spi2grp {
+//		fsl,pins = <
+//			MX6QDL_PAD_EIM_OE__ECSPI2_MISO		0x10081
+//			MX6QDL_PAD_EIM_CS1__ECSPI2_MOSI		0x000b1
+//			MX6QDL_PAD_EIM_CS0__ECSPI2_SCLK		0x000b1
+//		>;
+//	};
 
 	i2c1_pins_a: i2c1grp {
 		fsl,pins = <
@@ -190,15 +190,15 @@
 		>;
 	};
 
-	usdhc3_cs_pins: usdhc3csgrp {
+	usdhc3_cd_pins: usdhc3cdgrp {
 		fsl,pins = <
-			MX6QDL_PAD_SD3_DAT4__GPIO7_IO01		0x80000000
+			MX6QDL_PAD_SD3_DAT4__GPIO7_IO01		0x1f0b0
 		>;
 	};
 
 	usdhc3_wp_pins: usdhc3wpgrp {
 		fsl,pins = <
-			MX6QDL_PAD_SD3_DAT5__GPIO7_IO00		0x80000000
+			MX6QDL_PAD_SD3_DAT5__GPIO7_IO00		0x1f0b0
 		>;
 	};
 
@@ -222,12 +222,12 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c1_pins_a>;
 	status = "okay";
-	clock-frequency = <400000>;
+	clock-frequency = <12500>;
 
 	ssd1309@3c {
 		compatible = "solomon,ssd1309fb-i2c";
 		pinctrl-names = "default";
-		pinctrl-0 = <&display_reset_pins>;
+		// pinctrl-0 = <&display_reset_pins>;
 		reg = <0x3c>;
 		reset-gpios = <&gpio1 25 GPIO_ACTIVE_HIGH>;
 		solomon,width = <128>;
@@ -300,11 +300,11 @@
 
 &usdhc3 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&usdhc3_pins_a>;
+	pinctrl-0 = <&usdhc3_pins_a>, <&usdhc3_cd_pins>, <&usdhc3_wp_pins>;
 	vmmc-supply = <&reg_vcc3v3>;
 	bus-width = <4>;
-/*	wp-gpios = <&gpio7 0 GPIO_ACTIVE_LOW>; */
-/*	cd-gpios = <&gpio7 1 GPIO_ACTIVE_LOW>; */
+	wp-gpios = <&gpio7 0 GPIO_ACTIVE_HIGH>;
+	cd-gpios = <&gpio7 1 GPIO_ACTIVE_LOW>;
 	no-1-8-v;
 	status = "okay";
 };
