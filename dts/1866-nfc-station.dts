@@ -65,3 +65,13 @@
 &rtc {
 	status = "disabled";
 };
+
+&usb_otg {
+    dr_mode = "host";
+};
+
+&usbphy {
+    /* Unset otg detect pins as we force dr_mode */
+    /delete-property/ usb0_id_det-gpio;
+    /delete-property/ usb0_vbus_det-gpio;
+};
