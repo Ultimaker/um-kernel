@@ -1,5 +1,6 @@
 #Article number (optional revision):dtb name:description (for humans)
 #These articles links are converted to hex representation sym links to be used in the u-boot script to load the proper device tree for this article.
+1866:1866-nfc-station:NFC Programming station
 1797:part2005-withpart1994:programming station
 9066:part2005-withpart1994:UM3
 9066-9051:UM3m:UM3 Hybrid
