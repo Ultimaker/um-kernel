@@ -40,16 +40,17 @@
  *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
+#if 0
 #include <dt-bindings/input/input.h>
 
 / {
 	model = "Ulticontroller 3.0 (201258-0)";
 	compatible = "ultimaker,201258-0";
 };
-
-&hdmi_i2c {
-	clock-frequency = <400000>;
-
+#else
+// &hdmi_i2c
+&i2c2	{
+	clock-frequency = <100000>;
 	panel_touchscreen: ft5426@38 {
 		compatible = "edt,edt-ft5426";
 		reg = <0x38>;
@@ -100,5 +101,6 @@
 			reg = <3>;
 			linux,default-trigger = "default-on";
 		};
-	};
+  };
 };
+#endif

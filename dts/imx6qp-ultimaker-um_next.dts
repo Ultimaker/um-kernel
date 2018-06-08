@@ -46,9 +46,11 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/pwm/pwm.h>
+#include "part201258-ulticontroller3.dtsi"
 
 / {
-	model = "Ultimaker NeXT Compulab SB-FX6-Y-Z-EVAL SOM-IMX6-C1000QP-D2-N16-E-A-I-U5-WAB-H proto (9066-4097)";
+
+	model = "Ultimaker NeXT Compulab SB-FX6-Y-Z-EVAL SOM-IMX6-C1000QP-D2-N16-E-A-I-U5-WAB-H proto (9066-4097) pcie fix";
 	compatible, = "ultimaker,9066-4097","compulab,cm-fx6", "fsl,imx6qp";
 
 	beeper {
@@ -103,6 +105,11 @@
 		spi-max-frequency = <50000000>;
 		reg = <0>;
 	};	
+};
+
+&hdmi {
+	ddc-i2c-bus = <&i2c2>;
+	status = "okay";
 };
 
 &iomuxc {
@@ -222,7 +229,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c1_pins_a>;
 	status = "okay";
-	clock-frequency = <12500>;
+	clock-frequency = <100000>;
 
 	ssd1309@3c {
 		compatible = "solomon,ssd1309fb-i2c";
@@ -277,7 +284,6 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c2_pins_a>;
 	status = "okay";
-	clock-frequency = <50000>;
 };
 
 &pwm2 {
