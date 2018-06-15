@@ -95,10 +95,10 @@
 };
 
 &ecspi2 {
-//	pinctrl-names = "default";
-//	pinctrl-0 = <&ecspi2_pins_a>, <&ecspi2_cs_pins>;
-//	cs-gpios = <&gpio3 25 GPIO_ACTIVE_LOW>;
-	status = "disabled";
+	pinctrl-names = "default";
+	pinctrl-0 = <&ecspi2_pins_a>, <&ecspi2_cs_pins>;
+	cs-gpios = <&gpio3 25 GPIO_ACTIVE_LOW>;
+	status = "okay";
 
 	spidev@0 {
 		compatible = "linux,spidev";
@@ -119,25 +119,25 @@
 		>;
 	};
 
-//	display_reset_pins: displayresetgrp {
-//		fsl,pins = <
-//			MX6QDL_PAD_ENET_CRS_DV__GPIO1_IO25	0x02030
-//		>;
-//	};
+	display_reset_pins: displayresetgrp {
+		fsl,pins = <
+			MX6QDL_PAD_ENET_CRS_DV__GPIO1_IO25	0x02030
+		>;
+	};
 
-//	ecspi2_cs_pins: spi2csgrp {
-//		fsl,pins = <
-//			MX6QDL_PAD_EIM_D25__GPIO3_IO25		0x06031
-//		>;
-//	};
+	ecspi2_cs_pins: spi2csgrp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_D25__GPIO3_IO25		0x06031
+		>;
+	};
 
-//	ecspi2_pins_a: spi2grp {
-//		fsl,pins = <
-//			MX6QDL_PAD_EIM_OE__ECSPI2_MISO		0x10081
-//			MX6QDL_PAD_EIM_CS1__ECSPI2_MOSI		0x000b1
-//			MX6QDL_PAD_EIM_CS0__ECSPI2_SCLK		0x000b1
-//		>;
-//	};
+	ecspi2_pins_a: spi2grp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_OE__ECSPI2_MISO		0x10081
+			MX6QDL_PAD_EIM_CS1__ECSPI2_MOSI		0x000b1
+			MX6QDL_PAD_EIM_CS0__ECSPI2_SCLK		0x000b1
+		>;
+	};
 
 	i2c1_pins_a: i2c1grp {
 		fsl,pins = <
