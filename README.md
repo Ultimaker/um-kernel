@@ -1,3 +1,5 @@
+[![pipeline status](https://gitlab.com/olliver/um-kernel/badges/master/pipeline.svg)](https://gitlab.com/olliver/um-kernel/commits/master)
+
 This repository contains the Ultimaker package build script for the linux kernel
 
 The layout of the repository is as follows.

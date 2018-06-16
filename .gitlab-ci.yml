@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0+
+#
+# Copyright (C) 2018 Ultimaker B.V.
+# Copyright (C) 2018 Olliver Schinagl <oliver@schinagl.nl>
+#
+
+stages:
+- build
+
+# Package generation
+# ==================
+.build pkg template: &pkg_common
+  tags:
+  - embedded
+  - shell
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+
+build package:
+  <<: *pkg_common
+  stage: build
+  script:
+  - ./build.sh
+  artifacts:
+    name: "$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA"
+    paths:
+    - ./*.deb
+    expire_in: 3 days
