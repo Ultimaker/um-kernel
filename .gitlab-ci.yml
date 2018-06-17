@@ -9,6 +9,7 @@
 
 stages:
 - prepare
+- verify
 - push
 - build
 - cleanup
@@ -34,6 +35,12 @@ prepare build environment:
   stage: prepare
   script:
   - docker build --rm -t "$CI_COMMIT_SHA:$CI_PIPELINE_ID" .
+
+verify build environment:
+  stage: verify
+  <<: *buildenv_common
+  script:
+    - docker run --rm "$CI_COMMIT_SHA:$CI_PIPELINE_ID" /tests/buildenv.sh
 
 push build environment:
   <<: *buildenv_common
