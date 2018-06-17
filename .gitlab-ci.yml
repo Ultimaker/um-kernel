@@ -8,6 +8,7 @@
 # * Package generation: creates the final artifact
 
 stages:
+- lint
 - prepare
 - verify
 - push
@@ -20,6 +21,13 @@ stages:
   tags:
   - embedded
   - docker
+
+lint build environment test:
+  <<: *parameters_common
+  image: registry.hub.docker.com/koalaman/shellcheck-alpine:stable
+  stage: lint
+  script:
+  - shellcheck -C -f tty -s sh tests/buildenv.sh
 
 # Build environment
 # =================
