@@ -22,12 +22,20 @@ stages:
   - embedded
   - docker
 
-lint build environment test:
+.shell_lint_template: &shell_linting
   <<: *parameters_common
   image: registry.hub.docker.com/koalaman/shellcheck-alpine:stable
   stage: lint
+
+lint build environment:
+  <<: *shell_linting
   script:
   - shellcheck -C -f tty -s sh tests/buildenv.sh
+
+lint local build script:
+  <<: *shell_linting
+  script:
+  - shellcheck -C -f tty -s sh build_for_ultimaker.sh
 
 # Build environment
 # =================
