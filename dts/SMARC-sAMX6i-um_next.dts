@@ -1,0 +1,333 @@
+/*
+ * Copyright 2017 - Ultimaker B.V.
+ * Author Olliver Schinagl <oliver@schinagl.nl>
+ *
+ * This file is dual-licensed: you can use it either under the terms
+ * of the GPL or the X11 license, at your option. Note that this dual
+ * licensing only applies to this file, and not this project as a
+ * whole.
+ *
+ *  a) This file is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License as
+ *     published by the Free Software Foundation; either version 2 of the
+ *     License, or (at your option) any later version.
+ *
+ *     This file is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ * Or, alternatively,
+ *
+ *  b) Permission is hereby granted, free of charge, to any person
+ *     obtaining a copy of this software and associated documentation
+ *     files (the "Software"), to deal in the Software without
+ *     restriction, including without limitation the rights to use,
+ *     copy, modify, merge, publish, distribute, sublicense, and/or
+ *     sell copies of the Software, and to permit persons to whom the
+ *     Software is furnished to do so, subject to the following
+ *     conditions:
+ *
+ *     The above copyright notice and this permission notice shall be
+ *     included in all copies or substantial portions of the Software.
+ *
+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *     OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "imx6q-smarc-sam6xi.dtsi"
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/pwm/pwm.h>
+#include "part201258-ulticontroller3.dtsi"
+
+/ {
+
+	model = "Ultimaker NeXT Kontron SMARC-sAMX6i";
+	compatible, = "ultimaker,9066-4098","kontron,imx6-smx6", "fsl,imx6qp";
+
+	beeper {
+		pwm-names ="opinicus-board-beeper";
+		compatible = "pwm-beeper";
+		pwms = <&pwm2 0 500000 0>;
+		status = "okay";
+	};
+
+	button_wheel {
+		pinctrl-names = "default";
+		pinctrl-0 = <&button_wheel_pins_a>;
+		compatible = "rotary-encoder";
+		gpios = <&gpio1 4 GPIO_ACTIVE_LOW>, <&gpio7 13 GPIO_ACTIVE_LOW>;
+		linux,axis = <8>; /* REL_Z */
+		rotary-encoder,relative-axis;
+		rotary-encoder,steps-per-period = <4>;
+		status = "okay";
+	};
+
+	button_center {
+		pinctrl-names = "default";
+		pinctrl-0 = <&button_center_pins_a>;
+		compatible = "gpio-keys";
+		status = "okay";
+
+		button_enter {
+			label = "Button ring enter";
+			gpios = <&gpio3 31 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_ENTER>;
+			wakeup-source;
+		};
+	};
+
+	reg_vcc3v3: vcc3v3 {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+	};
+};
+
+&ecspi2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&ecspi2_pins_a>, <&ecspi2_cs_pins>;
+	cs-gpios = <&gpio3 25 GPIO_ACTIVE_LOW>;
+	status = "okay";
+
+	spidev@0 {
+		compatible = "linux,spidev";
+		spi-max-frequency = <50000000>;
+		reg = <0>;
+	};	
+};
+
+&hdmi {
+	ddc-i2c-bus = <&i2c2>;
+	status = "okay";
+};
+
+&iomuxc {
+	rtos_reset_pins: rtosresetgrp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_D27__GPIO3_IO27		0x02030
+		>;
+	};
+
+	display_reset_pins: displayresetgrp {
+		fsl,pins = <
+			MX6QDL_PAD_ENET_CRS_DV__GPIO1_IO25	0x02030
+		>;
+	};
+
+	ecspi2_cs_pins: spi2csgrp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_D25__GPIO3_IO25		0x06031
+		>;
+	};
+
+	ecspi2_pins_a: spi2grp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_OE__ECSPI2_MISO		0x10081
+			MX6QDL_PAD_EIM_CS1__ECSPI2_MOSI		0x000b1
+			MX6QDL_PAD_EIM_CS0__ECSPI2_SCLK		0x000b1
+		>;
+	};
+
+	i2c1_pins_a: i2c1grp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_D21__I2C1_SCL		0x4001b8b1
+			MX6QDL_PAD_EIM_D28__I2C1_SDA		0x4001b8b1
+		>;
+	};
+
+	i2c2_pins_a: i2c2grp {
+		fsl,pins = <
+			MX6QDL_PAD_KEY_COL3__I2C2_SCL		0x4001b8b1
+			MX6QDL_PAD_KEY_ROW3__I2C2_SDA		0x4001b8b1
+		>;
+	};
+
+	pwm2_pins_a: pwm2grp {
+		fsl,pins = <
+			MX6QDL_PAD_GPIO_1__PWM2_OUT		0x0b0b1
+		>;
+	};
+
+	button_wheel_pins_a: butwheelgrp {
+		fsl,pins = <
+			MX6QDL_PAD_GPIO_18__GPIO7_IO13		0x17001
+			MX6QDL_PAD_GPIO_4__GPIO1_IO04		0x17001
+		>;
+	};
+
+	button_center_pins_a: butcentgrp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_D31__GPIO3_IO31		0x17001
+		>;
+	};
+
+	uart1_pins_a: uart1grp {
+		fsl,pins = <
+			MX6QDL_PAD_SD3_DAT7__UART1_TX_DATA	0x1b0b1
+			MX6QDL_PAD_SD3_DAT6__UART1_RX_DATA	0x1b0b1
+		>;
+	};
+
+	uart2_pins_a: uart2grp {
+		fsl,pins = <
+			MX6QDL_PAD_GPIO_7__UART2_TX_DATA	0x1b0b1
+			MX6QDL_PAD_GPIO_8__UART2_RX_DATA	0x1b0b1
+		>;
+	};
+
+	usdhc3_pins_a: usdhc3grp {
+		fsl,pins = <
+			MX6QDL_PAD_SD3_CMD__SD3_CMD		0x17059
+			MX6QDL_PAD_SD3_CLK__SD3_CLK		0x10059
+			MX6QDL_PAD_SD3_DAT0__SD3_DATA0		0x17059
+			MX6QDL_PAD_SD3_DAT1__SD3_DATA1		0x17059
+			MX6QDL_PAD_SD3_DAT2__SD3_DATA2		0x17059
+			MX6QDL_PAD_SD3_DAT3__SD3_DATA3		0x17059
+		>;
+	};
+
+	usdhc3_cd_pins: usdhc3cdgrp {
+		fsl,pins = <
+			MX6QDL_PAD_SD3_DAT4__GPIO7_IO01		0x1f0b0
+		>;
+	};
+
+	usdhc3_wp_pins: usdhc3wpgrp {
+		fsl,pins = <
+			MX6QDL_PAD_SD3_DAT5__GPIO7_IO00		0x1f0b0
+		>;
+	};
+
+	usdhc4_pins_a: usdhc4grp {
+		fsl,pins = <
+			MX6QDL_PAD_SD4_CMD__SD4_CMD		0x1f071
+			MX6QDL_PAD_SD4_CLK__SD4_CLK		0x11071
+			MX6QDL_PAD_SD4_DAT0__SD4_DATA0		0x1f071
+			MX6QDL_PAD_SD4_DAT1__SD4_DATA1		0x1f071
+			MX6QDL_PAD_SD4_DAT2__SD4_DATA2		0x1f071
+			MX6QDL_PAD_SD4_DAT3__SD4_DATA3		0x1f071
+		/*	MX6QDL_PAD_SD4_DAT4__SD4_DATA4		0x1f071
+			MX6QDL_PAD_SD4_DAT5__SD4_DATA5		0x1f071
+			MX6QDL_PAD_SD4_DAT6__SD4_DATA6		0x1f071
+			MX6QDL_PAD_SD4_DAT7__SD4_DATA7		0x1f071*/
+		>;
+	};
+};
+
+&i2c1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c1_pins_a>;
+	status = "okay";
+	clock-frequency = <100000>;
+
+	ssd1309@3c {
+		compatible = "solomon,ssd1309fb-i2c";
+		pinctrl-names = "default";
+		// pinctrl-0 = <&display_reset_pins>;
+		reg = <0x3c>;
+		reset-gpios = <&gpio1 25 GPIO_ACTIVE_HIGH>;
+		solomon,width = <128>;
+		solomon,height = <64>;
+		solomon,com-invdir;
+		solomon,page-offset = <0>;
+		solomon,prechargep1 = <2>;
+		solomon,prechargep2 = <8>;
+	};
+
+	button_ring@60 {
+		compatible = "nxp,pca9632";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x60>;
+		nxp,totem-pole;
+		nxp,inverted-out;
+		nxp,hw-blink;
+
+		red@0 {
+			label = "red:button_ring";
+			reg = <0>;
+			linux,default-trigger = "none";
+		};
+
+		green@1 {
+			label = "green:button_ring";
+			reg = <1>;
+			linux,default-trigger = "default-on";
+		};
+
+		blue@2 {
+			label = "blue:button_ring";
+			reg = <2>;
+			linux,default-trigger = "default-on";
+		};
+
+		unused@3 {
+			label = "unused";
+			reg = <3>;
+			linux,default-trigger = "none";
+		};
+	};
+};
+
+&i2c2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c2_pins_a>;
+	status = "okay";
+};
+
+&pwm2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pwm2_pins_a>;
+	status = "okay";
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1_pins_a>;
+	status = "okay";
+};
+
+&uart2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart2_pins_a>;
+	status = "okay";
+};
+
+&usdhc3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&usdhc3_pins_a>, <&usdhc3_cd_pins>, <&usdhc3_wp_pins>;
+	vmmc-supply = <&reg_vcc3v3>;
+	bus-width = <4>;
+	wp-gpios = <&gpio7 0 GPIO_ACTIVE_HIGH>;
+	cd-gpios = <&gpio7 1 GPIO_ACTIVE_LOW>;
+	no-1-8-v;
+	status = "okay";
+};
+
+/*
+&usdhc4 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&usdhc4_pins_a>;
+	vmmc-supply = <&reg_vcc3v3>;
+	bus-width = <4>;
+	non-removable;
+	no-1-8-v;
+	keep-power-in-suspend;
+	status = "okay";
+};
+*/
+
+&usbotg {
+	dr_mode = "host";
+};

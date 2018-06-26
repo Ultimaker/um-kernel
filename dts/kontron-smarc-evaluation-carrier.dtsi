@@ -1,0 +1,271 @@
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
+ */
+
+/ {
+	regulators {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+#ifdef smarc_pwm_backlight
+		/* PWM power.
+		   This is stub for now, including voltage values.
+		   Physically, LP8545 is used there. It could be described better */
+		carrier_pwm_reg: regulator@100 {
+			compatible = "regulator-fixed";
+			reg = <100>;
+			regulator-name = "V_31V9_BKLT";
+			regulator-min-microvolt = <12000000>;
+			regulator-max-microvolt = <12000000>;
+			regulator-boot-on;
+			regulator-always-on;
+		};
+#endif
+
+#ifdef smarc_sdio
+		/* MicroSD slot power */
+		carrier_sdio_reg: regulator@101 {
+			compatible = "regulator-fixed";
+			reg = <101>;
+			regulator-name = "V_3V3_SDCARD";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = SMARC_SDIO_PWR_EN_GPIO;
+			enable-active-high;
+		};
+#endif
+
+#if defined(smarc_can0) && defined(smarc_i2c_pm)
+		/* CAN0 enable line */
+		can0_en_reg: regulator@102 {
+			compatible = "regulator-fixed";
+			reg = <102>;
+			regulator-name = "CAN0_EN";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = <&pm_gpio 6 0>;
+			enable-active-high;
+		};
+#endif
+
+#if defined(smarc_can1) && defined(smarc_i2c_pm)
+		/* CAN1 enable line */
+		can1_en_reg: regulator@103 {
+			compatible = "regulator-fixed";
+			reg = <103>;
+			regulator-name = "CAN1_EN";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = <&pm_gpio 7 0>;
+			enable-active-high;
+		};
+#endif
+
+		v_3v3: regulator@104 {
+			compatible = "regulator-fixed";
+			reg = <104>;
+			regulator-name = "V_3V3";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-boot-on;
+			regulator-always-on;
+		};
+
+		v_io_1v8: regulator@105 {
+			compatible = "regulator-fixed";
+			reg = <105>;
+			regulator-name = "V_IO_1V8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			regulator-boot-on;
+			regulator-always-on;
+		};
+
+		v_1v8_ldo: regulator@106 {
+			compatible = "regulator-fixed";
+			reg = <106>;
+			regulator-name = "V_1V8_LDO";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			regulator-boot-on;
+			regulator-always-on;
+		};
+
+		v_usb_otg_vbus: regulator@107 {
+			compatible = "regulator-fixed";
+			reg = <107>;
+			regulator-name = "USB_OTG_VBUS";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			gpio = <&USB0_EN_OC_GPIO_PORT USB0_EN_OC_GPIO_NUM 0>;
+			enable-active-high;
+		};
+
+	};
+};
+
+#ifdef smarc_ser0
+&smarc_ser0 {
+	status = "okay";
+};
+#endif
+
+#ifdef smarc_ser1
+&smarc_ser1 {
+	status = "okay";
+};
+#endif
+
+#ifdef smarc_ser2
+&smarc_ser2 {
+	status = "okay";
+};
+#endif
+
+#ifdef smarc_ser3
+&smarc_ser3 {
+	status = "okay";
+};
+#endif
+
+#ifdef smarc_gbe
+&smarc_gbe {
+	status = "okay";
+};
+#endif
+
+#ifdef smarc_pwm_backlight
+&smarc_pwm_backlight {
+	power-supply = <&carrier_pwm_reg>;
+};
+#endif
+
+#ifdef smarc_sdio
+&smarc_sdio {
+	status = "okay";
+	vmmc-supply = <&carrier_sdio_reg>;
+	no-1-8-v;
+};
+#endif
+
+#ifdef smarc_sdmmc
+&smarc_sdmmc {
+	status = "okay";
+	no-1-8-v;
+};
+#endif
+
+#ifdef smarc_usb0
+&smarc_usb0 {
+	status = "okay";
+	vbus-supply = <&v_usb_otg_vbus>;
+};
+#endif
+
+#ifdef smarc_usb1
+&smarc_usb1 {
+	status = "okay";
+};
+#endif
+
+#ifdef smarc_usb2
+&smarc_usb2 {
+	status = "okay";
+};
+#endif
+
+#ifdef smarc_i2c_pm
+&smarc_i2c_pm {
+	pm_gpio: tca9554@22 {
+		compatible = "nxp,pca9554";
+		reg = <0x22>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		vcc-supply = <&v_1v8_ldo>;
+	};
+};
+#endif
+
+#ifdef smarc_sata
+&smarc_sata {
+	status = "okay";
+};
+#endif
+
+#if defined(smarc_can0) && defined(smarc_i2c_pm)
+&smarc_can0 {
+	xceiver-supply = <&can0_en_reg>;
+	status = "okay";
+};
+#endif
+
+#if defined(smarc_can1) && defined(smarc_i2c_pm)
+&smarc_can1 {
+	xceiver-supply = <&can1_en_reg>;
+	status = "okay";
+};
+#endif
+
+#ifdef smarc_i2c_gp
+&smarc_i2c_gp {
+	codec: wm8903@1b {
+		compatible = "wlf,wm8903";
+		reg = <0x1b>;
+		clocks = SMARC_AUDIO_MCLK;
+		micdet-cfg = <0>;
+		micdet-delay = <100>;
+	};
+
+	lis3lv02d@1c {
+		compatible = "st,lis3lv02d";
+		reg = <0x1c>;
+
+		st,click-single-x;
+		st,click-single-y;
+		st,click-single-z;
+		st,click-thresh-x = <10>;
+		st,click-thresh-y = <10>;
+		st,click-thresh-z = <10>;
+		st,irq1-click;
+		st,irq2-click;
+		st,wakeup-x-lo;
+		st,wakeup-x-hi;
+		st,wakeup-y-lo;
+		st,wakeup-y-hi;
+		st,wakeup-z-lo;
+		st,wakeup-z-hi;
+		st,min-limit-x = <120>;
+		st,min-limit-y = <120>;
+		st,min-limit-z = <140>;
+		st,max-limit-x = <550>;
+		st,max-limit-y = <550>;
+		st,max-limit-z = <750>;
+
+		Vdd-supply = <&v_3v3>;
+		Vdd_IO-supply = <&v_io_1v8>;
+	};
+};
+#endif
+	
+#if defined(smarc_i2s0_audio) && defined(smarc_i2c_gp)
+&smarc_i2s0_audio {
+#ifdef SMX6_COMPATIBLE
+	compatible = "fsl,imx-audio-wm8903";
+	model = "imx-wm8903";
+#else
+#error Audio path unsupported
+#endif
+	audio-codec = <&codec>;
+	audio-routing =
+		"Headphone Jack", "HPOUTR",
+		"Headphone Jack", "HPOUTL",
+		"Mic Jack", "MICBIAS",
+		"IN1L", "Mic Jack";
+};
+#endif
