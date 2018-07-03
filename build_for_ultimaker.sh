@@ -210,7 +210,7 @@ kernel_build() {
     # Configure the kernel
     kernel_build_command
     # Build the uImage file for a bootable kernel
-    kernel_build_command LOADADDR=0x40008000 uImage
+    kernel_build_command LOADADDR=0x10004000 uImage
 }
 
 ##
