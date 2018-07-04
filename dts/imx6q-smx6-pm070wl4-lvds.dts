@@ -1,0 +1,38 @@
+/*
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
+ */
+
+#define SMX6_CPU_IMX6Q
+
+#define SMX6_PANEL_LVDS
+#define SMX6_PANEL_18BIT
+
+#define SMX6_SSI1_AUDIO
+#define SMX6_SSI1_AUDIO_OUTPUT 0
+
+#define SMX6_SERIAL_CAMERA
+#define SMX6_SERIAL_CAMERA_ENDPOINT ov5640_to_mipi_csi2
+#define SMX6_SERIAL_CAMERA_DATA_LANES 1 2
+#define SMX6_SERIAL_CAMERA_CLOCK_LANES 0
+
+/dts-v1/;
+#include "imx6qdl-smx6.dtsi"
+#include "kontron-smarc-evaluation-carrier.dtsi"
+#include "smx6-ov5640-camera.dtsi"
+
+&smx6_panel_timings {
+	clock-frequency = <22000000>;
+	hactive = <800>;
+	vactive = <480>;
+	hback-porch = <86>;
+	hfront-porch = <42>;
+	vback-porch = <33>;
+	vfront-porch = <10>;
+	hsync-len = <128>;
+	vsync-len = <2>;
+};

@@ -51,7 +51,7 @@
 / {
 
 	model = "Ultimaker NeXT Kontron SMARC-sAMX6i";
-	compatible, = "ultimaker,9066-4098","kontron,imx6-smx6", "fsl,imx6qp";
+	compatible, = "ultimaker,9066-4098","kontron,imx6-smx6", "fsl,imx6q";
 
 	beeper {
 		pwm-names ="opinicus-board-beeper";
