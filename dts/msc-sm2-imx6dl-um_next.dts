@@ -1,0 +1,21 @@
+/*
+ * Copyright (C) 2013 Freescale Semiconductor, Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+/dts-v1/;
+#define ULTIMAKER 1
+#include "msc-sm2-imx6-03A.dtsi"
+
+/ {
+	model = "Freescale i.MX6 DualLite MSC_SM2-SK-IMX6-EP1 alla UM";
+	compatible = "fsl,imx6dl-MSC-um", "fsl,imx6dl";
+
+	//aliases {
+	//	spi_1 = &ecspi1;
+	//};
+
+};
