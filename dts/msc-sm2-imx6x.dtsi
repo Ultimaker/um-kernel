@@ -916,17 +916,6 @@
 			reg = <0x0 0x800000>;
 		};
 	};
-#ifdef ULTIMAKER
-      /*
-      * user space SPI interfaces
-      */
-	spidev: spidev@1 {
-		status = "okay";
-		compatible = "linux,spidev";
-		spi-max-frequency = <50000000>;
-		reg = <1>;
-	};
-#else
 
 	test_flash2_1: m25@1 {
 		#address-cells = <1>;
@@ -940,7 +929,6 @@
 			reg = <0x0 0x800000>;
 		};
 	};
-#endif
 };
 
 &ecspi3 {
@@ -963,6 +951,17 @@
 		};
 	};
 
+#ifdef ULTIMAKER
+      /*
+      * user space SPI interface (want kernel to create /dev/spi2.1)
+      */
+	spidev: spidev@1 {
+		status = "okay";
+		compatible = "linux,spidev";
+		spi-max-frequency = <50000000>;
+		reg = <1>;
+	};
+#else
 	test_flash3_1: m25@1 {
 		#address-cells = <1>;
 		#size-cells = <1>;
@@ -975,6 +974,7 @@
 			reg = <0x0 0x800000>;
 		};
 	};
+#endif
 };
 
 &usbh1 {
