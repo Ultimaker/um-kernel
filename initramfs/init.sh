@@ -1,4 +1,4 @@
-#!/bin/busybox sh
+#!/bin/sh
 #
 # Copyright (C) 2018 Ultimaker B.V.
 # Copyright (C) 2018 Olliver Schinagl <oliver@schinagl.nl>
@@ -12,6 +12,7 @@ UPDATE_MOUNT="/mnt/update"
 UPDATE_SCRIPT="${UPDATE_MOUNT}/um_update.sh"
 UPDATE_DEVICES="/dev/sd[a-z][0-9] /dev/mmcblk[0-9]p[0-9]"
 BB_BIN="/bin/busybox"
+WATCHDOG_DEV="/dev/watchdog"
 
 init="/sbin/init"
 root=""
@@ -21,7 +22,7 @@ rwmode=""
 
 shutdown()
 {
-	while [ 1 ]; do
+	while [ true ]; do
 		poweroff
 		echo "Please remove power to complete shutdown."
 		sleep 10s
@@ -34,7 +35,9 @@ restart()
 	sleep 5s
 	reboot
 	modprobe sunxi_wdt || true
-	watchdog -T 1 -t 60 -F /dev/watchdog || true
+	if [ -w "${WATCHDOG_DEV}" ]; then
+        watchdog -T 1 -t 60 -F "${WATCHDOG_DEV}"
+    fi
 	echo "Failed to reboot, shutting down instead."
 	shutdown
 }
@@ -82,10 +85,10 @@ critical_error()
 boot_root()
 {
 	echo "Mounting ${root}."
-	mount -t ${rootfstype} -o exec,suid,dev,noatime,$rootflags,$rwmode "${root}" "${ROOT_MOUNT}"
+	mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags}","${rwmode}" "${root}" "${ROOT_MOUNT}"
 	kernel_umount
 	echo "Starting linux on ${root} of type ${rootfstype} with init=${init}."
-	exec switch_root /mnt/root "${init}"
+	exec switch_root "${ROOT_MOUNT}" "${init}"
 }
 
 find_and_run_update()
@@ -96,7 +99,7 @@ find_and_run_update()
 			continue
 		fi
 
-		echo "Attempting to mount ${dev}."
+		echo "Attempting to mount '${dev}'."
 		if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_MOUNT}"; then
 			continue
 		fi
@@ -148,11 +151,11 @@ parse_cmdline()
 			rwmode="rw"
 		;;
 		rootdelay=*)
-			sleep ${cmd#*=}
+			sleep "${cmd#*=}"
 		;;
 		root=*)
-			local _root="${cmd#*=}"
-			local _prefix="${_root%%=*}"
+			_root="${cmd#*=}"
+			_prefix="${_root%%=*}"
 
 			if [ "${_prefix}" = "UUID" ] || \
 			   [ "${_prefix}" = "PARTUUID" ] || \
