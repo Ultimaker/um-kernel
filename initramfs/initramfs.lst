@@ -5,6 +5,7 @@ dir	/etc					0755 0 0
 dir	/lib					0755 0 0
 dir	/mnt					0755 0 0
 dir	/mnt/root				0755 0 0
+dir	/mnt/toolbox				0755 0 0
 dir	/mnt/update				0755 0 0
 dir	/proc					0755 0 0
 dir	/root					0700 0 0
