@@ -1,4 +1,4 @@
-#!/bin/busybox sh
+#!/bin/sh
 #
 # Copyright (C) 2018 Ultimaker B.V.
 # Copyright (C) 2018 Olliver Schinagl <oliver@schinagl.nl>
@@ -9,9 +9,12 @@ set -eu
 
 ROOT_MOUNT="/mnt/root"
 UPDATE_MOUNT="/mnt/update"
-UPDATE_SCRIPT="${UPDATE_MOUNT}/um_update.sh"
-UPDATE_DEVICES="/dev/sd[a-z][0-9] /dev/mmcblk[0-9]p[0-9]"
+TOOLBOX_MOUNT="/mnt/toolbox"
+TOOLBOX_IMAGE="${UPDATE_MOUNT}/um-update_toolbox.xz.img"
+SYSTEM_UPDATE_ENTRYPOINT="${TOOLBOX_MOUNT}/sbin/startup.sh"
+UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 BB_BIN="/bin/busybox"
+WATCHDOG_DEV="/dev/watchdog"
 
 init="/sbin/init"
 root=""
@@ -21,7 +24,7 @@ rwmode=""
 
 shutdown()
 {
-	while [ 1 ]; do
+	while true; do
 		poweroff
 		echo "Please remove power to complete shutdown."
 		sleep 10s
@@ -34,7 +37,9 @@ restart()
 	sleep 5s
 	reboot
 	modprobe sunxi_wdt || true
-	watchdog -T 1 -t 60 -F /dev/watchdog || true
+	if [ -w "${WATCHDOG_DEV}" ]; then
+        watchdog -T 1 -t 60 -F "${WATCHDOG_DEV}"
+    fi
 	echo "Failed to reboot, shutting down instead."
 	shutdown
 }
@@ -82,10 +87,10 @@ critical_error()
 boot_root()
 {
 	echo "Mounting ${root}."
-	mount -t ${rootfstype} -o exec,suid,dev,noatime,$rootflags,$rwmode "${root}" "${ROOT_MOUNT}"
+	mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags}","${rwmode}" "${root}" "${ROOT_MOUNT}"
 	kernel_umount
 	echo "Starting linux on ${root} of type ${rootfstype} with init=${init}."
-	exec switch_root /mnt/root "${init}"
+	exec switch_root "${ROOT_MOUNT}" "${init}"
 }
 
 find_and_run_update()
@@ -96,30 +101,49 @@ find_and_run_update()
 			continue
 		fi
 
-		echo "Attempting to mount ${dev}."
+		echo "Attempting to mount '${dev}'."
 		if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_MOUNT}"; then
 			continue
 		fi
 
-		if [ ! -x "${UPDATE_SCRIPT}" ]; then
+		if [ ! -x "${TOOLBOX_IMAGE}" ]; then
 			umount "${dev}"
-			echo "No executable update '${UPDATE_SCRIPT}' found on ${dev}, trying next."
+			echo "No update toolbox image '${TOOLBOX_IMAGE}' found on '${dev}', trying next."
 			continue
 		fi
 
-		echo "Found update on ${dev}, executing update ${UPDATE_SCRIPT}."
-		if ! "${UPDATE_SCRIPT}"; then
-			umount "${dev}"
-			echo "Update failed!"
+		echo "Found '${TOOLBOX_IMAGE}' on '${dev}', attempting to mount."
+		if ! mount "${TOOLBOX_IMAGE}" "${TOOLBOX_MOUNT}"; then
+			echo "Update failed: Unable to mount '${TOOLBOX_IMAGE}'."
 			critical_error
 			break;
 		fi
 
-		echo "Update finished, cleaning up."
-		if ! chmod -x "${UPDATE_SCRIPT}" || [ -x "${UPDATE_SCRIPT}" ]; then
-			umount "${dev}"
-			echo "Please remove update medium and power off."
-			shutdown
+		echo "Successfully mounted '${TOOLBOX_IMAGE}', looking for '${SYSTEM_UPDATE_ENTRYPOINT}' script."
+		if [ ! -x "${SYSTEM_UPDATE_ENTRYPOINT}" ]; then
+			echo "Update failed: No '${SYSTEM_UPDATE_ENTRYPOINT}' script found on '${TOOLBOX_MOUNT}'."
+			critical_error
+			break;
+		fi
+
+		echo "Found '${SYSTEM_UPDATE_ENTRYPOINT}' script on ${dev}, trying to execute."
+		if ! "${SYSTEM_UPDATE_ENTRYPOINT}"; then
+			echo "Update failed: Error executing '${SYSTEM_UPDATE_ENTRYPOINT}'."
+			critical_error
+			break;
+		fi
+
+		echo "Update finished, attempting to unmount '${TOOLBOX_MOUNT}'."
+		if ! umount "${TOOLBOX_MOUNT}"; then
+			echo "Update failed: Unable to unmount '${TOOLBOX_MOUNT}'."
+			critical_error
+			break;
+		fi
+
+		echo "Attempting to remove '${TOOLBOX_IMAGE}'."
+		if ! chmod -x "${TOOLBOX_IMAGE}" || ! rm -f "${TOOLBOX_IMAGE}"; then
+			echo "Update failed: Failed to remove '${TOOLBOX_IMAGE}'."
+			critical_error
 			break;
 		fi
 
@@ -148,11 +172,11 @@ parse_cmdline()
 			rwmode="rw"
 		;;
 		rootdelay=*)
-			sleep ${cmd#*=}
+			sleep "${cmd#*=}"
 		;;
 		root=*)
-			local _root="${cmd#*=}"
-			local _prefix="${_root%%=*}"
+			_root="${cmd#*=}"
+			_prefix="${_root%%=*}"
 
 			if [ "${_prefix}" = "UUID" ] || \
 			   [ "${_prefix}" = "PARTUUID" ] || \
