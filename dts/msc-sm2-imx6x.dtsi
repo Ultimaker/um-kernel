@@ -341,6 +341,16 @@
 		};
 	};
 
+#ifdef ULTIMAKER
+	i2c4 { /* this gets instantiated as /dev/i2c3 so does not clash with MSC bit-banged devices /dev/i2c4 and /dev/i2c5! */
+		pinctrl_i2c4: i2c4grp {
+			fsl,pins = <
+				MX6QDL_PAD_GPIO_7__I2C4_SCL	0x4001b8b1
+				MX6QDL_PAD_GPIO_8__I2C4_SDA	0x4001b8b1
+			>;
+		};
+	};
+#endif
 	lcd_i2c {
 		pinctrl_lcd_i2c_1: lcdi2cgrp-1 {
 			fsl,pins = <
@@ -633,6 +643,15 @@
 	};
 };
 
+#ifdef ULTIMAKER
+&i2c4 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c4>;
+	clock-frequency = <100000>;
+	status = "okay";
+};
+
+#endif
 &lcd_i2c {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_lcd_i2c_1>;
@@ -844,7 +863,11 @@
 &can1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_flexcan1_1>;
+#ifdef ULTIMAKER
+	status = "disabled"; /* clashes with our designs for GPIO 7 and 8 */
+#else
 	status = "okay";
+#endif
 };
 
 &can2 {
