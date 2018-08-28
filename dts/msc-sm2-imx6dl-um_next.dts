@@ -1,21 +1,30 @@
-/*
- * Copyright (C) 2013 Freescale Semiconductor, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- */
 
 /dts-v1/;
-#define ULTIMAKER 1
-#include "msc-sm2-imx6-03A.dtsi"
+#define IMX6DL_ULTIMAKER 1
+
+#include "part2621-ultimainboard3.1.dtsi"
+#include "part201258-ulticontroller3.dtsi"
+#include "part1994-ulticontroller.dtsi"
 
 / {
-	model = "Freescale i.MX6 DualLite MSC_SM2-SK-IMX6-EP1 alla UM";
+	model = "Freescale i.MX6 DualLite MSC_SM2-SK-IMX6-EP1 alla Ultimaker";
 	compatible = "fsl,imx6dl-MSC-um", "fsl,imx6dl";
+
+    /* beeper stuff below not checked out properly yet! */
+      beeper {
+	  pwm-names = "opinicus-board-beeper";
+	  compatible = "pwm-beeper";
+	  pwms = <&pwm3 1 500000 0>;
+	  status = "okay";
+      };
 
 	//aliases {
 	//	spi_1 = &ecspi1;
 	//};
 
+};
+
+&hdmi {
+	ddc-i2c-bus = <&i2c2>;
+	status = "okay";
 };

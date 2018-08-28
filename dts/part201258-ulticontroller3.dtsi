@@ -40,15 +40,14 @@
  *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
-#if 0
 #include <dt-bindings/input/input.h>
+#include <dt-bindings/gpio/gpio.h>
 
 / {
 	model = "Ulticontroller 3.0 (201258-0)";
 	compatible = "ultimaker,201258-0";
 };
-#else
-// &hdmi_i2c
+// the folowing is also correct when working with the MSC SMARC board:
 &i2c2	{
 	clock-frequency = <100000>;
 	panel_touchscreen: ft5426@38 {
@@ -103,4 +102,4 @@
 		};
   };
 };
-#endif
+

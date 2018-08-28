@@ -8,9 +8,15 @@
  * http://www.opensource.org/licenses/gpl-license.html
  * http://www.gnu.org/copyleft/gpl.html
  */
+
 #include "skeleton.dtsi"
 #include <dt-bindings/gpio/gpio.h>
+
+#ifdef IMX6DL_ULTIMAKER
+#include "imx6dl.dtsi"
+#else
 #include "imx6qdl.dtsi"
+#endif
 
 &iomuxc {
 	enet {
@@ -340,17 +346,17 @@
 			>;
 		};
 	};
-
-#ifdef ULTIMAKER
-	i2c4 { /* this gets instantiated as /dev/i2c3 so does not clash with MSC bit-banged devices /dev/i2c4 and /dev/i2c5! */
-		pinctrl_i2c4: i2c4grp {
-			fsl,pins = <
-				MX6QDL_PAD_GPIO_7__I2C4_SCL	0x4001b8b1
-				MX6QDL_PAD_GPIO_8__I2C4_SDA	0x4001b8b1
-			>;
-		};
-	};
+#ifdef IMX6DL_ULTIMAKER
+      i2c4 { /* this gets instantiated as /dev/i2c3 so does not clash with MSC bit-banged devices /dev/i2c4 and /dev/i2c5! */
+                pinctrl_i2c4: i2c4grp {
+                       fsl,pins = <
+                               MX6QDL_PAD_GPIO_7__I2C4_SCL     0x4001b8b1
+                               MX6QDL_PAD_GPIO_8__I2C4_SDA     0x4001b8b1
+                       >;
+               };
+       };
 #endif
+
 	lcd_i2c {
 		pinctrl_lcd_i2c_1: lcdi2cgrp-1 {
 			fsl,pins = <
@@ -643,15 +649,16 @@
 	};
 };
 
-#ifdef ULTIMAKER
+#ifdef IMX6DL_ULTIMAKER
 &i2c4 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_i2c4>;
 	clock-frequency = <100000>;
 	status = "okay";
-};
 
+};
 #endif
+
 &lcd_i2c {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_lcd_i2c_1>;
@@ -836,12 +843,10 @@
 	fsl,ldo-bypass = <0>; /* use ldo-bypass, u-boot will check it and configure */
 	fsl,wdog-reset = <1>; /* watchdog select of reset source */
 };
-#if 0
-&vpu_fsl {
+&vpu {
 	iramsize = <0>;
 	status = "okay";
 };
-#endif
 &pwm1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pwm1_2>;
@@ -863,7 +868,7 @@
 &can1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_flexcan1_1>;
-#ifdef ULTIMAKER
+#ifdef IMX6DL_ULTIMAKER
 	status = "disabled"; /* clashes with our designs for GPIO 7 and 8 */
 #else
 	status = "okay";
@@ -954,6 +959,7 @@
 	};
 };
 
+#ifdef ULTIMAKER_SPI_TEST
 &ecspi3 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_ecspi3_1>;
@@ -974,7 +980,7 @@
 		};
 	};
 
-#ifdef ULTIMAKER
+#ifdef IMX6DL_ULTIMAKER
       /*
       * user space SPI interface (want kernel to create /dev/spi2.1)
       */
@@ -999,6 +1005,7 @@
 	};
 #endif
 };
+#endif
 
 &usbh1 {
 	pinctrl-names = "default";
@@ -1182,6 +1189,11 @@
 	hog {
 		pinctrl_hog_1: hoggrp-1 {
 			fsl,pins = <
+#ifndef ULTIMAKER_SPI_TEST
+				MX6QDL_PAD_DISP0_DAT2__GPIO4_IO23	0x30b1
+				MX6QDL_PAD_DISP0_DAT1__GPIO4_IO22	0x30b1
+				MX6QDL_PAD_DISP0_DAT0__GPIO4_IO21	0x30b1
+#endif				
 				MX6QDL_PAD_EIM_LBA__GPIO2_IO27		0x30b1
 				MX6QDL_PAD_EIM_RW__GPIO2_IO26		0x30b1
 				MX6QDL_PAD_EIM_A16__GPIO2_IO22		0x30b1

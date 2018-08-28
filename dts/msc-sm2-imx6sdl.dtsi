@@ -39,12 +39,10 @@
 		status = "disabled";
 	};
 };
-#if 0
-&vpu_fsl {
+&vpu {
 	iramsize = <0>;
 	status = "okay";
 };
-#endif
 &epdc {
 	status = "disabled";
 };

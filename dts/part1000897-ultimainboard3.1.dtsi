@@ -45,7 +45,7 @@
 
 / {
     aliases {
-        serial1 = &uart7;
+//        serial1 = &uart7;
     };
 
     leds {

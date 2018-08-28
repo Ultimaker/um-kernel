@@ -40,12 +40,14 @@
  *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
-
+#ifdef IMX6DL_ULTIMAKER
+#include "msc-sm2-imx6dl.dtsi"
+#else
 #include "jedi-common.dts"
-
+#endif
 / {
 	aliases {
-		serial1 = &uart4;
+//		serial1 = &uart4;
 	};
 
 	leds {
@@ -53,6 +55,7 @@
 			linux,default-trigger = "mmc0";
 		};
 
+#ifndef IMX6DL_ULTIMAKER
 		ol0 {
 			label = "opinicus:red:ol0";
 			gpios = <&pio 1 9 GPIO_ACTIVE_HIGH>;
@@ -70,24 +73,35 @@
 			gpios = <&pio 1 11 GPIO_ACTIVE_HIGH>;
 			default-state = "on";
 		};
+
+#endif
 	};
 
 	usb0-kill {
 		compatible = "linux,rfkill-gpio";
 		type = "fm";
+#ifdef IMX6DL_ULTIMAKER
+#else
 		shutdown-gpios = <&pio 2 17 GPIO_ACTIVE_HIGH>;
+#endif
 	};
 
 	usb1-kill {
 		compatible = "linux,rfkill-gpio";
 		type = "fm";
+#ifdef IMX6DL_ULTIMAKER
+#else
 		shutdown-gpios = <&pio 7 6 GPIO_ACTIVE_HIGH>;
+#endif
 	};
 
 	usb2-kill {
 		compatible = "linux,rfkill-gpio";
 		type = "fm";
+#ifdef IMX6DL_ULTIMAKER
+#else
 		shutdown-gpios = <&pio 7 3 GPIO_ACTIVE_HIGH>;
+#endif
 	};
 };
 
@@ -126,6 +140,8 @@
 		};
 	};
 };
+
+#ifndef IMX6DL_ULTIMAKER
 
 &i2c2 {
 	pinctrl-names = "default";
@@ -203,3 +219,4 @@
 	pinctrl-0 = <&uart5_pins_a>;
 	status = "okay";
 };
+#endif
