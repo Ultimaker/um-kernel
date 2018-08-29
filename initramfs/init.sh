@@ -10,7 +10,9 @@ set -eu
 ROOT_MOUNT="/mnt/root"
 UPDATE_MOUNT="/mnt/update"
 TOOLBOX_MOUNT="/mnt/toolbox"
-TOOLBOX_IMAGE="${UPDATE_MOUNT}/um-update_toolbox.xz.img"
+
+TOOLBOX_IMAGE="um-update_toolbox.xz.img"
+
 SYSTEM_UPDATE_ENTRYPOINT="${TOOLBOX_MOUNT}/sbin/startup.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 BB_BIN="/bin/busybox"
@@ -106,15 +108,22 @@ find_and_run_update()
 			continue
 		fi
 
-		if [ ! -x "${TOOLBOX_IMAGE}" ]; then
+		if [ ! -r "${UPDATE_MOUNT}/${TOOLBOX_IMAGE}" ]; then
 			umount "${dev}"
 			echo "No update toolbox image '${TOOLBOX_IMAGE}' found on '${dev}', trying next."
 			continue
 		fi
 
-		echo "Found '${TOOLBOX_IMAGE}' on '${dev}', attempting to mount."
-		if ! mount "${TOOLBOX_IMAGE}" "${TOOLBOX_MOUNT}"; then
-			echo "Update failed: Unable to mount '${TOOLBOX_IMAGE}'."
+		echo "Found '${TOOLBOX_IMAGE}' on '${dev}', moving to tmpfs."
+		if ! mv "${UPDATE_MOUNT}/${TOOLBOX_IMAGE}" "/tmp"; then
+			echo "Update failed: Unable to move ${TOOLBOX_IMAGE} to /tmp."
+			critical_error
+			break;
+		fi
+
+		echo "Attempting to mount '/tmp/${TOOLBOX_IMAGE}' to '${TOOLBOX_MOUNT}'."
+		if ! mount "/tmp/${TOOLBOX_IMAGE}" "${TOOLBOX_MOUNT}"; then
+			echo "Update failed: Unable to mount '/tmp/${TOOLBOX_IMAGE}'."
 			critical_error
 			break;
 		fi
@@ -126,8 +135,8 @@ find_and_run_update()
 			break;
 		fi
 
-		echo "Found '${SYSTEM_UPDATE_ENTRYPOINT}' script on ${dev}, trying to execute."
-		if ! "${SYSTEM_UPDATE_ENTRYPOINT}"; then
+		echo "Found '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
+		if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${UPDATE_MOUNT}"; then
 			echo "Update failed: Error executing '${SYSTEM_UPDATE_ENTRYPOINT}'."
 			critical_error
 			break;
@@ -136,13 +145,6 @@ find_and_run_update()
 		echo "Update finished, attempting to unmount '${TOOLBOX_MOUNT}'."
 		if ! umount "${TOOLBOX_MOUNT}"; then
 			echo "Update failed: Unable to unmount '${TOOLBOX_MOUNT}'."
-			critical_error
-			break;
-		fi
-
-		echo "Attempting to remove '${TOOLBOX_IMAGE}'."
-		if ! chmod -x "${TOOLBOX_IMAGE}" || ! rm -f "${TOOLBOX_IMAGE}"; then
-			echo "Update failed: Failed to remove '${TOOLBOX_IMAGE}'."
 			critical_error
 			break;
 		fi
@@ -216,7 +218,7 @@ kernel_umount()
 
 busybox_setup()
 {
-	${BB_BIN} --install -s
+	"${BB_BIN}" --install -s
 }
 
 trap critical_error EXIT
