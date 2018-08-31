@@ -136,8 +136,8 @@ find_and_run_update()
 		fi
 
 		echo "Found '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
-		if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${UPDATE_MOUNT}"; then
-			echo "Update failed: Error executing '${SYSTEM_UPDATE_ENTRYPOINT} ${UPDATE_MOUNT}'."
+		if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${UPDATE_MOUNT}" "${root}"; then
+			echo "Update failed: Error executing '${SYSTEM_UPDATE_ENTRYPOINT} ${UPDATE_MOUNT} ${root}'."
 			critical_error
 			break;
 		fi
