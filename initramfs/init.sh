@@ -137,7 +137,7 @@ find_and_run_update()
 
 		echo "Found '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
 		if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${UPDATE_MOUNT}"; then
-			echo "Update failed: Error executing '${SYSTEM_UPDATE_ENTRYPOINT}'."
+			echo "Update failed: Error executing '${SYSTEM_UPDATE_ENTRYPOINT} ${UPDATE_MOUNT}'."
 			critical_error
 			break;
 		fi
@@ -147,6 +147,11 @@ find_and_run_update()
 			echo "Update failed: Unable to unmount '${TOOLBOX_MOUNT}'."
 			critical_error
 			break;
+		fi
+
+		echo "Cleaning up, removing '/tmp/${TOOLBOX_IMAGE}'."
+		if ! rm "/tmp/${TOOLBOX_IMAGE}"; then
+			echo "Unable to remove '/tmp/${TOOLBOX_IMAGE}'."
 		fi
 
 		umount "${dev}"
