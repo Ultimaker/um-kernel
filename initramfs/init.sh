@@ -13,7 +13,7 @@ TOOLBOX_MOUNT="/mnt/toolbox"
 
 TOOLBOX_IMAGE="um-update_toolbox.xz.img"
 
-SYSTEM_UPDATE_ENTRYPOINT="${TOOLBOX_MOUNT}/sbin/startup.sh"
+SYSTEM_UPDATE_ENTRYPOINT="${TOOLBOX_MOUNT}/sbin/start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 BB_BIN="/bin/busybox"
 WATCHDOG_DEV="/dev/watchdog"
@@ -136,9 +136,8 @@ find_and_run_update()
 		fi
 
 		echo "Found '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
-		if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${UPDATE_MOUNT}" "${root}"; then
-			echo "Update failed: Error executing '${SYSTEM_UPDATE_ENTRYPOINT} ${UPDATE_MOUNT} ${root}'."
-			critical_error
+		if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${UPDATE_MOUNT}" "${dev}"; then
+			echo "Update failed: Error executing '${SYSTEM_UPDATE_ENTRYPOINT} ${UPDATE_MOUNT} ${dev}'."
 			break;
 		fi
 
