@@ -24,6 +24,7 @@ rootflags=""
 rootfstype="auto"
 rwmode=""
 
+
 shutdown()
 {
 	while true; do
@@ -116,44 +117,45 @@ find_and_run_update()
 
 		echo "Found '${TOOLBOX_IMAGE}' on '${dev}', moving to tmpfs."
 		if ! mv "${UPDATE_MOUNT}/${TOOLBOX_IMAGE}" "/tmp"; then
-			echo "Update failed: Unable to move ${TOOLBOX_IMAGE} to /tmp."
+			echo "Error, update failed: unable to move ${TOOLBOX_IMAGE} to /tmp."
 			critical_error
 			break;
 		fi
 
 		echo "Attempting to mount '/tmp/${TOOLBOX_IMAGE}' to '${TOOLBOX_MOUNT}'."
-		if ! mount "/tmp/${TOOLBOX_IMAGE}" "${TOOLBOX_MOUNT}"; then
-			echo "Update failed: Unable to mount '/tmp/${TOOLBOX_IMAGE}'."
+		if ! mount "/tmp/${TOOLBOX_IMAGE}" ${TOOLBOX_MOUNT}; then
+			echo "Error, update failed: unable to mount '/tmp/${TOOLBOX_IMAGE}'."
 			critical_error
 			break;
 		fi
 
 		echo "Successfully mounted '${TOOLBOX_IMAGE}', looking for '${SYSTEM_UPDATE_ENTRYPOINT}' script."
 		if [ ! -x "${SYSTEM_UPDATE_ENTRYPOINT}" ]; then
-			echo "Update failed: No '${SYSTEM_UPDATE_ENTRYPOINT}' script found on '${TOOLBOX_MOUNT}'."
+			echo "Error, update failed: no '${SYSTEM_UPDATE_ENTRYPOINT}' script found on '${TOOLBOX_MOUNT}'."
 			critical_error
 			break;
 		fi
 
 		echo "Found '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
-		if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${UPDATE_MOUNT}" "${dev}"; then
-			echo "Update failed: Error executing '${SYSTEM_UPDATE_ENTRYPOINT} ${UPDATE_MOUNT} ${dev}'."
-			break;
-		fi
-
-		echo "Update finished, attempting to unmount '${TOOLBOX_MOUNT}'."
-		if ! umount "${TOOLBOX_MOUNT}"; then
-			echo "Update failed: Unable to unmount '${TOOLBOX_MOUNT}'."
+		if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${TOOLBOX_MOUNT}" "${UPDATE_MOUNT}" "${dev}"; then
+			echo "Error, update failed: executing '${SYSTEM_UPDATE_ENTRYPOINT} ${TOOLBOX_MOUNT} ${UPDATE_MOUNT} ${dev}'."
 			critical_error
 			break;
 		fi
 
-		echo "Cleaning up, removing '/tmp/${TOOLBOX_IMAGE}'."
-		if ! rm "/tmp/${TOOLBOX_IMAGE}"; then
-			echo "Unable to remove '/tmp/${TOOLBOX_IMAGE}'."
+		echo "Update finished successfully, attempting to clean up update files."
+		if ! umount "${TOOLBOX_MOUNT}"; then
+			echo "Warning: unable to unmount '${TOOLBOX_MOUNT}'."
 		fi
 
-		umount "${dev}"
+		if ! rm "/tmp/${TOOLBOX_IMAGE:?}"; then
+			echo "Warning, unable to remove '/tmp/${TOOLBOX_IMAGE}'."
+		fi
+
+		if ! umount "${dev}"; then
+			echo "Warning, unable to unmount '${dev}'."
+		fi
+
 		restart
 	done
 	echo "No updates found."
@@ -166,6 +168,8 @@ parse_cmdline()
 		exit 1
 	fi
 
+    # shellcheck disable=SC2013
+    # Disabled because it is nos possible in a while read loop
 	for cmd in $(cat /proc/cmdline); do
 		case "${cmd}" in
 		rescue)
