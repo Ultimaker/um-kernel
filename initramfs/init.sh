@@ -119,8 +119,8 @@ find_and_run_update()
         fi
 
         echo "Found '${TOOLBOX_IMAGE}' on '${dev}', moving to tmpfs."
-        if ! mv "${UPDATE_MOUNT}/${TOOLBOX_IMAGE}" "/tmp"; then
-            echo "Error, update failed: unable to move ${TOOLBOX_IMAGE} to /tmp."
+        if ! mv "${UPDATE_MOUNT}/${TOOLBOX_IMAGE}" "${UPDATE_TMPFS_MOUNT}"; then
+            echo "Error, update failed: unable to move ${TOOLBOX_IMAGE} to ${UPDATE_TMPFS_MOUNT}."
             critical_error
             break;
         fi
@@ -134,9 +134,9 @@ find_and_run_update()
             echo "Warning, unable to unmount '${dev}'."
         fi
 
-        echo "Attempting to mount '/tmp/${TOOLBOX_IMAGE}' to '${TOOLBOX_MOUNT}'."
-        if ! mount "/tmp/${TOOLBOX_IMAGE}" ${TOOLBOX_MOUNT}; then
-            echo "Error, update failed: unable to mount '/tmp/${TOOLBOX_IMAGE}'."
+        echo "Attempting to mount '${UPDATE_TMPFS_MOUNT}/${TOOLBOX_IMAGE}' to '${TOOLBOX_MOUNT}'."
+        if ! mount "${UPDATE_TMPFS_MOUNT}/${TOOLBOX_IMAGE}" ${TOOLBOX_MOUNT}; then
+            echo "Error, update failed: unable to mount '${UPDATE_TMPFS_MOUNT}/${TOOLBOX_IMAGE}'."
             critical_error
             break;
         fi
@@ -164,8 +164,8 @@ find_and_run_update()
             echo "Warning: failed to remove update files"
         fi
 
-        if ! rm "/tmp/${TOOLBOX_IMAGE:?}"; then
-            echo "Warning, unable to remove '/tmp/${TOOLBOX_IMAGE}'."
+        if ! rm "${UPDATE_TMPFS_MOUNT}/${TOOLBOX_IMAGE:?}"; then
+            echo "Warning, unable to remove '${UPDATE_TMPFS_MOUNT}/${TOOLBOX_IMAGE}'."
         fi
 
         restart
