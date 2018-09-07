@@ -10,8 +10,6 @@ set -eu
 ROOT_MOUNT="/mnt/root"
 UPDATE_MOUNT="/mnt/update"
 TOOLBOX_MOUNT="/mnt/toolbox"
-UPDATE_TMPFS_MOUNT="/tmp/update"
-
 TOOLBOX_IMAGE="um-update_toolbox.xz.img"
 
 SYSTEM_UPDATE_ENTRYPOINT="${TOOLBOX_MOUNT}/sbin/start_update.sh"
@@ -25,6 +23,7 @@ rootflags=""
 rootfstype="auto"
 rwmode=""
 
+update_tmpfs_mount=""
 
 shutdown()
 {
@@ -118,15 +117,15 @@ find_and_run_update()
             continue
         fi
 
+        update_tmpfs_mount="$(mktemp -d)"
         echo "Found '${TOOLBOX_IMAGE}' on '${dev}', moving to tmpfs."
-        if ! mv "${UPDATE_MOUNT}/${TOOLBOX_IMAGE}" "${UPDATE_TMPFS_MOUNT}"; then
-            echo "Error, update failed: unable to move ${TOOLBOX_IMAGE} to ${UPDATE_TMPFS_MOUNT}."
+        if ! mv "${UPDATE_MOUNT}/${TOOLBOX_IMAGE}" "${update_tmpfs_mount}"; then
+            echo "Error, update failed: unable to move ${TOOLBOX_IMAGE} to ${update_tmpfs_mount}."
             critical_error
             break;
         fi
 
-        mkdir -p "${UPDATE_TMPFS_MOUNT}"
-        if ! mv "${UPDATE_MOUNT}/"*.tar.xz "${UPDATE_TMPFS_MOUNT}"; then
+        if ! mv "${UPDATE_MOUNT}/"*.tar.xz "${update_tmpfs_mount}"; then
             echo "Warning, failed to move update files to tmpfs"
         fi
 
@@ -134,9 +133,9 @@ find_and_run_update()
             echo "Warning, unable to unmount '${dev}'."
         fi
 
-        echo "Attempting to mount '${UPDATE_TMPFS_MOUNT}/${TOOLBOX_IMAGE}' to '${TOOLBOX_MOUNT}'."
-        if ! mount "${UPDATE_TMPFS_MOUNT}/${TOOLBOX_IMAGE}" ${TOOLBOX_MOUNT}; then
-            echo "Error, update failed: unable to mount '${UPDATE_TMPFS_MOUNT}/${TOOLBOX_IMAGE}'."
+        echo "Attempting to mount '${update_tmpfs_mount}/${TOOLBOX_IMAGE}' to '${TOOLBOX_MOUNT}'."
+        if ! mount "${update_tmpfs_mount}/${TOOLBOX_IMAGE}" ${TOOLBOX_MOUNT}; then
+            echo "Error, update failed: unable to mount '${update_tmpfs_mount}/${TOOLBOX_IMAGE}'."
             critical_error
             break;
         fi
@@ -149,7 +148,7 @@ find_and_run_update()
         fi
 
         echo "Found '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
-        if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${TOOLBOX_MOUNT}" "${UPDATE_TMPFS_MOUNT}" "${base_dev}"; then
+        if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${TOOLBOX_MOUNT}" "${update_tmpfs_mount}" "${base_dev}"; then
             echo "Error, update failed: executing '${SYSTEM_UPDATE_ENTRYPOINT} ${TOOLBOX_MOUNT} ${UPDATE_MOUNT} ${base_dev}'."
             critical_error
             break;
@@ -160,12 +159,12 @@ find_and_run_update()
             echo "Warning: unable to unmount '${TOOLBOX_MOUNT}'."
         fi
 
-        if ! rm "${UPDATE_TMPFS_MOUNT}/"*.tar.xz ]; then
+        if ! rm "${update_tmpfs_mount}/"*.tar.xz; then
             echo "Warning: failed to remove update files"
         fi
 
-        if ! rm "${UPDATE_TMPFS_MOUNT}/${TOOLBOX_IMAGE:?}"; then
-            echo "Warning, unable to remove '${UPDATE_TMPFS_MOUNT}/${TOOLBOX_IMAGE}'."
+        if ! rm "${update_tmpfs_mount}/${TOOLBOX_IMAGE:?}"; then
+            echo "Warning, unable to remove '${update_tmpfs_mount}/${TOOLBOX_IMAGE}'."
         fi
 
         restart
