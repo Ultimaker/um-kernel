@@ -91,7 +91,7 @@ critical_error()
 boot_root()
 {
     echo "Mounting ${root}."
-    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags}","${rwmode}" "${root}" "${ROOT_MOUNT}"
+    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root}" "${ROOT_MOUNT}"
     kernel_umount
     echo "Starting linux on ${root} of type ${rootfstype} with init=${init}."
     exec switch_root "${ROOT_MOUNT}" "${init}"
@@ -126,7 +126,7 @@ find_and_run_update()
         fi
 
         mkdir -p "${UPDATE_TMPFS_MOUNT}"
-        if ! mv "${UPDATE_MOUNT/"*.tar.xz "${UPDATE_TMPFS_MOUNT}"; then
+        if ! mv "${UPDATE_MOUNT}/"*.tar.xz "${UPDATE_TMPFS_MOUNT}"; then
             echo "Warning, failed to move update files to tmpfs"
         fi
 
