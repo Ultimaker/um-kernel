@@ -105,7 +105,7 @@ find_and_run_update()
             continue
         fi
 
-        base_dev="$(sed 's/p[0-9]$//')"
+        base_dev="${dev%p[0-9]}"
 
         echo "Attempting to mount '${dev}'."
         if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_MOUNT}"; then
