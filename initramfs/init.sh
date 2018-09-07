@@ -10,6 +10,7 @@ set -eu
 ROOT_MOUNT="/mnt/root"
 UPDATE_MOUNT="/mnt/update"
 TOOLBOX_MOUNT="/mnt/toolbox"
+UPDATE_TMPFS_MOUNT="/tmp/update"
 
 TOOLBOX_IMAGE="um-update_toolbox.xz.img"
 
@@ -104,6 +105,8 @@ find_and_run_update()
             continue
         fi
 
+        base_dev="$(sed 's/p[0-9]$//')"
+
         echo "Attempting to mount '${dev}'."
         if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_MOUNT}"; then
             continue
@@ -122,6 +125,15 @@ find_and_run_update()
             break;
         fi
 
+        mkdir -p "${UPDATE_TMPFS_MOUNT}"
+        if ! mv "${UPDATE_MOUNT/"*.tar.xz "${UPDATE_TMPFS_MOUNT}"; then
+            echo "Warning, failed to move update files to tmpfs"
+        fi
+
+        if ! umount "${dev}"; then
+            echo "Warning, unable to unmount '${dev}'."
+        fi
+
         echo "Attempting to mount '/tmp/${TOOLBOX_IMAGE}' to '${TOOLBOX_MOUNT}'."
         if ! mount "/tmp/${TOOLBOX_IMAGE}" ${TOOLBOX_MOUNT}; then
             echo "Error, update failed: unable to mount '/tmp/${TOOLBOX_IMAGE}'."
@@ -137,8 +149,8 @@ find_and_run_update()
         fi
 
         echo "Found '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
-        if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${TOOLBOX_MOUNT}" "${UPDATE_MOUNT}" "${dev}"; then
-            echo "Error, update failed: executing '${SYSTEM_UPDATE_ENTRYPOINT} ${TOOLBOX_MOUNT} ${UPDATE_MOUNT} ${dev}'."
+        if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${TOOLBOX_MOUNT}" "${UPDATE_TMPFS_MOUNT}" "${base_dev}"; then
+            echo "Error, update failed: executing '${SYSTEM_UPDATE_ENTRYPOINT} ${TOOLBOX_MOUNT} ${UPDATE_MOUNT} ${base_dev}'."
             critical_error
             break;
         fi
@@ -148,12 +160,12 @@ find_and_run_update()
             echo "Warning: unable to unmount '${TOOLBOX_MOUNT}'."
         fi
 
-        if ! rm "/tmp/${TOOLBOX_IMAGE:?}"; then
-            echo "Warning, unable to remove '/tmp/${TOOLBOX_IMAGE}'."
+        if ! rm "${UPDATE_TMPFS_MOUNT}/"*.tar.xz ]; then
+            echo "Warning: failed to remove update files"
         fi
 
-        if ! umount "${dev}"; then
-            echo "Warning, unable to unmount '${dev}'."
+        if ! rm "/tmp/${TOOLBOX_IMAGE:?}"; then
+            echo "Warning, unable to remove '/tmp/${TOOLBOX_IMAGE}'."
         fi
 
         restart
