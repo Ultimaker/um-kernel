@@ -545,12 +545,12 @@
 		ipu_id = <0>;
 		csi_id = <0>;
 		mclk_source = <0>;
-		status = "okay";
+		status = "disabled";
 	};
 
 	v4l2_out {
 		compatible = "fsl,mxc_v4l2_output";
-		status = "okay";
+		status = "disabled";
 	};
 
 	lcd_i2c: i2c@4 {
@@ -1115,7 +1115,7 @@
 	csi_id = <0>;
 	v_channel = <0>;
 	lanes = <2>;
-	status = "okay";
+	status = "disabled";
 };
 
 &ldb {
