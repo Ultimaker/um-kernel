@@ -350,13 +350,14 @@
       i2c4 { /* this gets instantiated as /dev/i2c3 so does not clash with MSC bit-banged devices /dev/i2c4 and /dev/i2c5! */
                 pinctrl_i2c4: i2c4grp {
                        fsl,pins = <
-                               MX6QDL_PAD_GPIO_7__I2C4_SCL     0x4001b8b1
-                               MX6QDL_PAD_GPIO_8__I2C4_SDA     0x4001b8b1
+                               MX6QDL_PAD_NANDF_WP_B__I2C4_SCL     0x4001b8b1
+                               MX6QDL_PAD_NANDF_CS3__I2C4_SDA     0x4001b8b1
                        >;
                };
        };
 #endif
 
+#ifndef IMX6DL_ULTIMAKER
 	lcd_i2c {
 		pinctrl_lcd_i2c_1: lcdi2cgrp-1 {
 			fsl,pins = <
@@ -374,6 +375,7 @@
 			>;
 		};
 	};
+#endif
 };
 
 / {
@@ -553,6 +555,7 @@
 		status = "disabled";
 	};
 
+#ifndef IMX6DL_ULTIMAKER
 	lcd_i2c: i2c@4 {
 		compatible = "i2c-gpio";
 		#address-cells = <1>;
@@ -570,7 +573,7 @@
 		/* i2c-gpio,scl-open-drain; */
 		i2c-gpio,delay-us = <2>;	/* ~100 kHz */
 	};
-	
+#endif	
 	pmu {
 		interrupt-affinity = <&cpu0>;
 	};
@@ -659,6 +662,7 @@
 };
 #endif
 
+#ifndef IMX6DL_ULTIMAKER
 &lcd_i2c {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_lcd_i2c_1>;
@@ -676,7 +680,7 @@
 		<&gpio6 9 0>; /* scl */
 	status = "okay";
 };
-
+#endif
 &pmic {
 
 	pinctrl-names = "default";

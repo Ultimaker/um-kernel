@@ -95,11 +95,13 @@ It does not configure the reset line of the OLED display, as this differs per ha
 	};
 #endif
 };
+
+
 #ifdef IMX6DL_ULTIMAKER
 // some stuff already defined in 'msc-sm2-imx6x.dtsi'
 &i2c1 { // 'CAM0' tapped off for D&L
 #else
-&i2c4 {
+&i2c3 {
     pinctrl-names = "default";
     pinctrl-0 = <&i2c3_pins_a>;
 #endif
