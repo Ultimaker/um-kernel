@@ -1,16 +1,16 @@
 
 /dts-v1/;
 #define IMX6DL_ULTIMAKER 1
-
-#include "part2621-ultimainboard3.1.dtsi"
+#include "msc-sm2-imx6dl.dtsi"
+#include "next-ultimainboard3.1.dtsi"
 #include "part201258-ulticontroller3.dtsi"
 #include "part1994-ulticontroller.dtsi"
 
 / {
-	model = "Freescale i.MX6 DualLite MSC_SM2-SK-IMX6-EP1 alla Ultimaker";
+	model = "Freescale imx6dl on MSC SOM on MSC board - alla Ultimaker";
 	compatible = "fsl,imx6dl-MSC-um", "fsl,imx6dl";
 
-    /* beeper stuff below not checked out properly yet! */
+    /* beeper stuff below not checked properly yet! */
       beeper {
 	  pwm-names = "opinicus-board-beeper";
 	  compatible = "pwm-beeper";

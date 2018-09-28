@@ -40,20 +40,63 @@
  *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
+/ {
+	leds {
+		green {
+			linux,default-trigger = "mmc0";
+		};
 
-#include "jedi-common.dts"
-#include "part2621-ultimainboard3.1.dtsi"
-#include "part1994-ulticontroller.dtsi"
+	};
 
-&pio {
-	oled_pins_opinicus: oled_pins@0 {
-		pins = "PI4";
-		function = "gpio_out";
-		drive-strength = <10>;
-		bias-pull-up;
+	usb0-kill {
+		compatible = "linux,rfkill-gpio";
+		type = "fm";
+	};
+
+	usb1-kill {
+		compatible = "linux,rfkill-gpio";
+		type = "fm";
+	};
+
+	usb2-kill {
+		compatible = "linux,rfkill-gpio";
+		type = "fm";
 	};
 };
 
-&ssd1309 {
-	reset-gpios = <&pio 8 4 GPIO_ACTIVE_HIGH>;
+&i2c1 {
+	cabin_light: pca9632@61 {
+		compatible = "nxp,pca9632";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x61>;
+		nxp,totem-pole;
+		nxp,inverted-out;
+		nxp,hw-blink;
+
+		red@0 {
+			label = "red:cabin_light";
+			reg = <0>;
+			linux,default-trigger = "none";
+		};
+
+		green@1 {
+			label = "green:cabin_light";
+			reg = <1>;
+			linux,default-trigger = "none";
+		};
+
+		blue@2 {
+			label = "blue:cabin_light";
+			reg = <2>;
+			linux,default-trigger = "none";
+		};
+
+		white@3 {
+			label = "white:cabin_light";
+			reg = <3>;
+			linux,default-trigger = "default-on";
+		};
+	};
 };
+

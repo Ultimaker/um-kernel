@@ -41,9 +41,9 @@
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
 #ifdef IMX6DL_ULTIMAKER
-#include "msc-sm2-imx6dl.dtsi"
+// #include "msc-sm2-imx6dl.dtsi"
 #else
-#include "jedi-common.dts"
+// #include "jedi-common.dts"
 #endif
 / {
 	aliases {
