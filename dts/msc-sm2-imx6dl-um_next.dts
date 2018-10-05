@@ -1,7 +1,8 @@
-
 /dts-v1/;
 #define IMX6DL_ULTIMAKER 1
-#include "msc-sm2-imx6dl.dtsi"
+#include "imx6dl-pinfunc.h"
+#include "imx6dl.dtsi"
+#include "msc-sm2-imx6sdl.dtsi"
 #include "next-ultimainboard3.1.dtsi"
 #include "part201258-ulticontroller3.dtsi"
 #include "part1994-ulticontroller.dtsi"
@@ -9,6 +10,9 @@
 / {
 	model = "Freescale imx6dl on MSC SOM on MSC board - alla Ultimaker";
 	compatible = "fsl,imx6dl-MSC-um", "fsl,imx6dl";
+	memory: memory {
+		reg = <0x10000000 0x80000000>; /* 2 GiB */
+	};
 
     /* beeper stuff below not checked properly yet! */
       beeper {
@@ -18,13 +22,4 @@
 	  status = "okay";
       };
 
-	//aliases {
-	//	spi_1 = &ecspi1;
-	//};
-
-};
-
-&hdmi {
-	ddc-i2c-bus = <&i2c2>;
-	status = "okay";
 };

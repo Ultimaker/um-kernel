@@ -56,3 +56,8 @@
 		crtc = "ipu1-di1";
 	};
 };
+
+&hdmi {
+	ddc-i2c-bus = <&i2c2>;
+	status = "okay";
+};

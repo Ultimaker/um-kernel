@@ -12,12 +12,6 @@
 #include "skeleton.dtsi"
 #include <dt-bindings/gpio/gpio.h>
 
-#ifdef IMX6DL_ULTIMAKER
-#include "imx6dl.dtsi"
-#else
-#include "imx6qdl.dtsi"
-#endif
-
 &iomuxc {
 	enet {
 		pinctrl_sm2_enet_1: enetgrp-1 {
@@ -355,18 +349,7 @@
                        >;
                };
        };
-#endif
-
-#ifndef IMX6DL_ULTIMAKER
-	lcd_i2c {
-		pinctrl_lcd_i2c_1: lcdi2cgrp-1 {
-			fsl,pins = <
-				MX6QDL_PAD_CSI0_DAT13__GPIO5_IO31	0x4001b8b1 /* SCL */
-				MX6QDL_PAD_CSI0_DAT12__GPIO5_IO30	0x4001b8b1 /* SDA */
-			>;
-		};
-	};
-
+#else
 	pm_i2c {
 		pinctrl_pm_i2c_1: pmi2cgrp-1 {
 			fsl,pins = <
@@ -376,6 +359,15 @@
 		};
 	};
 #endif
+      lcd_i2c {
+		pinctrl_lcd_i2c_1: lcdi2cgrp-1 {
+			fsl,pins = <
+				MX6QDL_PAD_CSI0_DAT13__GPIO5_IO31	0x4001b8b1 /* SCL */
+				MX6QDL_PAD_CSI0_DAT12__GPIO5_IO30	0x4001b8b1 /* SDA */
+			>;
+		};
+	};
+
 };
 
 / {
@@ -555,7 +547,6 @@
 		status = "disabled";
 	};
 
-#ifndef IMX6DL_ULTIMAKER
 	lcd_i2c: i2c@4 {
 		compatible = "i2c-gpio";
 		#address-cells = <1>;
@@ -565,6 +556,9 @@
 		i2c-gpio,delay-us = <2>;	/* ~100 kHz */
 	};
 
+#ifdef IMX6DL_ULTIMAKER
+// This bit-banged i2c interface is unnecessary on the imx6d where there is a fourth hardware i2c device that can be - and is - enabled on the same pins!
+#else
 	pm_i2c: i2c@5 {
 		compatible = "i2c-gpio";
 		#address-cells = <1>;
@@ -595,6 +589,9 @@
 		reg = <0x71>;
 	};
 	
+#ifdef IMX6DL_ULTIMAKER
+// This appears to be a driver definition for a camera control chip that is'nt fitted in our system. Moreover, we have another device (i2c display) at this address!
+#else
 	ov564x_mipi: ov564x_mipi@3c {
 		compatible = "ovti,ov564x_mipi";
 		reg = <0x3c>;
@@ -609,6 +606,7 @@
 		mclk = <24000000>;
 		mclk_source = <0>;
 	};	
+#endif
 };
 
 &i2c2 {
@@ -660,18 +658,7 @@
 	status = "okay";
 
 };
-#endif
-
-#ifndef IMX6DL_ULTIMAKER
-&lcd_i2c {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_lcd_i2c_1>;
-	gpios =
-		<&gpio5 30 0>, /* sda */
-		<&gpio5 31 0>; /* scl */
-	status = "okay";
-};
-
+#else
 &pm_i2c {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pm_i2c_1>;
@@ -681,6 +668,16 @@
 	status = "okay";
 };
 #endif
+
+&lcd_i2c {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lcd_i2c_1>;
+	gpios =
+		<&gpio5 30 0>, /* sda */
+		<&gpio5 31 0>; /* scl */
+	status = "okay";
+};
+
 &pmic {
 
 	pinctrl-names = "default";
