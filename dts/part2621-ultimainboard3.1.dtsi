@@ -72,6 +72,12 @@
 		};
 	};
 
+	amplifier {
+		compatible = "simple-audio-amplifier";
+		enable-gpios = <&pio 2 24 GPIO_ACTIVE_HIGH>;
+		sound-name-prefix = "FRONT";
+	};
+
 	usb0-kill {
 		compatible = "linux,rfkill-gpio";
 		type = "fm";
