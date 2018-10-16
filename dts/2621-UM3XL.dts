@@ -49,7 +49,3 @@
 	compatible = "ultimaker,2621", "olimex,a20-olinuxino-lime2",
 		     "allwinner,sun7i-a20";
 };
-
-&codec {
-	status = "okay";
-};

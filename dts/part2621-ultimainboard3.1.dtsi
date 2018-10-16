@@ -91,6 +91,10 @@
 	};
 };
 
+&codec {
+	status = "okay";
+};
+
 &i2c1 {
 	cabin_light: pca9632@61 {
 		compatible = "nxp,pca9632";
