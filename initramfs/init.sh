@@ -12,7 +12,11 @@ UPDATE_MOUNT="/mnt/update"
 TOOLBOX_MOUNT="/mnt/toolbox"
 TOOLBOX_IMAGE="um-update_toolbox.xz.img"
 
-SYSTEM_UPDATE_ENTRYPOINT="${TOOLBOX_MOUNT}/sbin/start_update.sh"
+PREFIX="${PREFIX:-/usr/}"
+EXEC_PREFIX="${PREFIX}"
+SBINDIR="${EXEC_PREFIX}/sbin"
+
+SYSTEM_UPDATE_ENTRYPOINT="${TOOLBOX_MOUNT}/${SBINDIR}/start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 BB_BIN="/bin/busybox"
 WATCHDOG_DEV="/dev/watchdog"
