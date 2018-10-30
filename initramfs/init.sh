@@ -19,6 +19,25 @@ SBINDIR="${EXEC_PREFIX}/sbin"
 SYSTEM_UPDATE_ENTRYPOINT="${UPDATE_IMG_MOUNT}/${SBINDIR}/start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 BB_BIN="/bin/busybox"
+CMDS=" \
+    [ \
+    break \
+    continue \
+    echo \
+    exec \
+    findfs \
+    mktemp \
+    modprobe \
+    mount \
+    mv \
+    poweroff \
+    reboot \
+    shutdown \
+    sleep \
+    switch_root \
+    umount \
+    watchdog \
+"
 WATCHDOG_DEV="/dev/watchdog"
 
 init="/sbin/init"
@@ -227,6 +246,14 @@ kernel_umount()
     umount /dev
 }
 
+toolcheck()
+{
+    echo "Checking command availability."
+    for cmd in ${CMDS}; do
+        command -V "${cmd}"
+    done
+}
+
 busybox_setup()
 {
     "${BB_BIN}" --install -s
@@ -235,6 +262,7 @@ busybox_setup()
 trap critical_error EXIT
 
 busybox_setup
+toolcheck
 kernel_mount
 parse_cmdline
 
