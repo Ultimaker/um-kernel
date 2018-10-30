@@ -1,4 +1,4 @@
-setenv bootargs console=tty0 fbcon=map:63 root=/dev/${ROOT_DEV} ro rootwait rootdelay=2 rootfstype=${ROOT_FS} console=ttymxc3,115200 earlyprintk rescue
+setenv bootargs console=tty0 fbcon=map:63 root=/dev/${ROOT_DEV} ro rootwait rootdelay=2 rootfstype=${ROOT_FS} console=ttymxc3,115200 earlyprintk ${opt_args}
 setenv fdt_high 0xffffffff
 
 setenv article_num_r 0x43300000
