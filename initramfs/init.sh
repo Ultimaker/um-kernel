@@ -16,7 +16,7 @@ PREFIX="${PREFIX:-/usr/}"
 EXEC_PREFIX="${PREFIX}"
 SBINDIR="${EXEC_PREFIX}/sbin"
 
-SYSTEM_UPDATE_ENTRYPOINT="${UPDATE_IMG_MOUNT}/${SBINDIR}/start_update.sh"
+SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -155,23 +155,30 @@ find_and_run_update()
             break;
         fi
 
-        echo "Successfully mounted '${UPDATE_IMAGE}', looking for '${SYSTEM_UPDATE_ENTRYPOINT}' script."
-        if [ ! -x "${SYSTEM_UPDATE_ENTRYPOINT}" ]; then
-            echo "Error, update failed: no '${SYSTEM_UPDATE_ENTRYPOINT}' script found on '${UPDATE_IMG_MOUNT}'."
+        echo "Successfully mounted '${UPDATE_IMAGE}', looking for '${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}' script."
+        if [ ! -x "${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}" ]; then
+            echo "Error, update failed: no '${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}' script found on '${UPDATE_IMG_MOUNT}'."
             critical_error
             break;
         fi
 
-        echo "Found '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
-        if ! "${SYSTEM_UPDATE_ENTRYPOINT}" "${UPDATE_IMG_MOUNT}" "${update_tmpfs_mount}" "${base_dev}"; then
+        echo "Copying '${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}' from the update image."
+        if ! cp "${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/"; then
+            echo "Error, copy of '${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}' to '${update_tmpfs_mount}' failed."
+            critical_error
+            break;
+        fi
+
+        echo "Copied update script from image, cleaning up."
+        if ! umount "${UPDATE_IMG_MOUNT}"; then
+            echo "Warning: unable to unmount '${UPDATE_IMG_MOUNT}'."
+        fi
+
+        echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
+        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${UPDATE_IMG_MOUNT}" "${update_tmpfs_mount}" "${base_dev}"; then
             echo "Error, update failed: executing '${SYSTEM_UPDATE_ENTRYPOINT} ${UPDATE_MOUNT} ${UPDATE_SRC_MOUNT} ${base_dev}'."
             critical_error
             break;
-        fi
-
-        echo "Update finished successfully, attempting to clean up update files."
-        if ! umount "${UPDATE_IMG_MOUNT}"; then
-            echo "Warning: unable to unmount '${UPDATE_IMG_MOUNT}'."
         fi
 
         if ! rm "${update_tmpfs_mount}/${UPDATE_IMAGE:?}"; then
