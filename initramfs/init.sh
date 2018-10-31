@@ -176,7 +176,7 @@ find_and_run_update()
 
         echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
         if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}"; then
-            echo "Error, update failed: executing '${SYSTEM_UPDATE_ENTRYPOINT} ${UPDATE_MOUNT} ${UPDATE_SRC_MOUNT} ${base_dev}'."
+            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev}'."
             critical_error
             break;
         fi
