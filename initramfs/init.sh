@@ -31,6 +31,7 @@ CMDS=" \
     mount \
     mv \
     poweroff \
+    readlink \
     reboot \
     shutdown \
     sleep \
@@ -115,6 +116,17 @@ boot_root()
     echo "Mounting ${root}."
     mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root}" "${ROOT_MOUNT}"
     kernel_umount
+
+    test_init="${init}"
+    if [ -L "${ROOT_MOUNT}/${init}" ]; then
+       test_init="${ROOT_MOUNT}/$(readlink "${ROOT_MOUNT}/${init}")"
+    fi
+    if [ ! -x "${test_init}" ]; then
+        echo "Error, no such file '${test_init}'."
+        critical_error
+        restart
+    fi
+
     echo "Starting linux on ${root} of type ${rootfstype} with init=${init}."
     exec switch_root "${ROOT_MOUNT}" "${init}"
 }
