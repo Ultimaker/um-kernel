@@ -31,6 +31,7 @@ CMDS=" \
     mount \
     mv \
     poweroff \
+    readlink \
     reboot \
     shutdown \
     sleep \
@@ -115,6 +116,17 @@ boot_root()
     echo "Mounting ${root}."
     mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root}" "${ROOT_MOUNT}"
     kernel_umount
+
+    test_init="${init}"
+    if [ -L "${ROOT_MOUNT}/${init}" ]; then
+       test_init="${ROOT_MOUNT}/$(readlink "${ROOT_MOUNT}/${init}")"
+    fi
+    if [ ! -x "${test_init}" ]; then
+        echo "Error, no such file '${test_init}'."
+        critical_error
+        restart
+    fi
+
     echo "Starting linux on ${root} of type ${rootfstype} with init=${init}."
     exec switch_root "${ROOT_MOUNT}" "${init}"
 }
@@ -145,7 +157,7 @@ find_and_run_update()
         if ! mv "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
             echo "Error, update failed: unable to move ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
             critical_error
-            break;
+            break
         fi
 
         echo "Attempting to mount '${update_tmpfs_mount}/${UPDATE_IMAGE}' to '${UPDATE_IMG_MOUNT}'."
@@ -159,14 +171,14 @@ find_and_run_update()
         if [ ! -x "${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}" ]; then
             echo "Error, update failed: no '${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}' script found on '${UPDATE_IMG_MOUNT}'."
             critical_error
-            break;
+            break
         fi
 
         echo "Copying '${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}' from the update image."
         if ! cp "${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/"; then
             echo "Error, copy of '${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}' to '${update_tmpfs_mount}' failed."
             critical_error
-            break;
+            break
         fi
 
         echo "Copied update script from image, cleaning up."
@@ -178,7 +190,7 @@ find_and_run_update()
         if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}"; then
             echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev}'."
             critical_error
-            break;
+            break
         fi
 
         if ! rm "${update_tmpfs_mount}/${UPDATE_IMAGE:?}"; then
