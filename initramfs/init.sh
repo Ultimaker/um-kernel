@@ -160,6 +160,13 @@ find_and_run_update()
             break
         fi
 
+        echo "Attempting to unmount '${UPDATE_SRC_MOUNT}' before performing the update."
+        if ! umount "${UPDATE_SRC_MOUNT}"; then
+            echo "Error, update failed: unable to unmount ${UPDATE_SRC_MOUNT}."
+            critical_error
+            break
+        fi
+
         echo "Attempting to mount '${update_tmpfs_mount}/${UPDATE_IMAGE}' to '${UPDATE_IMG_MOUNT}'."
         if ! mount "${update_tmpfs_mount}/${UPDATE_IMAGE}" ${UPDATE_IMG_MOUNT}; then
             echo "Error, update failed: unable to mount '${update_tmpfs_mount}/${UPDATE_IMAGE}'."
