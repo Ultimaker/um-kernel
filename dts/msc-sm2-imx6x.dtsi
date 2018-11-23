@@ -590,8 +590,14 @@
 	};
 	
 #ifdef IMX6DL_ULTIMAKER
-// This appears to be a driver definition for a camera control chip that is'nt fitted in our system. Moreover, we have another device (i2c display) at this address!
+	// usb hub on new ultimainboard
+	usb2512b@2c {
+		compatible = "microchip,usb2512b";
+		reg = <0x2c>;
+		reset-gpios = <&gpio4 5 GPIO_ACTIVE_LOW>;
+	};
 #else
+// This appears to be a driver definition for a camera control chip that is'nt fitted in our system. Moreover, we have another device (i2c display) at this address!
 	ov564x_mipi: ov564x_mipi@3c {
 		compatible = "ovti,ov564x_mipi";
 		reg = <0x3c>;
