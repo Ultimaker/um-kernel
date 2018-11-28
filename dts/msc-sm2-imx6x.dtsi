@@ -230,12 +230,13 @@
 				MX6QDL_PAD_DISP0_DAT9__PWM2_OUT	0x1b0b1
 			>;
 		};
-
+#ifndef IMX6DL_ULTIMAKER
 		pinctrl_pwm3_2: pwm3grp-2 {
 			fsl,pins = <
 				MX6QDL_PAD_SD4_DAT1__PWM3_OUT	0x1b0b1
 			>;
 		};
+#endif
 	};
 
 	lvds {
@@ -865,13 +866,13 @@
 	pinctrl-0 = <&pinctrl_pwm2_2>;
 	status = "disabled";
 };
-
+#ifndef IMX6DL_ULTIMAKER
 &pwm3 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pwm3_2>;
 	status = "okay";
 };
-
+#endif
 &can1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_flexcan1_1>;
@@ -1196,6 +1197,9 @@
 	hog {
 		pinctrl_hog_1: hoggrp-1 {
 			fsl,pins = <
+#ifdef IMX6DL_ULTIMAKER
+				MX6QDL_PAD_SD4_DAT1__GPIO2_IO09		0x30b1 // ATMEL nRST - NOT PWM3!
+#endif
 #ifndef ULTIMAKER_SPI_TEST
 				MX6QDL_PAD_DISP0_DAT2__GPIO4_IO23	0x30b1
 				MX6QDL_PAD_DISP0_DAT1__GPIO4_IO22	0x30b1

@@ -5,7 +5,8 @@
 #include "msc-sm2-imx6sdl.dtsi"
 #include "next-ultimainboard3.1.dtsi"
 #include "part201258-ulticontroller3.dtsi"
-#include "part1994-ulticontroller.dtsi"
+// following largely irrelevant and - in its curretn form -  requires PWM3 available:
+// #include "part1994-ulticontroller.dtsi"
 
 / {
 	model = "Freescale imx6dl on MSC SOM on MSC board - alla Ultimaker";
@@ -13,13 +14,13 @@
 	memory: memory {
 		reg = <0x10000000 0x80000000>; /* 2 GiB */
 	};
-
-    /* beeper stuff below not checked properly yet! */
+#if 0
+    /* beeper stuff below not woreking - we must stay off pwm3 whose pins are used  for SPI nRST! */
       beeper {
 	  pwm-names = "opinicus-board-beeper";
 	  compatible = "pwm-beeper";
 	  pwms = <&pwm3 1 500000 0>;
 	  status = "okay";
       };
-
+#endif
 };
