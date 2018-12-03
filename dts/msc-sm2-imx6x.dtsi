@@ -625,7 +625,7 @@
 	hdmi_display: hdmi@0x50 {
 		compatible = "fsl,imx6-hdmi-i2c";
 		reg = <0x50>;
-		status = "disabled";
+		status = "okay";
 	};
 };
 
