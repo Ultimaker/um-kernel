@@ -43,7 +43,7 @@ DEB_DIR=`pwd`/debian
 KCONFIG=`pwd`/configs/${BUILDCONFIG}_config
 KERNEL_BUILD=`pwd`/_build_armhf/${BUILDCONFIG}-linux
 
-INITRAMFS_MODULES="sunxi_wdt.ko ssd1307fb.ko fb_sys_fops.ko sysfillrect.ko syscopyarea.ko sysimgblt.ko"
+INITRAMFS_MODULES_REQ="sunxi_wdt.ko ssd1307fb.ko"
 INITRAMFS_COMPRESSION="${INITRAMFS_COMPRESSION:-.lzo}"
 INITRAMFS_ROOT_GID=${INITRAMFS_ROOT_GID:-0}
 INITRAMFS_ROOT_UID=${INITRAMFS_ROOT_UID:-0}
@@ -106,6 +106,20 @@ busybox_get()
 }
 
 ##
+# add_module_dependencies
+#
+add_module_dependencies() {
+    declare -A mods
+    local MODULES_DIR="${DEB_DIR}/lib/modules/$1"
+    for module in ${INITRAMFS_MODULES_REQ}; do
+        mods["${module}"]=1
+        deps=$(grep "${module}:" "${MODULES_DIR}/modules.dep" | sed -e 's/^.*:\s*//')
+        for dep in ${deps}; do mods[$(basename "${dep}")]=1; done
+    done
+    INITRAMFS_MODULES="${!mods[@]}"
+}
+
+##
 # initramfs_prepare() - Prepare the initramfs tree
 #
 # To be able to create a initramfs in the temporary build directory, where
@@ -139,11 +153,12 @@ initramfs_prepare()
     if [ -d "${INITRAMFS_MODULES_DIR}" ]; then
         rm -rf "${INITRAMFS_MODULES_DIR}"
     fi
-    if [ -n "${INITRAMFS_MODULES}" ]; then
+    if [ -n "${INITRAMFS_MODULES_REQ}" ]; then
         mkdir -p "${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}"
         echo -e "\n# kernel modules" >> "${INITRAMFS_DEST}"
         echo "dir /lib/modules/ 0755 0 0" >> "${INITRAMFS_DEST}"
         echo "dir /lib/modules/${KERNELRELEASE}/ 0755 0 0" >> "${INITRAMFS_DEST}"
+        add_module_dependencies "${KERNELRELEASE}"
     fi
 
     for module in ${INITRAMFS_MODULES}; do
