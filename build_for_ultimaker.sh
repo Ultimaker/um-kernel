@@ -43,7 +43,8 @@ DEB_DIR=`pwd`/debian
 KCONFIG=`pwd`/configs/${BUILDCONFIG}_config
 KERNEL_BUILD=`pwd`/_build_armhf/${BUILDCONFIG}-linux
 
-INITRAMFS_MODULES_REQ="sunxi_wdt.ko ssd1307fb.ko"
+INITRAMFS_MODULES_REQ="sunxi_wdt.ko sun4i-drm-hdmi.ko sun4i-hdmi-i2c.ko sun4i-tcon.ko sun4i-backend.ko gpio-pca953x.ko leds-pca963x.ko ssd1307fb.ko"
+#INITRAMFS_MODULES_REQ="sunxi_wdt.ko gpio-pca953x.ko leds-pca963x.ko ssd1307fb.ko"
 INITRAMFS_COMPRESSION="${INITRAMFS_COMPRESSION:-.lzo}"
 INITRAMFS_ROOT_GID=${INITRAMFS_ROOT_GID:-0}
 INITRAMFS_ROOT_UID=${INITRAMFS_ROOT_UID:-0}
@@ -53,7 +54,7 @@ INITRAMFS_IMG="${KERNEL_BUILD}/initramfs.cpio${INITRAMFS_COMPRESSION}"
 GEN_INIT_CPIO="${KERNEL_BUILD}/usr/gen_init_cpio"
 GEN_INITRAMFS_LIST="${KERNEL}/scripts/gen_initramfs_list.sh"
 
-BB_PKG="http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/armhf/busybox-static-1.28.4-r1.apk"
+BB_PKG="http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/armhf/busybox-static-1.28.4-r2.apk"
 BB_BIN="busybox"
 
 DEPMOD="${DEPMOD:-/sbin/depmod}"
@@ -128,6 +129,7 @@ add_module_dependencies() {
 #
 initramfs_prepare()
 {
+    set -x
     local INITRAMFS_SRC_DIR="$(pwd)/initramfs"
     local INITRAMFS_DST_DIR="${KERNEL_BUILD}/initramfs"
     local INITRAMFS_MODULES_DIR="${KERNEL_BUILD}/initramfs/lib/modules"
@@ -159,6 +161,7 @@ initramfs_prepare()
         echo "dir /lib/modules/ 0755 0 0" >> "${INITRAMFS_DEST}"
         echo "dir /lib/modules/${KERNELRELEASE}/ 0755 0 0" >> "${INITRAMFS_DEST}"
         add_module_dependencies "${KERNELRELEASE}"
+	echo "Modules to integrate after resolving dependencies: ${INITRAMFS_MODULES}"
     fi
 
     for module in ${INITRAMFS_MODULES}; do
@@ -179,6 +182,7 @@ initramfs_prepare()
             echo "file /lib/modules/${KERNELRELEASE}/${moddep} ${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}/${moddep} 0755 0 0" >> "${INITRAMFS_DEST}"
         fi
     done
+    set +x
 }
 
 ##

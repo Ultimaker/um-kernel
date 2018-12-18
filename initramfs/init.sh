@@ -101,7 +101,8 @@ rescue_shell()
     ${BB_BIN} echo "# Tip: type help<enter> for available commands.  #"
     ${BB_BIN} echo "#                                                #"
     ${BB_BIN} echo "##################################################"
-    exec ${BB_BIN} sh
+#    exec ${BB_BIN} sh
+    ${BB_BIN} sh
 }
 
 critical_error()
