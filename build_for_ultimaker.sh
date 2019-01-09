@@ -53,7 +53,7 @@ INITRAMFS_IMG="${KERNEL_BUILD}/initramfs.cpio${INITRAMFS_COMPRESSION}"
 GEN_INIT_CPIO="${KERNEL_BUILD}/usr/gen_init_cpio"
 GEN_INITRAMFS_LIST="${KERNEL}/scripts/gen_initramfs_list.sh"
 
-BB_PKG="http://ftp.nl.debian.org/debian/pool/main/b/busybox/busybox-static_1.22.0-19+b3_armhf.deb"
+BB_PKG="http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/armhf/busybox-static-1.28.4-r3.apk"
 BB_BIN="busybox"
 
 DEPMOD="${DEPMOD:-/sbin/depmod}"
@@ -81,7 +81,7 @@ git submodule update
 busybox_get()
 {
     local BB_DIR=$(mktemp -d)
-    local BB_AR="${BB_DIR}/busybox-static_armhf.deb"
+    local BB_APK="${BB_DIR}/busybox-static_armhf.apk"
     local DEST_DIR="${1}"
     local cwd=$(pwd)
 
@@ -95,11 +95,14 @@ busybox_get()
         exit 1
     fi
 
-    wget -q "${BB_PKG}" -O "${BB_AR}"
-    cd "${BB_DIR}" # ar always extracts to the cwd
-    ar -x "${BB_AR}" "data.tar.xz"
-    cd "${cwd}"
-    tar -xf "${BB_DIR}/data.tar.xz" --strip=2 -C "${DEST_DIR}" "./bin/${BB_BIN}"
+    if ! wget -q "${BB_PKG}" -O "${BB_APK}"; then
+        echo "Unable to download the busybox package '${BB_PKG}'. Update the download URL."
+        exit 1
+    fi
+
+    tar -xf "${BB_APK}" --strip=1 -C "${BB_DIR}" "bin/busybox.static"
+    mv "${BB_DIR}/busybox.static" "${DEST_DIR}/${BB_BIN}"
+
     rm -r "${BB_DIR}"
     if [ ! -x "${DEST_DIR}/${BB_BIN}" ]; then
         echo "Failed to get busybox."
