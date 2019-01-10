@@ -1,3 +1,4 @@
 [submodule "linux"]
 	path = linux
 	url = https://github.com/Ultimaker/linux.git
+	branch = opinicus-4.14.1-SMARC-sAMX61
