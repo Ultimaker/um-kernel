@@ -43,7 +43,7 @@ DEB_DIR=`pwd`/debian
 KCONFIG=`pwd`/configs/${BUILDCONFIG}_config
 KERNEL_BUILD=`pwd`/_build_armhf/${BUILDCONFIG}-linux
 
-INITRAMFS_MODULES="sunxi_wdt.ko ssd1307fb.ko fb_sys_fops.ko sysfillrect.ko syscopyarea.ko sysimgblt.ko"
+INITRAMFS_MODULES_REQUIRED="sunxi_wdt.ko ssd1307fb.ko"
 INITRAMFS_COMPRESSION="${INITRAMFS_COMPRESSION:-.lzo}"
 INITRAMFS_ROOT_GID=${INITRAMFS_ROOT_GID:-0}
 INITRAMFS_ROOT_UID=${INITRAMFS_ROOT_UID:-0}
@@ -110,6 +110,29 @@ busybox_get()
 }
 
 ##
+# add_module_dependencies() - Add all module dependencies
+#
+# In initramfs we can make drivers available by adding them to
+# the 'INITRAMFS_MODULES_REQUIRED' variable. This function
+# makes sure that the driver dependencies are also added to the
+# list.
+#
+add_module_dependencies()
+{
+    MODULES_DIR="${DEB_DIR}/lib/modules/${1}"
+    INITRAMFS_MODULES="${INITRAMFS_MODULES_REQUIRED}"
+    for module in ${INITRAMFS_MODULES_REQUIRED}; do
+        dependencies="$(grep "${module}:" "${MODULES_DIR}/modules.dep" | sed -e "s|^.*:\s*||")"
+        for dependency in ${dependencies}; do
+            dep_module="$(basename "${dependency}")"
+            if [ -n "${INITRAMFS_MODULES##*${dep_module}*}" ]; then
+                INITRAMFS_MODULES="${INITRAMFS_MODULES} ${dep_module}"
+            fi
+        done
+    done
+}
+
+##
 # initramfs_prepare() - Prepare the initramfs tree
 #
 # To be able to create a initramfs in the temporary build directory, where
@@ -143,11 +166,12 @@ initramfs_prepare()
     if [ -d "${INITRAMFS_MODULES_DIR}" ]; then
         rm -rf "${INITRAMFS_MODULES_DIR}"
     fi
-    if [ -n "${INITRAMFS_MODULES}" ]; then
+    if [ -n "${INITRAMFS_MODULES_REQUIRED}" ]; then
         mkdir -p "${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}"
         echo -e "\n# kernel modules" >> "${INITRAMFS_DEST}"
         echo "dir /lib/modules/ 0755 0 0" >> "${INITRAMFS_DEST}"
         echo "dir /lib/modules/${KERNELRELEASE}/ 0755 0 0" >> "${INITRAMFS_DEST}"
+        add_module_dependencies "${KERNELRELEASE}"
     fi
 
     for module in ${INITRAMFS_MODULES}; do
