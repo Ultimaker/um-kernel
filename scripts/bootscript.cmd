@@ -1,4 +1,3 @@
-setenv bootargs console=tty0 fbcon=map:63 root=/dev/${ROOT_DEV} ro rootwait rootdelay=2 rootfstype=${ROOT_FS} console=ttyS0,115200 earlyprintk
 setenv fdt_high 0xffffffff
 ${BOOTSPLASH_COMMANDS}
 
@@ -23,6 +22,8 @@ echo Article number: ${article_number}-${article_rev}
 # Build the possible dtb list from the article numbers with a fallback.
 # We fall back to the v1 electronics with display right now, as these are most common, and required for the production installer software.
 setenv dtb_list ${article_number}-${article_rev}.dtb ${article_number}.dtb part2005-withpart1994.dts jedi-common.dtb sun7i-a20-opinicus_emmc_v1.dtb
+
+setenv bootargs um_an=${article_number} console=tty0 fbcon=map:63 root=/dev/${ROOT_DEV} ro rootwait rootdelay=2 rootfstype=${ROOT_FS} console=ttyS0,115200 earlyprintk ${jedimagic}
 
 load mmc 0 ${kernel_addr_r} uImage-sun7i-a20-opinicus_v1
 for dtb in ${dtb_list}; do
