@@ -11,10 +11,14 @@ ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
 UPDATE_IMG_MOUNT="/mnt/update_img"
 UPDATE_SRC_MOUNT="/mnt/update"
+RESCUE_SHELL="no"
 
 PREFIX="${PREFIX:-/usr/}"
 EXEC_PREFIX="${PREFIX}"
 SBINDIR="${EXEC_PREFIX}/sbin"
+
+UM3_DISPLAY_ARTICLE_NUMBERS="9066 9511"
+SLINE_DISPLAY_ARTICLE_NUMBERS="9051"
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
@@ -131,6 +135,18 @@ boot_root()
     exec switch_root "${ROOT_MOUNT}" "${init}"
 }
 
+enable_framebuffer_device()
+{
+    if [ -z "${ARTICLE_NUMBER}" ]; then
+        return
+    fi
+    if [ -z "${UM3_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
+        modprobe -v ssd1307fb || true
+    elif [ -z "${SLINE_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
+        echo "S-Line framebuffer support not enabled in initramfs."
+    fi
+}
+
 find_and_run_update()
 {
     echo "Checking for updates ..."
@@ -194,8 +210,8 @@ find_and_run_update()
         fi
 
         echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
-        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}"; then
-            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev}'."
+        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "${ARTICLE_NUMBER}"; then
+            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} ${ARTICLE_NUMBER}'."
             critical_error
             break
         fi
@@ -220,8 +236,11 @@ parse_cmdline()
     # Disabled because it is nos possible in a while read loop
     for cmd in $(cat /proc/cmdline); do
         case "${cmd}" in
+        um_an=*)
+            ARTICLE_NUMBER="$(echo $((0x${cmd#*=})))"
+        ;;
         rescue)
-            rescue_shell
+            RESCUE_SHELL="yes"
         ;;
         ro)
             rwmode="ro"
@@ -291,9 +310,12 @@ busybox_setup
 toolcheck
 kernel_mount
 parse_cmdline
+enable_framebuffer_device
+if [ "${RESCUE_SHELL}" -eq "yes" ]; then
+    rescue_shell
+fi
 
 find_and_run_update
-
 boot_root
 
 critical_error
