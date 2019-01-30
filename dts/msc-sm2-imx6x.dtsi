@@ -589,25 +589,6 @@
 		compatible = "ti,tmp103";
 		reg = <0x71>;
 	};
-	
-#ifdef IMX6DL_ULTIMAKER
-// This appears to be a driver definition for a camera control chip that is'nt fitted in our system. Moreover, we have another device (i2c display) at this address!
-#else
-	ov564x_mipi: ov564x_mipi@3c {
-		compatible = "ovti,ov564x_mipi";
-		reg = <0x3c>;
-		clocks = <&clks 201>;
-		clock-names = "csi_mclk";
-		DOVDD-supply = <&reg_1p8v>;
-		AVDD-supply = <&reg_2p8v>;
-		DVDD-supply = <&reg_1p5v>;
-		pwn-gpios = <&gpio3 29 1>;
-		rst-gpios = <&gpio3 28 1>;
-		csi_id = <0>;
-		mclk = <24000000>;
-		mclk_source = <0>;
-	};	
-#endif
 };
 
 &i2c2 {
