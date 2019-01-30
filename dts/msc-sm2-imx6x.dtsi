@@ -391,8 +391,7 @@
 			regulator-name = "usb_h1_vbus";
 			regulator-min-microvolt = <5000000>;
 			regulator-max-microvolt = <5000000>;
-			gpio = <&gpio1 0 0>;
-			enable-active-high;
+			regulator-always-on;
 		};
 
 		reg_aud_vdda: reg_aud_vdda {
@@ -588,6 +587,16 @@
 	thermal: thermal@0x71 {
 		compatible = "ti,tmp103";
 		reg = <0x71>;
+	};
+
+	// USB hub on UltiMainboard v4.1
+	usb2512b@2c {
+		compatible = "microchip,usb2512b";
+		reg = <0x2c>;
+		reset-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>;
+		string-support;
+		manufacturer = "Ultimaker";
+		product = "UltiMainboard v4.1 USB hub";
 	};
 };
 
