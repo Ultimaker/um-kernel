@@ -85,9 +85,9 @@
 	usbhost {
 		pinctrl_usbhost: usbhostgrp {
 			fsl,pins = <
-				MX6QDL_PAD_GPIO_0__GPIO1_IO00	0x30b1	/* USBH_PWR_EN */
+				MX6QDL_PAD_GPIO_0__GPIO1_IO00			0x1b8b1	/* iMX6 T5, SoM P67, SMARC USB1_EN_OC#, Linux GPIO 0, Output to switch external power enable */
 				MX6QDL_PAD_GPIO_3__XTALOSC_REF_CLK_24M	0x1b030	/* USB_REFCLK */
-				MX6QDL_PAD_EIM_D30__GPIO3_IO30	0x30b1	/* USB_HUB_RESET */
+				MX6QDL_PAD_EIM_D30__GPIO3_IO30			0x1b8b1	/* iMX6 J20, SoM P67, SMARC USB1_EN_OC#, Linux GPIO 94, Input to monitor external power over-current */
 			>;
 		};
 	};
