@@ -316,7 +316,7 @@ toolcheck
 kernel_mount
 parse_cmdline
 enable_framebuffer_device
-if [ "${RESCUE_SHELL}" -eq "yes" ]; then
+if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
 
