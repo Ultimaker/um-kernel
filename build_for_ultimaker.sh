@@ -43,7 +43,7 @@ DEB_DIR=`pwd`/debian
 KCONFIG=`pwd`/configs/${BUILDCONFIG}_config
 KERNEL_BUILD=`pwd`/_build_armhf/${BUILDCONFIG}-linux
 
-INITRAMFS_MODULES_REQUIRED="sunxi_wdt.ko ssd1307fb.ko"
+INITRAMFS_MODULES_REQUIRED="sunxi_wdt.ko ssd1307fb.ko drm.ko sun4i-backend.ko sun4i-drm.ko sun4i-tcon.ko sun4i-drm-hdmi.ko sun4i-hdmi-i2c.ko"
 INITRAMFS_COMPRESSION="${INITRAMFS_COMPRESSION:-.lzo}"
 INITRAMFS_ROOT_GID=${INITRAMFS_ROOT_GID:-0}
 INITRAMFS_ROOT_UID=${INITRAMFS_ROOT_UID:-0}

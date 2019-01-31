@@ -143,7 +143,12 @@ enable_framebuffer_device()
     if [ -z "${UM3_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
         modprobe -v ssd1307fb || true
     elif [ -z "${SLINE_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
-        echo "S-Line framebuffer support not enabled in initramfs."
+        modprobe sun4i-drm-hdmi || true
+        modprobe sun4i-hdmi-i2c || true
+        modprobe sun4i-tcon || true
+        modprobe sun4i-backend || true
+        modprobe rc-core || true
+        modprobe sun4i-drm || true
     fi
 }
 
