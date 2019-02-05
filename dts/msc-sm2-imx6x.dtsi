@@ -648,6 +648,11 @@
 	clock-frequency = <100000>;
 	status = "okay";
 
+	carrierdata@57 {
+		compatible = "atmel,24c32";
+		reg = <0x57>;
+		pagesize = <32>;
+	};
 };
 #else
 &pm_i2c {
