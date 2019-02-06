@@ -5434,14 +5434,7 @@ CONFIG_STAGING=y
 # Speakup console speech
 #
 # CONFIG_SPEAKUP is not set
-CONFIG_STAGING_MEDIA=y
-CONFIG_VIDEO_IMX_MEDIA=m
-
-#
-# i.MX5/6 Media Sub devices
-#
-CONFIG_VIDEO_IMX_CSI=m
-# CONFIG_LIRC_STAGING is not set
+# CONFIG_STAGING_MEDIA is not set
 
 #
 # Android
