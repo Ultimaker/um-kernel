@@ -348,6 +348,7 @@
 			fsl,pins = <
 				MX6QDL_PAD_NANDF_WP_B__I2C4_SCL		0x4001b8b1
 				MX6QDL_PAD_NANDF_CS3__I2C4_SDA		0x4001b8b1
+				MX6QDL_PAD_SD4_DAT4__GPIO2_IO12		0x30b1		/* iMX6 E18, SoM P118, SMARC GPIO10, Linux GPIO 44, Output to write-protect carrier data EEPROM U12 */
 			>;
 		};
 	};
@@ -649,9 +650,11 @@
 	status = "okay";
 
 	carrierdata@57 {
+		/* Carrier data EEPROM U12 */
 		compatible = "atmel,24c32";
 		reg = <0x57>;
 		pagesize = <32>;
+		wp-gpios = <&gpio2 12 0>;
 	};
 };
 #else
@@ -1242,7 +1245,6 @@
 				MX6QDL_PAD_SD4_DAT0__GPIO2_IO08		0x30b1		/* SMARC2 GPIO4 */
 				MX6QDL_PAD_SD4_DAT2__GPIO2_IO10		0x30b1		/* SMARC2 GPIO8 */
 				MX6QDL_PAD_SD4_DAT3__GPIO2_IO11		0x30b1		/* SMARC2 GPIO9 */
-				MX6QDL_PAD_SD4_DAT4__GPIO2_IO12		0x30b1		/* SMARC2 GPIO10 */
 				MX6QDL_PAD_SD4_DAT5__GPIO2_IO13		0x30b1		/* SMARC2 GPIO11 */
 				MX6QDL_PAD_SD4_DAT6__GPIO2_IO14		0x30b1		/* SMARC2 GPIO7 */
 				MX6QDL_PAD_CSI0_DAT16__GPIO6_IO02	0x30b1
