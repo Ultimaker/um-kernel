@@ -43,6 +43,9 @@
 				MX6QDL_PAD_NANDF_D5__GPIO2_IO05		0x80000000	/* DEBUG_2 on SoM debug connector */
 				MX6QDL_PAD_ENET_CRS_DV__GPIO1_IO25	0x80000000	/* Orange LED on SoM */
 				MX6QDL_PAD_KEY_COL1__GPIO4_IO08		0x80000000	/* SATA LED on SATA_ACT# */
+				MX6QDL_PAD_EIM_D29__GPIO3_IO29		0x30b1		/* SMARC2 GPIO0, Carrier board LED0 */
+				MX6QDL_PAD_GPIO_16__GPIO7_IO11		0x30b1		/* SMARC2 GPIO1, Carrier board LED1 */
+				MX6QDL_PAD_EIM_D28__GPIO3_IO28		0x30b1		/* SMARC2 GPIO2, Carrier board LED2 */
 			>;
 		};
 	};
@@ -471,6 +474,27 @@
 		led5 {
 			label = "somdebug:green:debug-led-3";
 			gpios = <&gpio2 5 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "none";
+			default-state = "off";
+		};
+
+		led6 {
+			label = "carrier:red:um-led-0";
+			gpios = <&gpio3 29 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "mmc0";
+			default-state = "off";
+		};
+
+		led7 {
+			label = "carrier:red:um-led-1";
+			gpios = <&gpio7 11 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+			default-state = "off";
+		};
+
+		led8 {
+			label = "carrier:red:um-led-2";
+			gpios = <&gpio3 28 GPIO_ACTIVE_HIGH>;
 			linux,default-trigger = "none";
 			default-state = "off";
 		};
@@ -1175,8 +1199,6 @@
 				MX6QDL_PAD_EIM_A23__GPIO6_IO06		0x30b1
 				MX6QDL_PAD_EIM_A24__GPIO5_IO04		0x30b1
 				MX6QDL_PAD_EIM_A25__GPIO5_IO02		0x30b1		/* TPM_DAVINTn */
-				MX6QDL_PAD_EIM_D28__GPIO3_IO28		0x30b1		/* SMARC2 GPIO2 */
-				MX6QDL_PAD_EIM_D29__GPIO3_IO29		0x30b1		/* SMARC2 GPIO0 */
 				MX6QDL_PAD_EIM_EB3__GPIO2_IO31		0x30b1
 				MX6QDL_PAD_EIM_WAIT__GPIO5_IO00		0x30b1
 				MX6QDL_PAD_EIM_EB1__GPIO2_IO29		0x30b1
@@ -1195,7 +1217,6 @@
 				MX6QDL_PAD_EIM_DA13__GPIO3_IO13		0x30b1
 				MX6QDL_PAD_EIM_DA14__GPIO3_IO14		0x30b1
 				MX6QDL_PAD_EIM_DA15__GPIO3_IO15		0x30b1
-				MX6QDL_PAD_GPIO_16__GPIO7_IO11		0x30b1		/* SMARC2 GPIO1 */
 				MX6QDL_PAD_GPIO_17__GPIO7_IO12		0x30b1		/* SMARC2 GPIO3 */
 				MX6QDL_PAD_GPIO_19__GPIO4_IO05		0x30b1		/* SMARC2 GPIO6 CLOCKOUT*/
 				MX6QDL_PAD_NANDF_CS0__GPIO6_IO11	0x30b1
