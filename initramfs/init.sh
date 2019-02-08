@@ -135,21 +135,30 @@ boot_root()
     exec switch_root "${ROOT_MOUNT}" "${init}"
 }
 
+probe_module()
+{
+    if ! modprobe -v "${1}"; then
+        echo "Failed to probe module: '${1}', removing."
+        rmmod "${1}.ko" || true
+        return
+    fi
+}
+
 enable_framebuffer_device()
 {
     if [ -z "${ARTICLE_NUMBER}" ]; then
         return
     fi
     if [ -z "${UM3_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
-        modprobe -v ssd1307fb || true
+        probe_module ssd1307fb
     elif [ -z "${SLINE_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
-        modprobe sun4i-drm-hdmi || true
-        modprobe sun4i-hdmi-i2c || true
-        modprobe sun4i-tcon || true
-        modprobe sun4i-backend || true
-        modprobe rc-core || true
-        modprobe sun4i-drm || true
+        probe_module sun4i-drm-hdmi
+        probe_module sun4i-hdmi-i2c
+        probe_module sun4i-tcon
+        probe_module sun4i-backend
+        probe_module sun4i-drm
     fi
+    echo "Successfully registered framebuffer device."
 }
 
 find_and_run_update()

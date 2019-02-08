@@ -123,6 +123,7 @@ add_module_dependencies()
     INITRAMFS_MODULES="${INITRAMFS_MODULES_REQUIRED}"
     for module in ${INITRAMFS_MODULES_REQUIRED}; do
         dependencies="$(grep "${module}:" "${MODULES_DIR}/modules.dep" | sed -e "s|^.*:\s*||")"
+        echo "Adding dependencies: '${dependencies}' for module: '${module}'"
         for dependency in ${dependencies}; do
             dep_module="$(basename "${dependency}")"
             if [ -n "${INITRAMFS_MODULES##*${dep_module}*}" ]; then
@@ -176,10 +177,11 @@ initramfs_prepare()
 
     for module in ${INITRAMFS_MODULES}; do
         if [ -z "$(find "${KERNEL_BUILD}/drivers/" -name "${module}" -print -exec cp "{}" "${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}" \;)" ]; then
-            echo "Kernel ${module} not available."
-            exit 1
+            echo "Warning: kernel module: '${module}' not available."
+        else
+            echo "Adding kernel module: '${module}' to initrd."
+            echo "file /lib/modules/${KERNELRELEASE}/${module} ${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}/${module} 0755 0 0" >> "${INITRAMFS_DEST}"
         fi
-        echo "file /lib/modules/${KERNELRELEASE}/${module} ${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}/${module} 0755 0 0" >> "${INITRAMFS_DEST}"
     done
 
     if [ -n "${INITRAMFS_MODULES}" ] && ! ${DEPMOD} -b "${INITRAMFS_DST_DIR}" ${KERNELRELEASE}; then
