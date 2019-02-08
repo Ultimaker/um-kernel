@@ -38,11 +38,11 @@
 	led {
 		pinctrl_leds_1: ledsgrp-1 {
 			fsl,pins = <
-				MX6QDL_PAD_NANDF_D3__GPIO2_IO03		0x80000000	/* DEBUG_0 */
-				MX6QDL_PAD_NANDF_D4__GPIO2_IO04		0x80000000	/* DEBUG_1 */
-				MX6QDL_PAD_NANDF_D5__GPIO2_IO05		0x80000000	/* DEBUG_2 */
-				MX6QDL_PAD_ENET_CRS_DV__GPIO1_IO25	0x80000000
-				MX6QDL_PAD_KEY_COL1__GPIO4_IO08		0x80000000
+				MX6QDL_PAD_NANDF_D3__GPIO2_IO03		0x80000000	/* DEBUG_0 on SoM debug connector */
+				MX6QDL_PAD_NANDF_D4__GPIO2_IO04		0x80000000	/* DEBUG_1 on SoM debug connector */
+				MX6QDL_PAD_NANDF_D5__GPIO2_IO05		0x80000000	/* DEBUG_2 on SoM debug connector */
+				MX6QDL_PAD_ENET_CRS_DV__GPIO1_IO25	0x80000000	/* Orange LED on SoM */
+				MX6QDL_PAD_KEY_COL1__GPIO4_IO08		0x80000000	/* SATA LED on SATA_ACT# */
 			>;
 		};
 	};
@@ -441,35 +441,35 @@
 		pinctrl-0 = <&pinctrl_leds_1>;
 
 		led1 {
-			label = "module-led";
+			label = "som:orange:module-led";
 			gpios = <&gpio1 25 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "heartbeat";
 			default-state = "off";
 		};
 
 		led2 {
-			label = "sata-act-led";
+			label = "::sata-act-led";
 			gpios = <&gpio4 8 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "none";
 			default-state = "off";
 		};
 
 		led3 {
-			label = "debug-led-1";
+			label = "somdebug:red:debug-led-1";
 			gpios = <&gpio2 3 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "none";
 			default-state = "off";
 		};
 
 		led4 {
-			label = "debug-led-2";
+			label = "somdebug:yellow:debug-led-2";
 			gpios = <&gpio2 4 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "none";
 			default-state = "off";
 		};
 
 		led5 {
-			label = "debug-led-3";
+			label = "somdebug:green:debug-led-3";
 			gpios = <&gpio2 5 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "none";
 			default-state = "off";
