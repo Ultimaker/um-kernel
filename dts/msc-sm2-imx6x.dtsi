@@ -342,7 +342,7 @@
 		};
 	};
 
-	pm_i2c {
+	i2c4 {
 		pinctrl_pm_i2c_0: pmi2cgrp-1 {
 			fsl,pins = <
 				MX6QDL_PAD_NANDF_WP_B__I2C4_SCL		0x4001b8b1
@@ -620,7 +620,7 @@
 	};
 };
 
-&pm_i2c {
+&i2c4 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pm_i2c_0>;
 	clock-frequency = <100000>;
