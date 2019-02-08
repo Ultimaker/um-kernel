@@ -41,13 +41,6 @@
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
 / {
-	leds {
-		green {
-			linux,default-trigger = "mmc0";
-		};
-
-	};
-
 	usb0-kill {
 		compatible = "linux,rfkill-gpio";
 		type = "fm";
