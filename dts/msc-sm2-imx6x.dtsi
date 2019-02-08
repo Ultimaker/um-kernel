@@ -11,6 +11,7 @@
 
 #include "skeleton.dtsi"
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/sound/fsl-imx-audmux.h>
 
 &iomuxc {
 	enet {
@@ -270,11 +271,19 @@
 	audmux {
 		pinctrl_audmux_2: audmux-2 {
 			fsl,pins = <
-				MX6QDL_PAD_CSI0_DAT4__AUD3_TXC		0x130b0
-				MX6QDL_PAD_CSI0_DAT5__AUD3_TXD		0x110b0
-				MX6QDL_PAD_CSI0_DAT6__AUD3_TXFS		0x130b0
-				MX6QDL_PAD_CSI0_DAT7__AUD3_RXD		0x130b0
-				MX6QDL_PAD_CSI0_MCLK__CCM_CLKO1		0x130b0		/* 24Mhz out */
+				MX6QDL_PAD_CSI0_DAT4__AUD3_TXC		0x130b0		/* iMX6 N1, SoM S42, SMARC I2S0_CK, Serial data clock */
+				MX6QDL_PAD_CSI0_DAT5__AUD3_TXD		0x110b0		/* iMX6 P2, SoM S40, SMARC I2S0_SDOUT, Serial TDM data output to the codec */
+				MX6QDL_PAD_CSI0_DAT6__AUD3_TXFS		0x130b0		/* iMX6 N4, SoM S39, SMARC I2S0_LRCK, Sample-synchronization signal to the codec(s) */
+				MX6QDL_PAD_CSI0_DAT7__AUD3_RXD		0x130b0		/* iMX6 N3, SoM S41, SMARC I2S0_SDIN, Serial TDM data inputs from the codec */
+				MX6QDL_PAD_CSI0_MCLK__CCM_CLKO1		0x130b0		/* iMX6 P4, SoM S38, SMARC AUDIO_MCK, Codec clock supply (24MHz) */
+			>;
+		};
+	};
+
+	max98357a {
+		sdmode_en: sdmode-en {
+			fsl,pins = <
+				MX6QDL_PAD_SD4_DAT5__GPIO2_IO13		0x30b1		/* iMX6 C19, SoM P119, SMARC GPIO11, SD_MODE */
 			>;
 		};
 	};
@@ -537,17 +546,35 @@
 		status = "okay";
 	};
 
+	codec: max98357a@0 {
+		compatible = "maxim,max98357a";
+		pinctrl-names = "default";
+		pinctrl-0 = <&sdmode_en>;
+		sdmode-gpios = <&gpio2 13 GPIO_ACTIVE_HIGH>;	/* TODO: Change to proper GPIO pin */
+		sdmode-delay = <2>;
+		#sound-dai-cells = <0>;
+		status = "okay";
+	};
+
 	sound {
-		compatible = "imx6q-msc-sm-sgtl5000",
-			     "fsl,imx-audio-sgtl5000";
-		model = "imx6q-msc-sm-sgtl5000";
-		ssi-controller = <&ssi1>;
-		audio-codec = <&audio_codec>;
-		mux-int-port = <1>;
-		mux-ext-port = <3>;
-		audio-routing = "MIC_IN", "Mic Jack",
-				"Mic Jack", "Mic Bias",
-				"Headphone Jack", "HP_OUT";
+		compatible = "simple-audio-card";
+/*		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_audmux_2>;*/
+		simple-audio-card,name = "On-board Audio";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,widgets = "Speaker", "Speakers";
+		simple-audio-card,routing = "Speakers", "Speaker";
+		simple-audio-card,bitclock-master = <&cpu_dai>;
+		simple-audio-card,frame-master = <&cpu_dai>;
+		cpu_dai: simple-audio-card,cpu {
+			sound-dai = <&ssi1>;
+			system-clock-frequency = <883200>;
+			dai-tdm-slot-num = <2>;
+			dai-tdm-slot-width = <16>;
+		};
+		codec_dai: simple-audio-card,codec {
+			sound-dai = <&codec>;
+		};
 	};
 
 	v4l2_cap_0 {
@@ -652,14 +679,6 @@
 		feature-key-offset = <56>;
 		revision-offset = <76>;
 	};
-
-	audio_codec: i2c3@0x0a {
-		compatible = "fsl,sgtl5000";
-		reg = <0x0a>;
-		clocks = <&clks 201>;
-		VDDA-supply = <&reg_aud_vdda>;
-		VDDIO-supply = <&reg_aud_vddio>;
-	};
 };
 
 &i2c4 {
@@ -687,7 +706,6 @@
 };
 
 &pmic {
-
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pmicirq>;
 	compatible = "dlg,da9063";
@@ -842,6 +860,39 @@
 			regulator-max-microvolt = <1800000>;
 		};
 	};
+};
+
+&audmux {
+	status = "okay";
+
+	// Note: 'ssi1' (node of first SSI) corresponds to '_SSI0' below.
+
+	ssi1 {
+		fsl,audmux-port = <MX31_AUDMUX_PORT1_SSI0>;
+		fsl,port-config = <
+			0x00000000
+			IMX_AUDMUX_V2_PDCR_RXDSEL(MX31_AUDMUX_PORT3_SSI_PINS_3)
+		>;
+	};
+
+	aud3 {
+		fsl,audmux-port = <MX31_AUDMUX_PORT3_SSI_PINS_3>;
+		fsl,port-config = <
+			(IMX_AUDMUX_V2_PTCR_TFSDIR |
+			 IMX_AUDMUX_V2_PTCR_TFSEL(MX31_AUDMUX_PORT1_SSI0) |
+			 IMX_AUDMUX_V2_PTCR_TCLKDIR |
+			 IMX_AUDMUX_V2_PTCR_TCSEL(MX31_AUDMUX_PORT1_SSI0))
+			 IMX_AUDMUX_V2_PDCR_RXDSEL(MX31_AUDMUX_PORT1_SSI0)
+			>;
+	};
+};
+
+&ssi1 {
+	fsl,mode = "i2s-master";
+	assigned-clocks = <&clks IMX6QDL_CLK_SSI1_SEL>, <&clks IMX6QDL_CLK_SSI1>;
+	assigned-clock-parents = <&clks IMX6QDL_CLK_PLL4_AUDIO_DIV>;
+	assigned-clock-rates = <0>, <49152000>;		/* 48.0kHz on SSI1 clock */
+	status = "okay";
 };
 
 &gpc {
@@ -1250,7 +1301,6 @@
 				MX6QDL_PAD_SD4_CMD__GPIO7_IO09		0x30b1		/* DDR_CONFIG3*/
 				MX6QDL_PAD_SD4_DAT0__GPIO2_IO08		0x30b1		/* SMARC2 GPIO4 */
 				MX6QDL_PAD_SD4_DAT3__GPIO2_IO11		0x30b1		/* SMARC2 GPIO9 */
-				MX6QDL_PAD_SD4_DAT5__GPIO2_IO13		0x30b1		/* SMARC2 GPIO11 */
 				MX6QDL_PAD_SD4_DAT6__GPIO2_IO14		0x30b1		/* SMARC2 GPIO7 */
 				MX6QDL_PAD_CSI0_DAT16__GPIO6_IO02	0x30b1
 				MX6QDL_PAD_CSI0_DAT17__GPIO6_IO03	0x30b1
