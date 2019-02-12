@@ -309,6 +309,7 @@
 			fsl,pins = <
 				MX6QDL_PAD_CSI0_DAT8__I2C1_SDA		0x4001b8b1
 				MX6QDL_PAD_CSI0_DAT9__I2C1_SCL		0x4001b8b1
+				MX6QDL_PAD_SD4_DAT2__GPIO2_IO10		0x30b1		/* iMX6 F17, SoM P116, SMARC GPIO8, Linux GPIO 42, PCA9555 interrupt input */
 			>;
 		};
 	};
@@ -581,6 +582,23 @@
 	pinctrl-0 = <&pinctrl_i2c1_2>;
 	clock-frequency = <100000>;
 	status = "okay";
+
+	/* GPIO I/O expander on UltiMainboard v4.x */
+	pca9555: pca9555@20 {
+		compatible = "nxp,pca9555";
+		reg = <0x20>;
+/*
+		TODO: Extract interrupt GPIO pin from pinctrl_i2c1_2, create pinctrl_pca9555 and put it in there.
+		pinctrl-names = "default";
+		pinctrl-0 = <&pca9555_pins>;
+*/
+		interrupt-parent = <&gpio2>;		/* GPIO bank 2 */
+		interrupts = <10 IRQ_TYPE_LEVEL_LOW>;	/* GPIO pin 10 */
+		gpio-controller;
+		#gpio-cells = <2>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+	};
 
 	pmic: pmic@0x58 {
 		reg = <0x58>;
@@ -1231,7 +1249,6 @@
 				MX6QDL_PAD_SD4_CLK__GPIO7_IO10		0x30b1		/* DDR_CONFIG2*/
 				MX6QDL_PAD_SD4_CMD__GPIO7_IO09		0x30b1		/* DDR_CONFIG3*/
 				MX6QDL_PAD_SD4_DAT0__GPIO2_IO08		0x30b1		/* SMARC2 GPIO4 */
-				MX6QDL_PAD_SD4_DAT2__GPIO2_IO10		0x30b1		/* SMARC2 GPIO8 */
 				MX6QDL_PAD_SD4_DAT3__GPIO2_IO11		0x30b1		/* SMARC2 GPIO9 */
 				MX6QDL_PAD_SD4_DAT5__GPIO2_IO13		0x30b1		/* SMARC2 GPIO11 */
 				MX6QDL_PAD_SD4_DAT6__GPIO2_IO14		0x30b1		/* SMARC2 GPIO7 */
