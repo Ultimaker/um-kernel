@@ -483,10 +483,10 @@
 			regulator-min-microvolt = <5000000>;
 			regulator-max-microvolt = <5000000>;
 			regulator-always-on;
-/* TODO: This pin will be first set to output-low and the set high. The glitch this produces is propagated onto hdmi_pwr, upsetting the touch screen controller.
-			gpio = <&pca9555 4 0>;		/* HDMI_PWR_EN */
-			enable-active-high;
-*/
+// TODO: This pin will be first set to output-low and the set high. The glitch this produces is propagated onto hdmi_pwr, upsetting the touch screen controller.
+//			gpio = <&pca9555 4 0>;		/* HDMI_PWR_EN */
+//			enable-active-high;
+//
 		};
 
 		reg_vcc5ph: vcc5ph {
