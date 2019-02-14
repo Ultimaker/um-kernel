@@ -437,6 +437,48 @@
 			regulator-max-microvolt = <3300000>;
 			regulator-always-on;
 		};
+
+		reg_vcc5ext: vcc5ext {
+			compatible = "regulator-fixed";
+			regulator-name = "vcc5_ext";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			regulator-always-on;
+			gpio = <&pca9555 0 0>;		/* VCC5_EXT_EN */
+			enable-active-high;
+		};
+
+		reg_vcc5bus: vcc5bus {
+			compatible = "regulator-fixed";
+			regulator-name = "vcc5_bus";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			regulator-always-on;
+			gpio = <&pca9555 2 0>;		/* VCC5_BUS_EN */
+			enable-active-high;
+		};
+
+		reg_hdmipwr: hdmipwr {
+			compatible = "regulator-fixed";
+			regulator-name = "hdmi_pwr";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			regulator-always-on;
+/* TODO: This pin will be first set to output-low and the set high. The glitch this produces is propagated onto hdmi_pwr, upsetting the touch screen controller.
+			gpio = <&pca9555 4 0>;		/* HDMI_PWR_EN */
+			enable-active-high;
+*/
+		};
+
+		reg_vcc5ph: vcc5ph {
+			compatible = "regulator-fixed";
+			regulator-name = "vcc5_ph";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			regulator-always-on;
+			gpio = <&pca9555 6 0>;		/* VCC5_PH_EN */
+			enable-active-high;
+		};
 	};
 
 	leds {
