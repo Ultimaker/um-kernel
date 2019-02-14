@@ -263,6 +263,7 @@
 			fsl,pins = <
 				MX6QDL_PAD_EIM_A22__GPIO2_IO16		0x30b1		/* PCIE reset */
 				MX6QDL_PAD_GPIO_18__GPIO7_IO13		0x30b1		/* RST_OUTn */
+				MX6QDL_PAD_GPIO_19__GPIO4_IO05		0x30b1		/* iMX6 P5, SoM P114, SMARC GPIO6, Linux GPIO 101, Output to switch PCIe power enable */
 			>;
 		};
 	};
@@ -436,6 +437,15 @@
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
 			regulator-always-on;
+		};
+
+		reg_pcie_switch: pcie_switch {
+			compatible = "regulator-fixed";
+			regulator-name = "3v3_pcie";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = <&gpio4 5 0>;		/* PCIE_POWER */
+			enable-active-high;
 		};
 
 		reg_vcc5ext: vcc5ext {
@@ -1146,6 +1156,7 @@
 	pinctrl-0 = <&pinctrl_pcie1>;
 	reset-gpio = <&gpio2 16 0>;
 	pinctrl-assert-gpios = <&gpio7 13 GPIO_ACTIVE_HIGH>;
+	vpcie-supply = <&reg_pcie_switch>;
 	status = "okay";
 };
 #if 0
@@ -1278,7 +1289,6 @@
 				MX6QDL_PAD_EIM_DA14__GPIO3_IO14		0x30b1
 				MX6QDL_PAD_EIM_DA15__GPIO3_IO15		0x30b1
 				MX6QDL_PAD_GPIO_17__GPIO7_IO12		0x30b1		/* SMARC2 GPIO3 */
-				MX6QDL_PAD_GPIO_19__GPIO4_IO05		0x30b1		/* SMARC2 GPIO6 CLOCKOUT*/
 				MX6QDL_PAD_NANDF_CS0__GPIO6_IO11	0x30b1
 				MX6QDL_PAD_NANDF_ALE__GPIO6_IO08	0x30b1		/* HW_CONFIG0 */
 				MX6QDL_PAD_NANDF_CLE__GPIO6_IO07	0x30b1		/* HW_CONFIG1 */
