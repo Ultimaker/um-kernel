@@ -42,11 +42,11 @@
 				MX6QDL_PAD_NANDF_D3__GPIO2_IO03		0x80000000	/* DEBUG_0 on SoM debug connector */
 				MX6QDL_PAD_NANDF_D4__GPIO2_IO04		0x80000000	/* DEBUG_1 on SoM debug connector */
 				MX6QDL_PAD_NANDF_D5__GPIO2_IO05		0x80000000	/* DEBUG_2 on SoM debug connector */
-				MX6QDL_PAD_ENET_CRS_DV__GPIO1_IO25	0x80000000	/* Orange LED on SoM */
-				MX6QDL_PAD_KEY_COL1__GPIO4_IO08		0x80000000	/* SATA LED on SATA_ACT# */
-				MX6QDL_PAD_EIM_D29__GPIO3_IO29		0x30b1		/* SMARC2 GPIO0, Carrier board LED0 */
-				MX6QDL_PAD_GPIO_16__GPIO7_IO11		0x30b1		/* SMARC2 GPIO1, Carrier board LED1 */
-				MX6QDL_PAD_EIM_D28__GPIO3_IO28		0x30b1		/* SMARC2 GPIO2, Carrier board LED2 */
+				MX6QDL_PAD_ENET_CRS_DV__GPIO1_IO25	0x80000000	/* iMX6 U21,                             Linux GPIO  25, SoM Orange LED */
+				MX6QDL_PAD_KEY_COL1__GPIO4_IO08		0x80000000	/* iMX6  U7, SoM  S54, SMARC2 SATA_ACT#, Linux GPIO 104 */
+				MX6QDL_PAD_EIM_D29__GPIO3_IO29		0x30b1		/* iMX6 J19, SoM P108, SMARC2 GPIO0,     Linux GPIO  93, Carrier board LED0 */
+				MX6QDL_PAD_GPIO_16__GPIO7_IO11		0x30b1		/* iMX6  R2, SoM P109, SMARC2 GPIO1,     Linux GPIO 203, Carrier board LED1 */
+				MX6QDL_PAD_EIM_D28__GPIO3_IO28		0x30b1		/* iMX6 G23, SoM P110, SMARC2 GPIO2,     Linux GPIO  92, Carrier board LED2 */
 			>;
 		};
 	};
@@ -89,9 +89,9 @@
 	usbhost {
 		pinctrl_usbhost: usbhostgrp {
 			fsl,pins = <
-				MX6QDL_PAD_GPIO_0__GPIO1_IO00		0x1b8b1		/* iMX6 T5, SoM P67, SMARC USB1_EN_OC#, Linux GPIO 0, Output to switch external power enable */
+				MX6QDL_PAD_GPIO_0__GPIO1_IO00		0x1b8b1		/* iMX6 T5, SoM P67, SMARC2 USB1_EN_OC#, Linux GPIO 0, Output to switch external power enable */
 				MX6QDL_PAD_GPIO_3__XTALOSC_REF_CLK_24M	0x1b030		/* USB_REFCLK */
-				MX6QDL_PAD_EIM_D30__GPIO3_IO30		0x1b8b1		/* iMX6 J20, SoM P67, SMARC USB1_EN_OC#, Linux GPIO 94, Input to monitor external power over-current */
+				MX6QDL_PAD_EIM_D30__GPIO3_IO30		0x1b8b1		/* iMX6 J20, SoM P67, SMARC2 USB1_EN_OC#, Linux GPIO 94, Input to monitor external power over-current */
 			>;
 		};
 	};
@@ -264,7 +264,7 @@
 			fsl,pins = <
 				MX6QDL_PAD_EIM_A22__GPIO2_IO16		0x30b1		/* PCIE reset */
 				MX6QDL_PAD_GPIO_18__GPIO7_IO13		0x30b1		/* RST_OUTn */
-				MX6QDL_PAD_GPIO_19__GPIO4_IO05		0x30b1		/* iMX6 P5, SoM P114, SMARC GPIO6, Linux GPIO 101, Output to switch PCIe power enable */
+				MX6QDL_PAD_GPIO_19__GPIO4_IO05		0x30b1		/* iMX6 P5, SoM P114, SMARC2 GPIO6, Linux GPIO 101, Output to switch PCIe power enable */
 			>;
 		};
 	};
@@ -272,11 +272,11 @@
 	audmux {
 		pinctrl_audmux_2: audmux-2 {
 			fsl,pins = <
-				MX6QDL_PAD_CSI0_DAT4__AUD3_TXC		0x130b0		/* iMX6 N1, SoM S42, SMARC I2S0_CK, Serial data clock */
-				MX6QDL_PAD_CSI0_DAT5__AUD3_TXD		0x110b0		/* iMX6 P2, SoM S40, SMARC I2S0_SDOUT, Serial TDM data output to the codec */
-				MX6QDL_PAD_CSI0_DAT6__AUD3_TXFS		0x130b0		/* iMX6 N4, SoM S39, SMARC I2S0_LRCK, Sample-synchronization signal to the codec(s) */
-				MX6QDL_PAD_CSI0_DAT7__AUD3_RXD		0x130b0		/* iMX6 N3, SoM S41, SMARC I2S0_SDIN, Serial TDM data inputs from the codec */
-				MX6QDL_PAD_CSI0_MCLK__CCM_CLKO1		0x130b0		/* iMX6 P4, SoM S38, SMARC AUDIO_MCK, Codec clock supply (24MHz) */
+				MX6QDL_PAD_CSI0_DAT4__AUD3_TXC		0x130b0		/* iMX6 N1, SoM S42, SMARC2 I2S0_CK, Serial data clock */
+				MX6QDL_PAD_CSI0_DAT5__AUD3_TXD		0x110b0		/* iMX6 P2, SoM S40, SMARC2 I2S0_SDOUT, Serial I2S data output to the codec */
+				MX6QDL_PAD_CSI0_DAT6__AUD3_TXFS		0x130b0		/* iMX6 N4, SoM S39, SMARC2 I2S0_LRCK, Sample-synchronization signal to the codec(s) */
+				MX6QDL_PAD_CSI0_DAT7__AUD3_RXD		0x130b0		/* iMX6 N3, SoM S41, SMARC2 I2S0_SDIN, Serial I2S data inputs from the codec */
+				MX6QDL_PAD_CSI0_MCLK__CCM_CLKO1		0x130b0		/* iMX6 P4, SoM S38, SMARC2 AUDIO_MCK, Codec clock supply (24MHz) */
 			>;
 		};
 	};
@@ -284,7 +284,7 @@
 	max98357a {
 		sdmode_en: sdmode-en {
 			fsl,pins = <
-				MX6QDL_PAD_SD4_DAT5__GPIO2_IO13		0x30b1		/* iMX6 C19, SoM P119, SMARC GPIO11, SD_MODE */
+				MX6QDL_PAD_SD4_DAT5__GPIO2_IO13		0x30b1		/* iMX6 C19, SoM P119, SMARC2 GPIO11, SD_MODE */
 			>;
 		};
 	};
@@ -319,7 +319,7 @@
 			fsl,pins = <
 				MX6QDL_PAD_CSI0_DAT8__I2C1_SDA		0x4001b8b1
 				MX6QDL_PAD_CSI0_DAT9__I2C1_SCL		0x4001b8b1
-				MX6QDL_PAD_SD4_DAT2__GPIO2_IO10		0x30b1		/* iMX6 F17, SoM P116, SMARC GPIO8, Linux GPIO 42, PCA9555 interrupt input */
+				MX6QDL_PAD_SD4_DAT2__GPIO2_IO10		0x30b1		/* iMX6 F17, SoM P116, SMARC2 GPIO8, Linux GPIO 42, PCA9555 interrupt input */
 			>;
 		};
 	};
@@ -361,7 +361,7 @@
 			fsl,pins = <
 				MX6QDL_PAD_NANDF_WP_B__I2C4_SCL		0x4001b8b1
 				MX6QDL_PAD_NANDF_CS3__I2C4_SDA		0x4001b8b1
-				MX6QDL_PAD_SD4_DAT4__GPIO2_IO12		0x30b1		/* iMX6 E18, SoM P118, SMARC GPIO10, Linux GPIO 44, Output to write-protect carrier data EEPROM U12 */
+				MX6QDL_PAD_SD4_DAT4__GPIO2_IO12		0x30b1		/* iMX6 E18, SoM P118, SMARC2 GPIO10, Linux GPIO 44, Output to write-protect carrier data EEPROM U12 */
 			>;
 		};
 	};
@@ -448,6 +448,7 @@
 			regulator-always-on;
 		};
 
+		/* UltiMainboard v4.x PCIE_POWER power switch (U26) */
 		reg_pcie_switch: pcie_switch {
 			compatible = "regulator-fixed";
 			regulator-name = "3v3_pcie";
@@ -457,6 +458,7 @@
 			enable-active-high;
 		};
 
+		/* UltiMainboard v4.x VCC5_EXT power switch (U4) */
 		reg_vcc5ext: vcc5ext {
 			compatible = "regulator-fixed";
 			regulator-name = "vcc5_ext";
@@ -467,6 +469,7 @@
 			enable-active-high;
 		};
 
+		/* UltiMainboard v4.x VCC5_BUS power switch (U5) */
 		reg_vcc5bus: vcc5bus {
 			compatible = "regulator-fixed";
 			regulator-name = "vcc5_bus";
@@ -477,6 +480,7 @@
 			enable-active-high;
 		};
 
+		/* UltiMainboard v4.x HDMI_PWR power switch (U29) */
 		reg_hdmipwr: hdmipwr {
 			compatible = "regulator-fixed";
 			regulator-name = "hdmi_pwr";
@@ -489,6 +493,7 @@
 //
 		};
 
+		/* UltiMainboard v4.x VCC5_PH power switch (U36) */
 		reg_vcc5ph: vcc5ph {
 			compatible = "regulator-fixed";
 			regulator-name = "vcc5_ph";
@@ -540,6 +545,7 @@
 			default-state = "off";
 		};
 
+		/* UltiMainboard v4.x LED0 (D16) */
 		led6 {
 			label = "carrier:red:um-led-0";
 			gpios = <&gpio3 29 GPIO_ACTIVE_HIGH>;
@@ -547,6 +553,7 @@
 			default-state = "off";
 		};
 
+		/* UltiMainboard v4.x LED1 (D15) */
 		led7 {
 			label = "carrier:red:um-led-1";
 			gpios = <&gpio7 11 GPIO_ACTIVE_HIGH>;
@@ -554,6 +561,7 @@
 			default-state = "off";
 		};
 
+		/* UltiMainboard v4.x LED2 (D17) */
 		led8 {
 			label = "carrier:red:um-led-2";
 			gpios = <&gpio3 28 GPIO_ACTIVE_HIGH>;
@@ -598,6 +606,7 @@
 		status = "okay";
 	};
 
+	/* UltiMainboard v4.x Audio DAC/Amplifier (U11) */
 	codec: max98357a@0 {
 		compatible = "maxim,max98357a";
 		pinctrl-names = "default";
@@ -610,8 +619,9 @@
 
 	sound {
 		compatible = "simple-audio-card";
-/*		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_audmux_2>;*/
+// TODO: Claiming this pin here causes a conflict: Find out why and resolve the conflict
+//		pinctrl-names = "default";
+//		pinctrl-0 = <&pinctrl_audmux_2>;
 		simple-audio-card,name = "On-board Audio";
 		simple-audio-card,format = "i2s";
 		simple-audio-card,widgets = "Speaker", "Speakers";
@@ -662,15 +672,13 @@
 	clock-frequency = <100000>;
 	status = "okay";
 
-	/* GPIO I/O expander on UltiMainboard v4.x */
+	/* UltiMainboard v4.x GPIO I/O expander (U35) */
 	pca9555: pca9555@20 {
 		compatible = "nxp,pca9555";
 		reg = <0x20>;
-/*
-		TODO: Extract interrupt GPIO pin from pinctrl_i2c1_2, create pinctrl_pca9555 and put it in there.
-		pinctrl-names = "default";
-		pinctrl-0 = <&pca9555_pins>;
-*/
+// TODO: Extract interrupt GPIO pin from pinctrl_i2c1_2, create pinctrl_pca9555 and put it in there.
+//		pinctrl-names = "default";
+//		pinctrl-0 = <&pca9555_pins>;
 		interrupt-parent = <&gpio2>;		/* GPIO bank 2 */
 		interrupts = <10 IRQ_TYPE_LEVEL_LOW>;	/* GPIO pin 10 */
 		gpio-controller;
@@ -679,24 +687,26 @@
 		#interrupt-cells = <2>;
 	};
 
+	/* SoM PMIC */
 	pmic: pmic@0x58 {
 		reg = <0x58>;
 		status = "okay";
 	};
 
+	/* SoM board temperature sensor */
 	thermal: thermal@0x71 {
 		compatible = "ti,tmp103";
 		reg = <0x71>;
 	};
 
-	/* USB hub on UltiMainboard v4.1 */
+	/* UltiMainboard v4.x USB hub (U15) */
 	usb2512b@2c {
 		compatible = "microchip,usb2512b";
 		reg = <0x2c>;
 		reset-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>;
 		string-support;
 		manufacturer = "Ultimaker";
-		product = "UltiMainboard v4.1 USB hub";
+		product = "UltiMainboard v4.0 USB hub";
 	};
 };
 
@@ -719,6 +729,7 @@
 	clock-frequency = <100000>;
 	status = "okay";
 
+	/* SoM board data EEPROM */
 	boarddata@0x50 {
 		compatible = "msc,boarddata";
 		reg = <0x50>;
@@ -739,8 +750,8 @@
 	clock-frequency = <100000>;
 	status = "okay";
 
+	/* UltiMainboard v4.x carrier data EEPROM (U12) */
 	carrierdata@57 {
-		/* Carrier data EEPROM U12 */
 		compatible = "atmel,24c32";
 		reg = <0x57>;
 		pagesize = <32>;
@@ -917,8 +928,7 @@
 &audmux {
 	status = "okay";
 
-	// Note: 'ssi1' (node of first SSI) corresponds to '_SSI0' below.
-
+	/* Note: 'ssi1' (node of first SSI) corresponds to '_SSI0' below. */
 	ssi1 {
 		fsl,audmux-port = <MX31_AUDMUX_PORT1_SSI0>;
 		fsl,port-config = <
