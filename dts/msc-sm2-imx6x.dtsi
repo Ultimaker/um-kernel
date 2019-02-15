@@ -810,7 +810,7 @@
 		bcore2 {
 			regulator-name = "bcore2";
 			regulator-always-on = <1>;
-			regulator-min-microvolt = <1420000>;
+			regulator-min-microvolt = <1420000>;	/* TODO: Check with MSC reference board, as this voltage is increased from 1380mV: [    1.404821] bcore2: Bringing 1380000uV into 1420000-1420000uV */
 			regulator-max-microvolt = <1420000>;
 		};
 
@@ -824,7 +824,7 @@
 		bmem {
 			regulator-name = "bmem";
 			regulator-always-on = <1>;
-			regulator-min-microvolt = <1360000>;
+			regulator-min-microvolt = <1360000>;	/* TODO: Check with MSC reference board, as this voltage is lowered from 1500mV: [    1.420543] bmem: Bringing 1500000uV into 1360000-1360000uV */
 			regulator-max-microvolt = <1360000>;
 		};
 
