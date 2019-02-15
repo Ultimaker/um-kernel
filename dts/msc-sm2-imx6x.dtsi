@@ -873,14 +873,14 @@
 		ldo7 {
 			regulator-name = "ldo7";
 			regulator-always-on = <1>;
-			regulator-min-microvolt = <300000>;
+			regulator-min-microvolt = <900000>;	/* TODO: Check with MSC reference board. Was: <300000> (Caused: [    1.437575] ldo7: Bringing 0uV into 300000-300000uV, [    1.443869] ldo7: failed to apply 300000-300000uV constraint(-22)) */
 			regulator-max-microvolt = <3300000>;
 		};
 
 		ldo8 {
 			regulator-name = "ldo8";
 			regulator-always-on = <1>;
-			regulator-min-microvolt = <300000>;
+			regulator-min-microvolt = <900000>;	/* TODO: Check with MSC reference board. Was: <300000> (Caused: [    1.445456] ldo8: failed to apply 300000-300000uV constraint(-22)) */
 			regulator-max-microvolt = <3300000>;
 		};
 
@@ -894,7 +894,7 @@
 		ldo10 {
 			regulator-name = "ldo10";
 			regulator-always-on = <1>;
-			regulator-min-microvolt = <300000>;
+			regulator-min-microvolt = <900000>;	/* TODO: Check with MSC reference board. Was: <300000> ([    1.448366] ldo10: failed to apply 300000-300000uV constraint(-22)) */
 			regulator-max-microvolt = <3300000>;
 		};
 
