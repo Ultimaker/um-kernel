@@ -792,7 +792,7 @@
 		bcore2 {
 			regulator-name = "bcore2";
 			regulator-always-on = <1>;
-			regulator-min-microvolt = <1420000>;
+			regulator-min-microvolt = <1420000>;	/* TODO: Check with MSC reference board, as this voltage is increased from 1380mV: [    1.404821] bcore2: Bringing 1380000uV into 1420000-1420000uV */
 			regulator-max-microvolt = <1420000>;
 		};
 
@@ -806,7 +806,7 @@
 		bmem {
 			regulator-name = "bmem";
 			regulator-always-on = <1>;
-			regulator-min-microvolt = <1360000>;
+			regulator-min-microvolt = <1360000>;	/* TODO: Check with MSC reference board, as this voltage is lowered from 1500mV: [    1.420543] bmem: Bringing 1500000uV into 1360000-1360000uV */
 			regulator-max-microvolt = <1360000>;
 		};
 
@@ -855,14 +855,14 @@
 		ldo7 {
 			regulator-name = "ldo7";
 			regulator-always-on = <1>;
-			regulator-min-microvolt = <300000>;
+			regulator-min-microvolt = <900000>;	/* TODO: Check with MSC reference board. Was: <300000> (Caused: [    1.437575] ldo7: Bringing 0uV into 300000-300000uV, [    1.443869] ldo7: failed to apply 300000-300000uV constraint(-22)) */
 			regulator-max-microvolt = <3300000>;
 		};
 
 		ldo8 {
 			regulator-name = "ldo8";
 			regulator-always-on = <1>;
-			regulator-min-microvolt = <300000>;
+			regulator-min-microvolt = <900000>;	/* TODO: Check with MSC reference board. Was: <300000> (Caused: [    1.445456] ldo8: failed to apply 300000-300000uV constraint(-22)) */
 			regulator-max-microvolt = <3300000>;
 		};
 
@@ -876,7 +876,7 @@
 		ldo10 {
 			regulator-name = "ldo10";
 			regulator-always-on = <1>;
-			regulator-min-microvolt = <300000>;
+			regulator-min-microvolt = <900000>;	/* TODO: Check with MSC reference board. Was: <300000> ([    1.448366] ldo10: failed to apply 300000-300000uV constraint(-22)) */
 			regulator-max-microvolt = <3300000>;
 		};
 
