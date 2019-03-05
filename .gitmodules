@@ -1,3 +1,3 @@
 [submodule "linux"]
 	path = linux
-	url = https://github.com/Ultimaker/linux.git
+	url = ssh://git@github.com/Ultimaker/linux.git
