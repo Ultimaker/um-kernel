@@ -58,8 +58,10 @@ BB_PKG="http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/armhf/busybox-st
 BB_BIN="busybox"
 
 DEPMOD="${DEPMOD:-/sbin/depmod}"
+
 if [ ! -x "${DEPMOD}" ]; then
     DEPMOD="busybox depmod"
+
     if [ ! -x "${DEPMOD}" ]; then
         echo "No depmod binary available. Cannot continue."
         exit 1
@@ -78,7 +80,6 @@ git submodule update
 # param1:	Writable path where to store the retrieved binary
 #
 # Busybox is downloaded from the global variable ${BB_PKG}.
-#
 busybox_get()
 {
     BB_DIR="$(mktemp -d)"
@@ -103,6 +104,7 @@ busybox_get()
     tar -xf "${BB_APK}" --strip=1 -C "${BB_DIR}" "bin/busybox.static"
     mv "${BB_DIR}/busybox.static" "${DEST_DIR}/${BB_BIN}"
     rm -r "${BB_DIR}"
+
     if [ ! -x "${DEST_DIR}/${BB_BIN}" ]; then
         echo "Failed to get busybox."
         exit 1
@@ -121,6 +123,7 @@ add_module_dependencies()
 {
     MODULES_DIR="${DEBIAN_DIR}/lib/modules/${1}"
     INITRAMFS_MODULES="${INITRAMFS_MODULES_REQUIRED}"
+
     for module in ${INITRAMFS_MODULES_REQUIRED}; do
         dependencies="$(grep "${module}:" "${MODULES_DIR}/modules.dep" | sed -e "s|^.*:\s*||")"
         echo "Adding dependencies: '${dependencies}' for module: '${module}'"
@@ -136,12 +139,17 @@ add_module_dependencies()
 ##
 # initramfs_prepare() - Prepare the initramfs tree
 #
-# To be able to create a initramfs in the temporary build directory, where
-# the kernel expects these files due to INITRAMFS_SOURCE being set, we need
+# To be able to create an initramfs in the temporary build directory, where
+# the kernel expects these files due to 'INITRAMFS_SOURCE' being set, we need
 # to copy the source initramfs files and put some expected binaries in place.
 #
+# Initramfs needs certain Kernel modules like e.g. graphics driver modules so that
+# we can show feedback on the displays. For this reason this step is
+# dependent on the Kernel modules being build and installed in the build
+# output directory.
 initramfs_prepare()
 {
+    echo "Preparing initramfs."
 
     INITRAMFS_SRC_DIR="${CWD}/initramfs"
     INITRAMFS_DST_DIR="${KERNEL_BUILD_DIR}/initramfs"
@@ -164,6 +172,7 @@ initramfs_prepare()
     if [ -d "${INITRAMFS_MODULES_DIR}" ]; then
         rm -rf "${INITRAMFS_MODULES_DIR}"
     fi
+
     if [ -n "${INITRAMFS_MODULES_REQUIRED}" ]; then
         mkdir -p "${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}"
         echo -e "\n# kernel modules" >> "${INITRAMFS_DEST}"
@@ -193,16 +202,19 @@ initramfs_prepare()
             echo "file /lib/modules/${KERNEL_RELEASE}/${moddep} ${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}/${moddep} 0755 0 0" >> "${INITRAMFS_DEST}"
         fi
     done
+
+    echo "Finished preparing initramfs."
 }
 
 ##
 # initramfs_build() - Build an initramfs cpio archive
 #
-# Create a initramfs archive file to be loaded separately. This is useful
-# when not using a built-in initramfs.
-#
+# Create a 'initramfs' archive file that can be loaded separately.
+# This is not used by default, by default the 'initramfs' in part of
+# the Kernel binary file (uImage).
 initramfs_build()
 {
+    echo "Building initramfs cpio archive."
 
     initramfs_prepare
 
@@ -221,8 +233,14 @@ initramfs_build()
         -g "${INITRAMFS_ROOT_GID}" \
         "${INITRAMFS_SOURCE}"
     cd "${CWD}"
+
+    echo "Finished building initramfs cpio archive."
 }
 
+##
+# kernel_build_command() - Wrapper function for Kernel build commands
+#
+# Wrap the argument into a Linux Kernel cross-compile command.
 kernel_build_command()
 {
     if [ ! -d "${KERNEL_BUILD_DIR}" ]; then
@@ -234,7 +252,15 @@ kernel_build_command()
     cd "${CWD}"
 }
 
-kernel_build() {
+##
+# kernel_build() - Build the Linux Kernel image
+#
+# Creates the 'initramfs', compiles the Linux Kernel and generates
+# a uImage binary file in the build output boot directory.
+kernel_build()
+{
+    echo "Building Kernel."
+    # Prepare the initramfs
     initramfs_prepare
     # Configure the kernel
     kernel_build_command
@@ -245,16 +271,18 @@ kernel_build() {
         mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
     fi
     cp "${KERNEL_BUILD_DIR}/arch/arm/boot/uImage" "${BOOT_FILE_OUTPUT_DIR}/uImage-sun7i-a20-opinicus_v1"
+    echo "Finished building Kernel."
 }
 
 ##
-# kernel_build_modules() - Build the kernel modules
+# kernel_build_modules() - Build the Kernel modules
 #
-# Compiles only the kernel modules, not the kernel itself, as they may be
-# needed to be put in the initramfs image.
-#
+# Compiles only the kernel modules, and generates a 'lib/modules/[Kernel version]'
+# directory structure in the build output directory.
 kernel_build_modules()
 {
+    echo "Building Kernel modules."
+
     kernel_build_command modules
 
     KERNEL_RELEASE=$(cat "${KERNEL_BUILD_DIR}/include/config/kernel.release")
@@ -269,9 +297,23 @@ kernel_build_modules()
     if ! "${DEPMOD}" -b "${DEBIAN_DIR}" -V "${KERNEL_RELEASE}"; then
         echo "Error, failed to generate module dependencies."
     fi
+    echo "Finished Building Kernel modules."
 }
 
-dtb_build() {
+##
+# dtb_build() - Compile product specific device-tree binary files
+#
+# In the U-Boot stage the boot script is executed, that in turn reads
+# the machine article number from the I2C EEPROM. This article number
+# is in Hexadecimal format. The boot-script will then load a device-tree
+# with corresponding article number into memory.
+#
+# This function will parse a file called article.links and compile the device-tree
+# binaries described above.
+dtb_build()
+{
+    echo "Building Device-trees."
+
     if [ -d "${KERNEL_BUILD_DIR}/dtb" ]; then
         rm -rf "${KERNEL_BUILD_DIR}/dtb"
     fi
@@ -316,9 +358,13 @@ dtb_build() {
             echo "Created link for article ${ARTICLE_NUMBER} ${ARTICLE_REV}"
         fi
     done < "dts/article.links"
+
+    echo "Finished building Device-trees."
 }
 
-bootscript_build() {
+bootscript_build()
+{
+    echo "Building boot scripts."
     if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
         mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
     fi
@@ -337,6 +383,7 @@ bootscript_build() {
         SCR_FILE="$(basename "${CMD_FILE%.*}.scr")"
         mkimage -A arm -O linux -T script -C none -a 0x43100000 -n "Boot script" -d "${CMD_FILE}" "${BOOT_FILE_OUTPUT_DIR}/${SCR_FILE}"
     done
+    echo "Finished building boot scripts."
 }
 
 deb_build()
@@ -375,6 +422,7 @@ deb_build()
     # Build the Debian package
     fakeroot dpkg-deb --build "${DEBIAN_DIR}" "um-kernel-${RELEASE_VERSION}.deb"
 
+    echo "Finished building Debian package."
 }
 
 case ${1-} in
