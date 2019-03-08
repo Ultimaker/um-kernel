@@ -27,8 +27,8 @@ if [ "${MAKEFLAGS}" == "" ]; then
     echo -e "\e[0m"
 fi
 
-set -e
-set -u
+set -eu
+
 CWD="$(pwd)"
 
 # Which kernel to build
