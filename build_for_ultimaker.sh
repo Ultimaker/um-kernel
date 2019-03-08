@@ -329,7 +329,8 @@ dtb_build()
     rm -rf "${BOOT_FILE_OUTPUT_DIR}/"*".dtb"
 
     # Build the device trees that we need
-    for dts in $(find dts/ -name '*.dts' -exec basename {} \;); do
+    for dts in "dts/"*".dts"; do
+        dts="$(basename "${dts}")"
         dt="${dts%.dts}"
         echo "Building devicetree blob '${dt}'"
         cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
