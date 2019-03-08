@@ -43,7 +43,6 @@ KERNEL_BUILD_DIR="${CWD}/_build_armhf/${BUILDCONFIG}-linux"
 BUILD_OUTPUT_DIR="${CWD}/_build_armhf/"
 DEBIAN_DIR="${BUILD_OUTPUT_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
-SCRIPTS_DIR="${CWD}/scripts"
 
 INITRAMFS_MODULES_REQUIRED="sunxi_wdt.ko ssd1307fb.ko drm.ko sun4i-backend.ko sun4i-drm.ko sun4i-tcon.ko sun4i-drm-hdmi.ko sun4i-hdmi-i2c.ko"
 INITRAMFS_COMPRESSION="${INITRAMFS_COMPRESSION:-.lzo}"
