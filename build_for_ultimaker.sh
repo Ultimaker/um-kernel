@@ -205,7 +205,6 @@ initramfs_prepare()
 #
 initramfs_build()
 {
-    local cwd=""
 
     initramfs_prepare
 
@@ -217,14 +216,13 @@ initramfs_build()
         exit 1
     fi
 
-    cwd=$(pwd)
     cd "${KERNEL_BUILD_DIR}"
     "${GEN_INITRAMFS_LIST}" \
         -o "${INITRAMFS_IMG}" \
         -u "${INITRAMFS_ROOT_UID}" \
         -g "${INITRAMFS_ROOT_GID}" \
         "${INITRAMFS_SOURCE}"
-    cd "${cwd}"
+    cd "${CWD}"
 }
 
 kernel_build_command()
