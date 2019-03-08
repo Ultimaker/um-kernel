@@ -18,7 +18,7 @@ if [ "${CROSS_COMPILE}" == "" ]; then
         exit 1
     fi
 fi
-export CROSS_COMPILE=${CROSS_COMPILE}
+export CROSS_COMPILE="${CROSS_COMPILE}"
 
 if [ "${MAKEFLAGS}" == "" ]; then
     echo -e -n "\e[1m"
@@ -32,7 +32,7 @@ set -eu
 CWD="$(pwd)"
 
 # Which kernel to build
-LINUX_SRC_DIR="${CWD}/linux"
+LINUX_SRC_DIR=${CWD}/linux
 
 # Which kernel config to build.
 BUILDCONFIG="opinicus"
@@ -47,8 +47,8 @@ SCRIPTS_DIR="${CWD}/scripts"
 
 INITRAMFS_MODULES_REQUIRED="sunxi_wdt.ko ssd1307fb.ko drm.ko sun4i-backend.ko sun4i-drm.ko sun4i-tcon.ko sun4i-drm-hdmi.ko sun4i-hdmi-i2c.ko"
 INITRAMFS_COMPRESSION="${INITRAMFS_COMPRESSION:-.lzo}"
-INITRAMFS_ROOT_GID=${INITRAMFS_ROOT_GID:-0}
-INITRAMFS_ROOT_UID=${INITRAMFS_ROOT_UID:-0}
+INITRAMFS_ROOT_GID="${INITRAMFS_ROOT_GID:-0}"
+INITRAMFS_ROOT_UID="${INITRAMFS_ROOT_UID:-0}"
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 INITRAMFS_IMG="${KERNEL_BUILD_DIR}/initramfs.cpio${INITRAMFS_COMPRESSION}"
 
@@ -68,7 +68,7 @@ if [ ! -x "${DEPMOD}" ]; then
 fi
 
 # Set the release version if it's not passed to the script
-RELEASE_VERSION=${RELEASE_VERSION:-9999.99.99}
+RELEASE_VERSION="${RELEASE_VERSION:-9999.99.99}"
 
 # Initialize repositories
 git submodule init
@@ -82,10 +82,9 @@ git submodule update
 #
 busybox_get()
 {
-    local BB_DIR=$(mktemp -d)
-    local BB_APK="${BB_DIR}/busybox-static_armhf.apk"
-    local DEST_DIR="${1}"
-    local cwd=$(pwd)
+    BB_DIR="$(mktemp -d)"
+    BB_APK="${BB_DIR}/busybox-static_armhf.apk"
+    DEST_DIR="${1}"
 
     if [ ! -d "${DEST_DIR}" ]; then
         echo "No initramfs dir set to download busybox into."
@@ -288,29 +287,29 @@ dtb_build() {
 
     # Build the device trees that we need
     for dts in $(find dts/ -name '*.dts' -exec basename {} \;); do
-        dt=${dts%.dts}
-        echo "Building devicetree blob ${dt}"
+        dt="${dts%.dts}"
+        echo "Building devicetree blob '${dt}'"
         cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
             -I "${LINUX_SRC_DIR}/include" -I "${LINUX_SRC_DIR}/arch/arm/boot/dts" \
             -o "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp" "dts/${dts}"
         dtc -I dts -o "${BOOT_FILE_OUTPUT_DIR}/${dt}.dtb" -O dtb "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp"
     done
 
-    while IFS='' read -r LINE || [[ -n "$LINE" ]]; do
-        if [[ $LINE != "#"* && $LINE != "" ]]; then
-            ARTICLE_FULL=$(cut -d':' -f1 <<< "${LINE}")
-            DTS=$(cut -d':' -f2 <<<"${LINE}")
+    while IFS='' read -r LINE || [ -n "${LINE}" ]; do
+        if [ -n "${LINE###*}" ] && [ "${LINE}" != "" ]; then
+            ARTICLE_FULL="$(cut -d':' -f1 <<< "${LINE}")"
+            DTS="$(cut -d':' -f2 <<<"${LINE}")"
 
-            ARTICLE_NUMBER=$(cut -d'-' -f1 <<< "${ARTICLE_FULL}")
-            ARTICLE_REV=$(cut -d'-' -s -f2 <<< "${ARTICLE_FULL}")
+            ARTICLE_NUMBER="$(cut -d'-' -f1 <<< "${ARTICLE_FULL}")"
+            ARTICLE_REV="$(cut -d'-' -s -f2 <<< "${ARTICLE_FULL}")"
 
-            ARTICLE_NUMBER_HEX=$(printf "%x\n" ${ARTICLE_NUMBER})
-            ARTICLE_REV_HEX=$(printf "%x\n" ${ARTICLE_REV})
+            ARTICLE_NUMBER_HEX="$(printf "%x\n" "${ARTICLE_NUMBER}")"
+            ARTICLE_REV_HEX="$(printf "%x\n" "${ARTICLE_REV}")"
 
-            if [[ -z "${ARTICLE_REV}" ]]; then
-                NAME=${ARTICLE_NUMBER_HEX}.dtb
+            if [ -z "${ARTICLE_REV}" ]; then
+                NAME="${ARTICLE_NUMBER_HEX}.dtb"
             else
-                NAME=${ARTICLE_NUMBER_HEX}-${ARTICLE_REV_HEX}.dtb
+                NAME="${ARTICLE_NUMBER_HEX}-${ARTICLE_REV_HEX}.dtb"
             fi
 
             ln -s "${DTS}.dtb" "${BOOT_FILE_OUTPUT_DIR}/${NAME}"
@@ -326,8 +325,8 @@ bootscript_build() {
     fi
 
     # Generate the boot splash script
-    gcc -Wall -Werror -std=c99 scripts/ultimaker_boot_splash_generator.c -o scripts/ultimaker_boot_splash_generator
-    BOOTSPLASH_COMMANDS=$(scripts/ultimaker_boot_splash_generator)
+    gcc -Wall -Werror -std=c99 "scripts/ultimaker_boot_splash_generator.c" -o "scripts/ultimaker_boot_splash_generator"
+    BOOTSPLASH_COMMANDS="$(scripts/ultimaker_boot_splash_generator)"
 
     # Create the boot-scripts for these Kernels
     ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_mmc.cmd"
