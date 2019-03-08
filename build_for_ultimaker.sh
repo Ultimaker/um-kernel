@@ -169,7 +169,7 @@ initramfs_prepare()
         busybox_get "${INITRAMFS_DST_DIR}"
     fi
 
-    if [ -d "${INITRAMFS_MODULES_DIR}" ]; then
+    if [ -d "${INITRAMFS_MODULES_DIR}" ] && [ -z "${INITRAMFS_MODULES_DIR##*/initramfs/lib/modules*}" ]; then
         rm -rf "${INITRAMFS_MODULES_DIR}"
     fi
 
