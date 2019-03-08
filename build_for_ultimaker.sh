@@ -175,9 +175,11 @@ initramfs_prepare()
 
     if [ -n "${INITRAMFS_MODULES_REQUIRED}" ]; then
         mkdir -p "${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}"
-        echo -e "\n# kernel modules" >> "${INITRAMFS_DEST}"
-        echo "dir /lib/modules/ 0755 0 0" >> "${INITRAMFS_DEST}"
-        echo "dir /lib/modules/${KERNEL_RELEASE}/ 0755 0 0" >> "${INITRAMFS_DEST}"
+        {
+            echo -e "\n# kernel modules"
+            echo "dir /lib/modules/ 0755 0 0"
+            echo "dir /lib/modules/${KERNEL_RELEASE}/ 0755 0 0"
+        } >> "${INITRAMFS_DEST}"
         add_module_dependencies "${KERNEL_RELEASE}"
     fi
 
