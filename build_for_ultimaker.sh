@@ -425,44 +425,95 @@ deb_build()
     echo "Finished building Debian package."
 }
 
-case ${1-} in
-um-kernel_modules)
-    kernel_build_modules
-    ;;
-um-kernel)
+usage()
+{
+    echo ""
+    echo "This is the build script for Linux Kernel related build artifacts and configure the Kernel."
+    echo ""
+    echo "  Usage: ${0} [kernel_modules|kernel|initramfs|dtbs|bootscript|deb]"
+    echo "  For Kernel config modification use: ${0} menuconfig"
+    echo ""
+    echo "  -c Clean the build output directory '_build_armhf'."
+    echo "  -h Print this help text and exit"
+    echo ""
+    echo "  By default the script can be executed with 'no' arguments, all required artifacts"
+    echo "  will be build resulting in a 'um-kernel-[RELEASE_VERSION].deb' package."
+    echo "  Either one of the above optional arguments can be passed to the script to build that"
+    echo "  specific artifact."
+    echo ""
+    echo "  The package release version can be passed by passing 'RELEASE_VERSION' through the run environment."
+}
+
+while getopts ":ch" options; do
+    case "${options}" in
+    c)
+        if [ -d "${BUILD_OUTPUT_DIR}" ] && [ -z "${BUILD_OUTPUT_DIR##*_build_armhf*}" ]; then
+            rm -rf "${BUILD_OUTPUT_DIR}"
+        fi
+        echo "Cleaned up '${BUILD_OUTPUT_DIR}'."
+        exit 0
+        ;;
+    h)
+        usage
+        exit 0
+        ;;
+    :)
+        echo "Option -${OPTARG} requires an argument."
+        exit 1
+        ;;
+    ?)
+        echo "Invalid option: -${OPTARG}"
+        exit 1
+        ;;
+    esac
+done
+shift "$((OPTIND - 1))"
+
+
+if [ "${#}" -gt 1 ]; then
+    echo "Too many arguments."
+    usage
+    exit 1
+fi
+
+if [ "${#}" -eq 0 ]; then
     kernel_build
-    ;;
-um-initramfs)
-    initramfs_build
-    ;;
-um-dtbs)
-    dtb_build
-    ;;
-um-bootscript)
-    bootscript_build
-    ;;
-um-deb)
-    deb_build
-    ;;
-"")
-    kernel_build
     dtb_build
     bootscript_build
     deb_build
-    ;;
-um-*)
-    echo "Unknown argument to build script."
-    echo "Use:"
-    echo -e "\t$0 um-kernel_modules"
-    echo -e "\t$0 um-kernel"
-    echo -e "\t$0 um-initramfs"
-    echo -e "\t$0 um-dtbs"
-    echo -e "\t$0 um-bootscript"
-    echo -e "\t$0 um-deb"
-    echo -e "\t$0 menuconfig"
-    echo -e "\t$0"
-    ;;
-*)
-    kernel_build_command ${*}
-    ;;
+    exit 0
+fi
+
+case "${1-}" in
+    kernel_modules)
+        kernel_build_modules
+        ;;
+    kernel)
+        kernel_build
+        ;;
+    initramfs)
+        initramfs_build
+        ;;
+    dtbs)
+        dtb_build
+        ;;
+    bootscript)
+        bootscript_build
+        ;;
+    deb)
+        kernel_build
+        dtb_build
+        bootscript_build
+        deb_build
+        ;;
+    menuconfig)
+        kernel_build_command menuconfig
+        ;;
+    *)
+        echo "Error, unknown build option given"
+        usage
+        exit 1
+        ;;
 esac
+
+exit 0
