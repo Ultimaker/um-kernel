@@ -377,9 +377,9 @@ bootscript_build()
     BOOTSPLASH_COMMANDS="$(scripts/ultimaker_boot_splash_generator)"
 
     # Create the boot-scripts for these Kernels
-    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_mmc.cmd"
-    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_installer.cmd"
-    ROOT_DEV=mmcblk1p2 ROOT_FS=f2fs BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_emmc.cmd"
+    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst "\${ROOT_DEV},\${ROOT_FS},\${BOOTSPLASH_COMMANDS}" < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_mmc.cmd"
+    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst "\${ROOT_DEV},\${ROOT_FS},\${BOOTSPLASH_COMMANDS}" < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_installer.cmd"
+    ROOT_DEV=mmcblk1p2 ROOT_FS=f2fs BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst "\${ROOT_DEV},\${ROOT_FS},\${BOOTSPLASH_COMMANDS}" < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_emmc.cmd"
 
     # Convert the boot-scripts into proper U-Boot script images
     for CMD_FILE in "${BOOT_FILE_OUTPUT_DIR}/"*".cmd"; do
@@ -420,7 +420,7 @@ deb_build()
     fi
 
     # Create a Debian control file to pack up a Debian package
-    RELEASE_VERSION="${RELEASE_VERSION}" envsubst '${RELEASE_VERSION}' < scripts/debian_control > "${DEBIAN_DIR}/DEBIAN/control"
+    RELEASE_VERSION="${RELEASE_VERSION}" envsubst "\${RELEASE_VERSION}" < scripts/debian_control > "${DEBIAN_DIR}/DEBIAN/control"
 
     # Build the Debian package
     fakeroot dpkg-deb --build "${DEBIAN_DIR}" "um-kernel-${RELEASE_VERSION}.deb"
