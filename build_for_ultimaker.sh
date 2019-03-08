@@ -29,29 +29,31 @@ fi
 
 set -e
 set -u
+CWD="$(pwd)"
 
 # Which kernel to build
-KERNEL=`pwd`/linux
+LINUX_SRC_DIR="${CWD}/linux"
 
 # Which kernel config to build.
 BUILDCONFIG="opinicus"
 
-# Location of the debian package contents
-DEB_DIR=`pwd`/debian
-
 # Setup internal variables
-KCONFIG=`pwd`/configs/${BUILDCONFIG}_config
-KERNEL_BUILD=`pwd`/_build_armhf/${BUILDCONFIG}-linux
+KCONFIG="${CWD}/configs/${BUILDCONFIG}_config"
+KERNEL_BUILD_DIR="${CWD}/_build_armhf/${BUILDCONFIG}-linux"
+BUILD_OUTPUT_DIR="${CWD}/_build_armhf/"
+DEBIAN_DIR="${BUILD_OUTPUT_DIR}/debian"
+BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
+SCRIPTS_DIR="${CWD}/scripts"
 
 INITRAMFS_MODULES_REQUIRED="sunxi_wdt.ko ssd1307fb.ko drm.ko sun4i-backend.ko sun4i-drm.ko sun4i-tcon.ko sun4i-drm-hdmi.ko sun4i-hdmi-i2c.ko"
 INITRAMFS_COMPRESSION="${INITRAMFS_COMPRESSION:-.lzo}"
 INITRAMFS_ROOT_GID=${INITRAMFS_ROOT_GID:-0}
 INITRAMFS_ROOT_UID=${INITRAMFS_ROOT_UID:-0}
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
-INITRAMFS_IMG="${KERNEL_BUILD}/initramfs.cpio${INITRAMFS_COMPRESSION}"
+INITRAMFS_IMG="${KERNEL_BUILD_DIR}/initramfs.cpio${INITRAMFS_COMPRESSION}"
 
-GEN_INIT_CPIO="${KERNEL_BUILD}/usr/gen_init_cpio"
-GEN_INITRAMFS_LIST="${KERNEL}/scripts/gen_initramfs_list.sh"
+GEN_INIT_CPIO="${KERNEL_BUILD_DIR}/usr/gen_init_cpio"
+GEN_INITRAMFS_LIST="${LINUX_SRC_DIR}/scripts/gen_initramfs_list.sh"
 
 BB_PKG="http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/armhf/busybox-static-1.28.4-r3.apk"
 BB_BIN="busybox"
@@ -119,7 +121,7 @@ busybox_get()
 #
 add_module_dependencies()
 {
-    MODULES_DIR="${DEB_DIR}/lib/modules/${1}"
+    MODULES_DIR="${DEBIAN_DIR}/lib/modules/${1}"
     INITRAMFS_MODULES="${INITRAMFS_MODULES_REQUIRED}"
     for module in ${INITRAMFS_MODULES_REQUIRED}; do
         dependencies="$(grep "${module}:" "${MODULES_DIR}/modules.dep" | sed -e "s|^.*:\s*||")"
@@ -142,22 +144,19 @@ add_module_dependencies()
 #
 initramfs_prepare()
 {
-    local INITRAMFS_SRC_DIR="$(pwd)/initramfs"
-    local INITRAMFS_DST_DIR="${KERNEL_BUILD}/initramfs"
-    local INITRAMFS_MODULES_DIR="${KERNEL_BUILD}/initramfs/lib/modules"
-    local INITRAMFS_DEST="${INITRAMFS_DST_DIR}/$(basename ${INITRAMFS_SOURCE})"
-    local KERNELRELEASE=""
 
+    INITRAMFS_SRC_DIR="${CWD}/initramfs"
+    INITRAMFS_DST_DIR="${KERNEL_BUILD_DIR}/initramfs"
+    INITRAMFS_MODULES_DIR="${KERNEL_BUILD_DIR}/initramfs/lib/modules"
+    INITRAMFS_DEST="${INITRAMFS_DST_DIR}/$(basename "${INITRAMFS_SOURCE}")"
+
+    # Build the Kernel modules first so we can add the required kernel modules and dependencies
     kernel_build_modules
-    KERNELRELEASE=$(cat "${KERNEL_BUILD}/include/config/kernel.release")
-    if [ -z "${KERNELRELEASE}" ]; then
-        echo "Unable to get kernel release version."
-        exit 1
-    fi
 
     if [ -d "${INITRAMFS_DST_DIR}" ]; then
         rm -rf "${INITRAMFS_DST_DIR}"
     fi
+
     cp -a "${INITRAMFS_SRC_DIR}/" "${INITRAMFS_DST_DIR}"
 
     if [ ! -x "${INITRAMFS_DST_DIR}/${BB_BIN}" ]; then
@@ -168,30 +167,32 @@ initramfs_prepare()
         rm -rf "${INITRAMFS_MODULES_DIR}"
     fi
     if [ -n "${INITRAMFS_MODULES_REQUIRED}" ]; then
-        mkdir -p "${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}"
+        mkdir -p "${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}"
         echo -e "\n# kernel modules" >> "${INITRAMFS_DEST}"
         echo "dir /lib/modules/ 0755 0 0" >> "${INITRAMFS_DEST}"
-        echo "dir /lib/modules/${KERNELRELEASE}/ 0755 0 0" >> "${INITRAMFS_DEST}"
-        add_module_dependencies "${KERNELRELEASE}"
+        echo "dir /lib/modules/${KERNEL_RELEASE}/ 0755 0 0" >> "${INITRAMFS_DEST}"
+        add_module_dependencies "${KERNEL_RELEASE}"
     fi
 
     for module in ${INITRAMFS_MODULES}; do
-        if [ -z "$(find "${KERNEL_BUILD}/drivers/" -name "${module}" -print -exec cp "{}" "${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}" \;)" ]; then
-            echo "Warning: kernel module: '${module}' not available."
-        else
-            echo "Adding kernel module: '${module}' to initrd."
-            echo "file /lib/modules/${KERNELRELEASE}/${module} ${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}/${module} 0755 0 0" >> "${INITRAMFS_DEST}"
+        if [ -z "$(find "${KERNEL_BUILD_DIR}/drivers/" -name "${module}" -print -exec cp "{}" "${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}" \;)" ]; then
+            echo "Error: kernel module: '${module}' not available."
+            exit 1
         fi
+
+        echo "Adding kernel module: '${module}' to initrd."
+        echo "file /lib/modules/${KERNEL_RELEASE}/${module} ${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}/${module} 0755 0 0" >> "${INITRAMFS_DEST}"
     done
 
-    if [ -n "${INITRAMFS_MODULES}" ] && ! ${DEPMOD} -b "${INITRAMFS_DST_DIR}" ${KERNELRELEASE}; then
+    if [ -n "${INITRAMFS_MODULES}" ] && ! ${DEPMOD} -b "${INITRAMFS_DST_DIR}" "${KERNEL_RELEASE}"; then
         echo "Failed to generate module dependencies."
         exit 1
     fi
-    for moddep in ${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}/modules.*; do
+
+    for moddep in "${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}/modules."*; do
         if [ -f "${moddep}" ]; then
-            moddep=$(basename ${moddep})
-            echo "file /lib/modules/${KERNELRELEASE}/${moddep} ${INITRAMFS_MODULES_DIR}/${KERNELRELEASE}/${moddep} 0755 0 0" >> "${INITRAMFS_DEST}"
+            moddep="$(basename "${moddep}")"
+            echo "file /lib/modules/${KERNEL_RELEASE}/${moddep} ${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}/${moddep} 0755 0 0" >> "${INITRAMFS_DEST}"
         fi
     done
 }
@@ -217,8 +218,8 @@ initramfs_build()
     fi
 
     cwd=$(pwd)
-    cd "${KERNEL_BUILD}"
-    ${GEN_INITRAMFS_LIST} \
+    cd "${KERNEL_BUILD_DIR}"
+    "${GEN_INITRAMFS_LIST}" \
         -o "${INITRAMFS_IMG}" \
         -u "${INITRAMFS_ROOT_UID}" \
         -g "${INITRAMFS_ROOT_GID}" \
@@ -226,11 +227,15 @@ initramfs_build()
     cd "${cwd}"
 }
 
-kernel_build_command() {
-    mkdir -p ${KERNEL_BUILD}
-    pushd ${KERNEL}
-    ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}" make O=${KERNEL_BUILD} KCONFIG_CONFIG=${KCONFIG} $*
-    popd
+kernel_build_command()
+{
+    if [ ! -d "${KERNEL_BUILD_DIR}" ]; then
+        mkdir -p "${KERNEL_BUILD_DIR}"
+    fi
+
+    cd "${LINUX_SRC_DIR}"
+    ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "${@}"
+    cd "${CWD}"
 }
 
 kernel_build() {
@@ -239,6 +244,11 @@ kernel_build() {
     kernel_build_command
     # Build the uImage file for a bootable kernel
     kernel_build_command LOADADDR=0x40008000 uImage
+    # Install Kernel image
+    if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
+        mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
+    fi
+    cp "${KERNEL_BUILD_DIR}/arch/arm/boot/uImage" "${BOOT_FILE_OUTPUT_DIR}/uImage-sun7i-a20-opinicus_v1"
 }
 
 ##
@@ -250,23 +260,42 @@ kernel_build() {
 kernel_build_modules()
 {
     kernel_build_command modules
+
+    KERNEL_RELEASE=$(cat "${KERNEL_BUILD_DIR}/include/config/kernel.release")
+
+    if [ -z "${KERNEL_RELEASE}" ]; then
+        echo "Unable to get kernel release version."
+        exit 1
+    fi
+
+    kernel_build_command INSTALL_MOD_PATH="${DEBIAN_DIR}" modules_install
+
+    if ! "${DEPMOD}" -b "${DEBIAN_DIR}" -V "${KERNEL_RELEASE}"; then
+        echo "Error, failed to generate module dependencies."
+    fi
 }
 
 dtb_build() {
-    if [[ -z $DEB_DIR ]]; then echo "You are an idiot"; exit 1; fi
+    if [ -d "${KERNEL_BUILD_DIR}/dtb" ]; then
+        rm -rf "${KERNEL_BUILD_DIR}/dtb"
+    fi
 
-    rm -rf ${KERNEL_BUILD}/dtb
-    mkdir -p ${KERNEL_BUILD}/dtb
-    rm -rf ${DEB_DIR}/boot/*.dtb
-    mkdir -p ${DEB_DIR}/boot
+    mkdir -p "${KERNEL_BUILD_DIR}/dtb"
+
+    if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
+        mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
+    fi
+
+    rm -rf "${BOOT_FILE_OUTPUT_DIR}/"*".dtb"
+
     # Build the device trees that we need
     for dts in $(find dts/ -name '*.dts' -exec basename {} \;); do
         dt=${dts%.dts}
         echo "Building devicetree blob ${dt}"
         cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
-            -I${KERNEL}/include -I${KERNEL}/arch/arm/boot/dts \
-            -o ${KERNEL_BUILD}/dtb/.${dt}.dtb.tmp dts/${dts}
-        dtc -I dts -o "${DEB_DIR}/boot/${dt}.dtb" -O dtb ${KERNEL_BUILD}/dtb/.${dt}.dtb.tmp
+            -I "${LINUX_SRC_DIR}/include" -I "${LINUX_SRC_DIR}/arch/arm/boot/dts" \
+            -o "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp" "dts/${dts}"
+        dtc -I dts -o "${BOOT_FILE_OUTPUT_DIR}/${dt}.dtb" -O dtb "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp"
     done
 
     while IFS='' read -r LINE || [[ -n "$LINE" ]]; do
@@ -285,49 +314,71 @@ dtb_build() {
             else
                 NAME=${ARTICLE_NUMBER_HEX}-${ARTICLE_REV_HEX}.dtb
             fi
-            ln -s ${DTS}.dtb ${DEB_DIR}/boot/${NAME}
+
+            ln -s "${DTS}.dtb" "${BOOT_FILE_OUTPUT_DIR}/${NAME}"
+
             echo "Created link for article ${ARTICLE_NUMBER} ${ARTICLE_REV}"
         fi
     done < "dts/article.links"
 }
 
 bootscript_build() {
-    if [[ -z $DEB_DIR ]]; then echo "You are an idiot"; exit 1; fi
-
-    mkdir -p ${DEB_DIR}/boot
+    if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
+        mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
+    fi
 
     # Generate the boot splash script
     gcc -Wall -Werror -std=c99 scripts/ultimaker_boot_splash_generator.c -o scripts/ultimaker_boot_splash_generator
     BOOTSPLASH_COMMANDS=$(scripts/ultimaker_boot_splash_generator)
 
-    # Create the bootscripts for these kernels
-    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${DEB_DIR}/boot/boot_mmc.cmd"
-    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${DEB_DIR}/boot/boot_installer.cmd"
-    ROOT_DEV=mmcblk1p2 ROOT_FS=f2fs BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${DEB_DIR}/boot/boot_emmc.cmd"
+    # Create the boot-scripts for these Kernels
+    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_mmc.cmd"
+    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_installer.cmd"
+    ROOT_DEV=mmcblk1p2 ROOT_FS=f2fs BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst '${ROOT_DEV} ${ROOT_FS} ${BOOTSPLASH_COMMANDS}' < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_emmc.cmd"
 
-    # Convert the bootscripts into proper u-boot script images
-    for CMD_FILE in $(find ${DEB_DIR}/boot/ -name '*.cmd' -exec basename {} \;); do
-        SCR_FILE="${CMD_FILE%.*}.scr"
-        mkimage -A arm -O linux -T script -C none -a 0x43100000 -n "Boot script" -d "${DEB_DIR}/boot/${CMD_FILE}" "${DEB_DIR}/boot/${SCR_FILE}"
+    # Convert the boot-scripts into proper U-Boot script images
+    for CMD_FILE in "${BOOT_FILE_OUTPUT_DIR}/"*".cmd"; do
+        SCR_FILE="$(basename "${CMD_FILE%.*}.scr")"
+        mkimage -A arm -O linux -T script -C none -a 0x43100000 -n "Boot script" -d "${CMD_FILE}" "${BOOT_FILE_OUTPUT_DIR}/${SCR_FILE}"
     done
 }
 
-deb_build() {
-    if [[ -z $DEB_DIR ]]; then echo "You are an idiot"; exit 1; fi
+deb_build()
+{
+    echo "Building Debian package."
+    mkdir -p "${DEBIAN_DIR}/DEBIAN"
 
-    # Remove old modules
-    rm -r ${DEB_DIR}/lib 2> /dev/null || true
-    mkdir -p "${DEB_DIR}/boot"
-    # Install kernel image and modules
-    cp ${KERNEL_BUILD}/arch/arm/boot/uImage "${DEB_DIR}/boot/uImage-sun7i-a20-opinicus_v1"
-    kernel_build_command INSTALL_MOD_PATH="${DEB_DIR}" modules_install
+    if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
+        echo "Error, boot directory not created, no boot files to package."
+        exit 1
+    fi
 
-    # Create a debian control file to pack up a debian package
-    mkdir -p "${DEB_DIR}/DEBIAN"
-    RELEASE_VERSION="${RELEASE_VERSION}" envsubst '${RELEASE_VERSION}' < scripts/debian_control > "${DEB_DIR}/DEBIAN/control"
+    if ! ls "${BOOT_FILE_OUTPUT_DIR}/uImage"* 1> /dev/null 2>&1; then
+        echo "Error, no Kernel binary installed, run 'kernel' build first."
+        exit 1
+    fi
 
-    # Build the debian package
-    fakeroot dpkg-deb --build "${DEB_DIR}" um-kernel-${RELEASE_VERSION}.deb
+    if ! ls "${BOOT_FILE_OUTPUT_DIR}/"*".scr" 1> /dev/null 2>&1; then
+        echo "Error, no boot-script files installed, run 'bootscript' build first."
+        exit 1
+    fi
+
+    if ! ls "${BOOT_FILE_OUTPUT_DIR}/"*".dtb" 1> /dev/null 2>&1; then
+        echo "Error, no Kernel device-tree files installed, run 'dtbs' build first."
+        exit 1
+    fi
+
+    if [ ! -d "${DEBIAN_DIR}/lib" ] || [ ! -f "${DEBIAN_DIR}/lib/modules/${KERNEL_RELEASE}/modules.dep" ]; then
+        echo "Error, no modules installed, run 'kernel_modules' build first."
+        exit 1
+    fi
+
+    # Create a Debian control file to pack up a Debian package
+    RELEASE_VERSION="${RELEASE_VERSION}" envsubst '${RELEASE_VERSION}' < scripts/debian_control > "${DEBIAN_DIR}/DEBIAN/control"
+
+    # Build the Debian package
+    fakeroot dpkg-deb --build "${DEBIAN_DIR}" "um-kernel-${RELEASE_VERSION}.deb"
+
 }
 
 case ${1-} in
@@ -350,11 +401,9 @@ um-deb)
     deb_build
     ;;
 "")
-    kernel_build_modules
     kernel_build
     dtb_build
     bootscript_build
-    initramfs_build
     deb_build
     ;;
 um-*)
