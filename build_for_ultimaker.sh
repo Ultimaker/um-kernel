@@ -6,10 +6,10 @@
 # using arm-none-eabi-gcc, so we need to ensure it exists. Because printenv and
 # which can cause bash -e to exit, so run this before setting this up.
 if [ "${CROSS_COMPILE}" == "" ]; then
-    if [ "$(which arm-none-eabi-gcc)" != "" ]; then
+    if [ "$(command -v arm-none-eabi-gcc)" != "" ]; then
         CROSS_COMPILE="arm-none-eabi-"
     fi
-    if [ "$(which arm-linux-gnueabihf-gcc)" != "" ]; then
+    if [ "$(command -v arm-linux-gnueabihf-gcc)" != "" ]; then
         CROSS_COMPILE="arm-linux-gnueabihf-"
     fi
     if [ "${CROSS_COMPILE}" == "" ]; then
