@@ -193,7 +193,7 @@ initramfs_prepare()
         echo "file /lib/modules/${KERNEL_RELEASE}/${module} ${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}/${module} 0755 0 0" >> "${INITRAMFS_DEST}"
     done
 
-    if [ -n "${INITRAMFS_MODULES}" ] && ! ${DEPMOD} -b "${INITRAMFS_DST_DIR}" "${KERNEL_RELEASE}"; then
+    if [ -n "${INITRAMFS_MODULES}" ] && ! ${DEPMOD} -ab "${INITRAMFS_DST_DIR}" "${KERNEL_RELEASE}"; then
         echo "Failed to generate module dependencies."
         exit 1
     fi
@@ -284,7 +284,7 @@ kernel_build()
 kernel_build_modules()
 {
     echo "Building Kernel modules."
-
+    
     kernel_build_command modules
 
     KERNEL_RELEASE=$(cat "${KERNEL_BUILD_DIR}/include/config/kernel.release")
@@ -296,9 +296,10 @@ kernel_build_modules()
 
     kernel_build_command INSTALL_MOD_PATH="${DEBIAN_DIR}" modules_install
 
-    if ! "${DEPMOD}" -b "${DEBIAN_DIR}" -V "${KERNEL_RELEASE}"; then
+    if ! "${DEPMOD}" -ab "${DEBIAN_DIR}" "${KERNEL_RELEASE}"; then
         echo "Error, failed to generate module dependencies."
     fi
+
     echo "Finished Building Kernel modules."
 }
 
