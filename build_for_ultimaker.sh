@@ -53,7 +53,7 @@ INITRAMFS_IMG="${KERNEL_BUILD}/initramfs.cpio${INITRAMFS_COMPRESSION}"
 GEN_INIT_CPIO="${KERNEL_BUILD}/usr/gen_init_cpio"
 GEN_INITRAMFS_LIST="${KERNEL}/scripts/gen_initramfs_list.sh"
 
-BB_PKG="http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/armhf/busybox-static-1.28.4-r3.apk"
+BB_PKG="http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/armhf/busybox-static-1.29.3-r10.apk"
 BB_BIN="busybox"
 
 DEPMOD="${DEPMOD:-/sbin/depmod}"
