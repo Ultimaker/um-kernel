@@ -45,14 +45,7 @@ DEBIAN_DIR="${BUILD_OUTPUT_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 
 INITRAMFS_MODULES_REQUIRED="sunxi_wdt.ko ssd1307fb.ko drm.ko sun4i-backend.ko sun4i-drm.ko sun4i-tcon.ko sun4i-drm-hdmi.ko sun4i-hdmi-i2c.ko"
-INITRAMFS_COMPRESSION="${INITRAMFS_COMPRESSION:-.lzo}"
-INITRAMFS_ROOT_GID="${INITRAMFS_ROOT_GID:-0}"
-INITRAMFS_ROOT_UID="${INITRAMFS_ROOT_UID:-0}"
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
-INITRAMFS_IMG="${KERNEL_BUILD_DIR}/initramfs.cpio${INITRAMFS_COMPRESSION}"
-
-GEN_INIT_CPIO="${KERNEL_BUILD_DIR}/usr/gen_init_cpio"
-GEN_INITRAMFS_LIST="${LINUX_SRC_DIR}/scripts/gen_initramfs_list.sh"
 
 BB_PKG="http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/armhf/busybox-static-1.28.4-r3.apk"
 BB_BIN="busybox"
@@ -206,37 +199,6 @@ initramfs_prepare()
     done
 
     echo "Finished preparing initramfs."
-}
-
-##
-# initramfs_build() - Build an initramfs cpio archive
-#
-# Create a 'initramfs' archive file that can be loaded separately.
-# This is not used by default, by default the 'initramfs' in part of
-# the Kernel binary file (uImage).
-initramfs_build()
-{
-    echo "Building initramfs cpio archive."
-
-    initramfs_prepare
-
-    if [ ! -x "${GEN_INIT_CPIO}" ]; then
-        kernel_build
-    fi
-    if [ ! -x "${GEN_INIT_CPIO}" ]; then
-        echo "Kernel failed to create gen_init_cpio."
-        exit 1
-    fi
-
-    cd "${KERNEL_BUILD_DIR}"
-    "${GEN_INITRAMFS_LIST}" \
-        -o "${INITRAMFS_IMG}" \
-        -u "${INITRAMFS_ROOT_UID}" \
-        -g "${INITRAMFS_ROOT_GID}" \
-        "${INITRAMFS_SOURCE}"
-    cd "${CWD}"
-
-    echo "Finished building initramfs cpio archive."
 }
 
 ##
@@ -494,9 +456,6 @@ case "${1-}" in
         ;;
     kernel)
         kernel_build
-        ;;
-    initramfs)
-        initramfs_build
         ;;
     dtbs)
         dtb_build
