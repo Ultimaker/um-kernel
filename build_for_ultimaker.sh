@@ -105,61 +105,22 @@ busybox_get()
 }
 
 ##
-# add_module_dependencies() - Add all module dependencies
+# initramfs_add_modules()
 #
 # In initramfs we can make drivers available by adding them to
 # the 'INITRAMFS_MODULES_REQUIRED' variable. This function
-# makes sure that the driver dependencies are also added to the
-# list.
-#
-add_module_dependencies()
+# will check for dependencies in the installed modules 'modules.dep' file
+# and add the requested modules and its dependencies to initramfs.
+initramfs_add_modules()
 {
-    MODULES_DIR="${DEBIAN_DIR}/lib/modules/${1}"
-    INITRAMFS_MODULES="${INITRAMFS_MODULES_REQUIRED}"
+    echo "Adding initramfs modules."
 
-    for module in ${INITRAMFS_MODULES_REQUIRED}; do
-        dependencies="$(grep "${module}:" "${MODULES_DIR}/modules.dep" | sed -e "s|^.*:\s*||")"
-        echo "Adding dependencies: '${dependencies}' for module: '${module}'"
-        for dependency in ${dependencies}; do
-            dep_module="$(basename "${dependency}")"
-            if [ -n "${INITRAMFS_MODULES##*${dep_module}*}" ]; then
-                INITRAMFS_MODULES="${INITRAMFS_MODULES} ${dep_module}"
-            fi
-        done
-    done
-}
+    KERNEL_RELEASE=$(cat "${KERNEL_BUILD_DIR}/include/config/kernel.release")
 
-##
-# initramfs_prepare() - Prepare the initramfs tree
-#
-# To be able to create an initramfs in the temporary build directory, where
-# the kernel expects these files due to 'INITRAMFS_SOURCE' being set, we need
-# to copy the source initramfs files and put some expected binaries in place.
-#
-# Initramfs needs certain Kernel modules like e.g. graphics driver modules so that
-# we can show feedback on the displays. For this reason this step is
-# dependent on the Kernel modules being build and installed in the build
-# output directory.
-initramfs_prepare()
-{
-    echo "Preparing initramfs."
-
-    INITRAMFS_SRC_DIR="${CWD}/initramfs"
-    INITRAMFS_DST_DIR="${KERNEL_BUILD_DIR}/initramfs"
-    INITRAMFS_MODULES_DIR="${KERNEL_BUILD_DIR}/initramfs/lib/modules"
-    INITRAMFS_DEST="${INITRAMFS_DST_DIR}/$(basename "${INITRAMFS_SOURCE}")"
-
-    # Build the Kernel modules first so we can add the required kernel modules and dependencies
-    kernel_build_modules
-
-    if [ -d "${INITRAMFS_DST_DIR}" ]; then
-        rm -rf "${INITRAMFS_DST_DIR}"
-    fi
-
-    cp -a "${INITRAMFS_SRC_DIR}/" "${INITRAMFS_DST_DIR}"
-
-    if [ ! -x "${INITRAMFS_DST_DIR}/${BB_BIN}" ]; then
-        busybox_get "${INITRAMFS_DST_DIR}"
+    if [ ! -d "${DEBIAN_DIR}/lib" ] || [ -z "${KERNEL_RELEASE}" ] || \
+        [ ! -f "${DEBIAN_DIR}/lib/modules/${KERNEL_RELEASE}/modules.dep" ]; then
+        echo "Error, no modules installed, cannot continue."
+        exit 1
     fi
 
     if [ -d "${INITRAMFS_MODULES_DIR}" ] && [ -z "${INITRAMFS_MODULES_DIR##*/initramfs/lib/modules*}" ]; then
@@ -173,11 +134,24 @@ initramfs_prepare()
             echo "dir /lib/modules/ 0755 0 0"
             echo "dir /lib/modules/${KERNEL_RELEASE}/ 0755 0 0"
         } >> "${INITRAMFS_DEST}"
-        add_module_dependencies "${KERNEL_RELEASE}"
+
+        MODULES_DIR="${DEBIAN_DIR}/lib/modules/${KERNEL_RELEASE}"
+        INITRAMFS_MODULES="${INITRAMFS_MODULES_REQUIRED}"
+
+        for module in ${INITRAMFS_MODULES_REQUIRED}; do
+            dependencies="$(grep "${module}:" "${MODULES_DIR}/modules.dep" | sed -e "s|^.*:\s*||")"
+            for dependency in ${dependencies}; do
+                dep_module="$(basename "${dependency}")"
+                echo "Adding dependency: '${dep_module}' for module: '${module}'"
+                if [ -n "${INITRAMFS_MODULES##*${dep_module}*}" ]; then
+                    INITRAMFS_MODULES="${INITRAMFS_MODULES} ${dep_module}"
+                fi
+            done
+        done
     fi
 
     for module in ${INITRAMFS_MODULES}; do
-        if [ -z "$(find "${KERNEL_BUILD_DIR}/drivers/" -name "${module}" -print -exec cp "{}" "${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}" \;)" ]; then
+        if [ -z "$(find "${MODULES_DIR}" -name "${module}" -print -exec cp "{}" "${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}" \;)" ]; then
             echo "Error: kernel module: '${module}' not available."
             exit 1
         fi
@@ -197,6 +171,36 @@ initramfs_prepare()
             echo "file /lib/modules/${KERNEL_RELEASE}/${moddep} ${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}/${moddep} 0755 0 0" >> "${INITRAMFS_DEST}"
         fi
     done
+
+    echo "Finished adding initramfs modules."
+}
+
+##
+# initramfs_prepare() - Prepare the initramfs tree
+#
+# To be able to create an initramfs in the temporary build directory, where
+# the kernel expects these files due to 'INITRAMFS_SOURCE' being set, we need
+# to copy the source initramfs files and put some expected binaries in place.
+initramfs_prepare()
+{
+    echo "Preparing initramfs."
+
+    INITRAMFS_SRC_DIR="${CWD}/initramfs"
+    INITRAMFS_DST_DIR="${KERNEL_BUILD_DIR}/initramfs"
+    INITRAMFS_MODULES_DIR="${KERNEL_BUILD_DIR}/initramfs/lib/modules"
+    INITRAMFS_DEST="${INITRAMFS_DST_DIR}/$(basename "${INITRAMFS_SOURCE}")"
+
+    if [ -d "${INITRAMFS_DST_DIR}" ]; then
+        rm -rf "${INITRAMFS_DST_DIR}"
+    fi
+
+    mkdir -p "${INITRAMFS_DST_DIR}"
+
+    cp -a "${INITRAMFS_SRC_DIR}/"* "${INITRAMFS_DST_DIR}"
+
+    if [ ! -x "${INITRAMFS_DST_DIR}/${BB_BIN}" ]; then
+        busybox_get "${INITRAMFS_DST_DIR}"
+    fi
 
     echo "Finished preparing initramfs."
 }
@@ -219,40 +223,48 @@ kernel_build_command()
 ##
 # kernel_build() - Build the Linux Kernel image
 #
-# Creates the 'initramfs', compiles the Linux Kernel and generates
-# a uImage binary file in the build output boot directory.
+# Builds the Kernel
+# Installs the modules in the build output lib directory
+# Creates the 'initramfs'
+# Creates a uImage binary in the build output boot directory.
 kernel_build()
 {
     echo "Building Kernel."
-    # Prepare the initramfs
+
+    # Prepare the initramfs 1st time
     initramfs_prepare
     # Configure the kernel
     kernel_build_command
+    # Build the Kernel modules and generate dependency list
+    kernel_modules_install
+    # New that all modules have been build and the dependency file is properly generated,
+    # we can add the required Kernel modules to initramfs
+    initramfs_add_modules
     # Build the uImage file for a bootable kernel
     kernel_build_command LOADADDR=0x40008000 uImage
+
     # Install Kernel image
     if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
         mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
     fi
+
     cp "${KERNEL_BUILD_DIR}/arch/arm/boot/uImage" "${BOOT_FILE_OUTPUT_DIR}/uImage-sun7i-a20-opinicus_v1"
     echo "Finished building Kernel."
 }
 
 ##
-# kernel_build_modules() - Build the Kernel modules
+# kernel_modules_install() - Install the Kernel modules
 #
-# Compiles only the kernel modules, and generates a 'lib/modules/[Kernel version]'
-# directory structure in the build output directory.
-kernel_build_modules()
+# Generates a 'lib/modules/[Kernel version]' directory structure
+# in the build output directory.
+kernel_modules_install()
 {
-    echo "Building Kernel modules."
-    
-    kernel_build_command modules
+    echo "Install Kernel modules."
 
     KERNEL_RELEASE=$(cat "${KERNEL_BUILD_DIR}/include/config/kernel.release")
 
     if [ -z "${KERNEL_RELEASE}" ]; then
-        echo "Unable to get kernel release version."
+        echo "Error, unable to get kernel release version, cannot continue."
         exit 1
     fi
 
@@ -262,7 +274,7 @@ kernel_build_modules()
         echo "Error, failed to generate module dependencies."
     fi
 
-    echo "Finished Building Kernel modules."
+    echo "Finished installing Kernel modules."
 }
 
 ##
@@ -367,6 +379,11 @@ deb_build()
         exit 1
     fi
 
+    if [ ! -d "${DEBIAN_DIR}/lib" ] || [ ! -f "${DEBIAN_DIR}/lib/modules/${KERNEL_RELEASE}/modules.dep" ]; then
+        echo "Error, no modules installed, run 'kernel' build first."
+        exit 1
+    fi
+
     if ! ls "${BOOT_FILE_OUTPUT_DIR}/"*".scr" 1> /dev/null 2>&1; then
         echo "Error, no boot-script files installed, run 'bootscript' build first."
         exit 1
@@ -374,11 +391,6 @@ deb_build()
 
     if ! ls "${BOOT_FILE_OUTPUT_DIR}/"*".dtb" 1> /dev/null 2>&1; then
         echo "Error, no Kernel device-tree files installed, run 'dtbs' build first."
-        exit 1
-    fi
-
-    if [ ! -d "${DEBIAN_DIR}/lib" ] || [ ! -f "${DEBIAN_DIR}/lib/modules/${KERNEL_RELEASE}/modules.dep" ]; then
-        echo "Error, no modules installed, run 'kernel_modules' build first."
         exit 1
     fi
 
