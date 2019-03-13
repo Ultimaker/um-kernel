@@ -396,7 +396,7 @@ usage()
     echo ""
     echo "This is the build script for Linux Kernel related build artifacts and configure the Kernel."
     echo ""
-    echo "  Usage: ${0} [kernel_modules|kernel|initramfs|dtbs|bootscript|deb]"
+    echo "  Usage: ${0} [kernel|dtbs|bootscript|deb]"
     echo "  For Kernel config modification use: ${0} menuconfig"
     echo ""
     echo "  -c Clean the build output directory '_build_armhf'."
@@ -451,9 +451,6 @@ if [ "${#}" -eq 0 ]; then
 fi
 
 case "${1-}" in
-    kernel_modules)
-        kernel_build_modules
-        ;;
     kernel)
         kernel_build
         ;;
