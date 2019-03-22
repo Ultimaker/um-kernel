@@ -1,4 +1,4 @@
-#!/bin/busybox sh
+#!/bin/sh
 #
 # Copyright (C) 2018 Ultimaker B.V.
 # Copyright (C) 2018 Olliver Schinagl <oliver@schinagl.nl>
@@ -8,10 +8,42 @@
 set -eu
 
 ROOT_MOUNT="/mnt/root"
-UPDATE_MOUNT="/mnt/update"
-UPDATE_SCRIPT="${UPDATE_MOUNT}/um_update.sh"
-UPDATE_DEVICES="/dev/sd[a-z][0-9] /dev/mmcblk[0-9]p[0-9]"
+UPDATE_IMAGE="um-update.swu"
+UPDATE_IMG_MOUNT="/mnt/update_img"
+UPDATE_SRC_MOUNT="/mnt/update"
+RESCUE_SHELL="no"
+
+PREFIX="${PREFIX:-/usr/}"
+EXEC_PREFIX="${PREFIX}"
+SBINDIR="${EXEC_PREFIX}/sbin"
+
+UM3_DISPLAY_ARTICLE_NUMBERS="9066 9511"
+SLINE_DISPLAY_ARTICLE_NUMBERS="9051"
+
+SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
+UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 BB_BIN="/bin/busybox"
+CMDS=" \
+    [ \
+    break \
+    continue \
+    echo \
+    exec \
+    findfs \
+    mktemp \
+    modprobe \
+    mount \
+    mv \
+    poweroff \
+    readlink \
+    reboot \
+    shutdown \
+    sleep \
+    switch_root \
+    umount \
+    watchdog \
+"
+WATCHDOG_DEV="/dev/watchdog"
 
 init="/sbin/init"
 root=""
@@ -19,190 +51,285 @@ rootflags=""
 rootfstype="auto"
 rwmode=""
 
+update_tmpfs_mount=""
+
 shutdown()
 {
-	while [ 1 ]; do
-		poweroff
-		echo "Please remove power to complete shutdown."
-		sleep 10s
-	done
+    while true; do
+        poweroff
+        echo "Please remove power to complete shutdown."
+        sleep 10s
+    done
 }
 
 restart()
 {
-	echo "Rebooting in 5 seconds ..."
-	sleep 5s
-	reboot
-	modprobe sunxi_wdt || true
-	watchdog -T 1 -t 60 -F /dev/watchdog || true
-	echo "Failed to reboot, shutting down instead."
-	shutdown
+    echo "Rebooting in 5 seconds ..."
+    sleep 5s
+    reboot
+    modprobe sunxi_wdt || true
+    if [ -w "${WATCHDOG_DEV}" ]; then
+        watchdog -T 1 -t 60 -F "${WATCHDOG_DEV}"
+    fi
+    echo "Failed to reboot, shutting down instead."
+    shutdown
 }
 
 rescue_shell()
 {
-	set +eu
-	${BB_BIN} echo -en "\n" \
-		"##################################################\n" \
-		"#                   ▄▄▄      ▄▄▄                 #\n" \
-		"#                   ███████▄▄███▄                #\n" \
-		"#                 ▄███  ▄▄   ▄▄ ▐█               #\n" \
-		"#              ▄██  ██ ▀▀▀   ▀▀▀▐█▄              #\n" \
-		"#              ███▄▄██  ▄▄▄▄▄▄▄ ▐██              #\n" \
-		"#               ██████ ▀       ▀ ▐█              #\n" \
-		"#            ▄████▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█▄           #\n" \
-		"#          ████▐█ ▐████████████████▌▐██▄         #\n" \
-		"#        ▐███▌▄▄█ ▐████████████████▌▐█▄█         #\n" \
-		"#         ███████ ███████▀▀ ▀██████▌▐██▌         #\n" \
-		"#         ███████ █████████ ██▐████▌▐██▌         #\n" \
-		"#        ▄███████ ██████▄██████████▌▐█▀█         #\n" \
-		"#        ████  ▐█ ▐████████████████▌▐█ █▌        #\n" \
-		"#        ▀███ ███   ▀▀▀▀            ▐██▀         #\n" \
-		"#           ▀▀████▄▄████████████████▀            #\n" \
-		"#             ▐████████▀▀████▀▀▌  █▌             #\n" \
-		"#            ▄██████  █  ▐███▄▄█▄▄██             #\n" \
-		"#            ████████▀▀▀█▀████▀    ██            #\n" \
-		"#            █████████    ▐███     ██            #\n" \
-		"#              ▀███▄█▄▄▄▄▄███▀▀▀▀▀▀▀             #\n" \
-		"#                                                #\n" \
-		"# Starting busybox rescue and recovery shell.    #\n" \
-		"# Tip: type help<enter> for available commands.  #\n" \
-		"#                                                #\n" \
-		"##################################################\n"
-	exec ${BB_BIN} sh
+    set +eu
+    ${BB_BIN} echo ""
+    ${BB_BIN} echo "##################################################"
+    ${BB_BIN} echo "#                   ▄▄▄      ▄▄▄                 #"
+    ${BB_BIN} echo "#                   ███████▄▄███▄                #"
+    ${BB_BIN} echo "#                 ▄███  ▄▄   ▄▄ ▐█               #"
+    ${BB_BIN} echo "#              ▄██  ██ ▀▀▀   ▀▀▀▐█▄              #"
+    ${BB_BIN} echo "#              ███▄▄██  ▄▄▄▄▄▄▄ ▐██              #"
+    ${BB_BIN} echo "#               ██████ ▀       ▀ ▐█              #"
+    ${BB_BIN} echo "#            ▄████▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█▄           #"
+    ${BB_BIN} echo "#          ████▐█ ▐████████████████▌▐██▄         #"
+    ${BB_BIN} echo "#        ▐███▌▄▄█ ▐████████████████▌▐█▄█         #"
+    ${BB_BIN} echo "#         ███████ ███████▀▀ ▀██████▌▐██▌         #"
+    ${BB_BIN} echo "#         ███████ █████████ ██▐████▌▐██▌         #"
+    ${BB_BIN} echo "#        ▄███████ ██████▄██████████▌▐█▀█         #"
+    ${BB_BIN} echo "#        ████  ▐█ ▐████████████████▌▐█ █▌        #"
+    ${BB_BIN} echo "#        ▀███ ███   ▀▀▀▀            ▐██▀         #"
+    ${BB_BIN} echo "#           ▀▀████▄▄████████████████▀            #"
+    ${BB_BIN} echo "#             ▐████████▀▀████▀▀▌  █▌             #"
+    ${BB_BIN} echo "#            ▄██████  █  ▐███▄▄█▄▄██             #"
+    ${BB_BIN} echo "#            ████████▀▀▀█▀████▀    ██            #"
+    ${BB_BIN} echo "#            █████████    ▐███     ██            #"
+    ${BB_BIN} echo "#              ▀███▄█▄▄▄▄▄███▀▀▀▀▀▀▀             #"
+    ${BB_BIN} echo "#                                                #"
+    ${BB_BIN} echo "# Starting busybox rescue and recovery shell.    #"
+    ${BB_BIN} echo "# Tip: type help<enter> for available commands.  #"
+    ${BB_BIN} echo "#                                                #"
+    ${BB_BIN} echo "##################################################"
+    exec ${BB_BIN} sh
 }
 
 critical_error()
 {
-	echo "A critical error has occurred, entering recovery mode."
-	rescue_shell
-	shutdown
+    echo "A critical error has occurred, entering recovery mode."
+    rescue_shell
+    shutdown
 }
 
 boot_root()
 {
-	echo "Mounting ${root}."
-	mount -t ${rootfstype} -o exec,suid,dev,noatime,$rootflags,$rwmode "${root}" "${ROOT_MOUNT}"
-	kernel_umount
-	echo "Starting linux on ${root} of type ${rootfstype} with init=${init}."
-	exec switch_root /mnt/root "${init}"
+    echo "Mounting ${root}."
+    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root}" "${ROOT_MOUNT}"
+    kernel_umount
+
+    test_init="${init}"
+    if [ -L "${ROOT_MOUNT}/${init}" ]; then
+       test_init="${ROOT_MOUNT}/$(readlink "${ROOT_MOUNT}/${init}")"
+    fi
+    if [ ! -x "${test_init}" ]; then
+        echo "Error, no such file '${test_init}'."
+        critical_error
+        restart
+    fi
+
+    echo "Starting linux on ${root} of type ${rootfstype} with init=${init}."
+    exec switch_root "${ROOT_MOUNT}" "${init}"
+}
+
+probe_module()
+{
+    if ! modprobe -v "${1}"; then
+        echo "Failed to probe module: '${1}', removing."
+        rmmod "${1}.ko" || true
+        return
+    fi
+}
+
+enable_framebuffer_device()
+{
+    if [ -z "${ARTICLE_NUMBER}" ]; then
+        return
+    fi
+    if [ -z "${UM3_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
+        probe_module ssd1307fb
+    elif [ -z "${SLINE_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
+        probe_module sun4i-drm-hdmi
+        probe_module sun4i-hdmi-i2c
+        probe_module sun4i-tcon
+        probe_module sun4i-backend
+        probe_module sun4i-drm
+    fi
+    echo "Successfully registered framebuffer device."
 }
 
 find_and_run_update()
 {
-	echo "Checking for updates ..."
-	for dev in ${UPDATE_DEVICES}; do
-		if [ ! -b "${dev}" ]; then
-			continue
-		fi
+    echo "Checking for updates ..."
+    for dev in ${UPDATE_DEVICES}; do
+        if [ ! -b "${dev}" ]; then
+            continue
+        fi
 
-		echo "Attempting to mount ${dev}."
-		if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_MOUNT}"; then
-			continue
-		fi
+        base_dev="${dev%p[0-9]}"
 
-		if [ ! -x "${UPDATE_SCRIPT}" ]; then
-			umount "${dev}"
-			echo "No executable update '${UPDATE_SCRIPT}' found on ${dev}, trying next."
-			continue
-		fi
+        echo "Attempting to mount '${dev}'."
+        if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}"; then
+            continue
+        fi
 
-		echo "Found update on ${dev}, executing update ${UPDATE_SCRIPT}."
-		if ! "${UPDATE_SCRIPT}"; then
-			umount "${dev}"
-			echo "Update failed!"
-			critical_error
-			break;
-		fi
+        if [ ! -r "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" ]; then
+            umount "${dev}"
+            echo "No update image '${UPDATE_IMAGE}' found on '${dev}', trying next."
+            continue
+        fi
 
-		echo "Update finished, cleaning up."
-		if ! chmod -x "${UPDATE_SCRIPT}" || [ -x "${UPDATE_SCRIPT}" ]; then
-			umount "${dev}"
-			echo "Please remove update medium and power off."
-			shutdown
-			break;
-		fi
+        update_tmpfs_mount="$(mktemp -d)"
+        echo "Found '${UPDATE_IMAGE}' on '${dev}', moving to tmpfs."
+        if ! mv "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
+            echo "Error, update failed: unable to move ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
+            critical_error
+            break
+        fi
 
-		umount "${dev}"
-		restart
-	done
-	echo "No updates found."
+        echo "Attempting to unmount '${UPDATE_SRC_MOUNT}' before performing the update."
+        if ! umount "${UPDATE_SRC_MOUNT}"; then
+            echo "Error, update failed: unable to unmount ${UPDATE_SRC_MOUNT}."
+            critical_error
+            break
+        fi
+
+        echo "Attempting to mount '${update_tmpfs_mount}/${UPDATE_IMAGE}' to '${UPDATE_IMG_MOUNT}'."
+        if ! mount "${update_tmpfs_mount}/${UPDATE_IMAGE}" ${UPDATE_IMG_MOUNT}; then
+            echo "Error, update failed: unable to mount '${update_tmpfs_mount}/${UPDATE_IMAGE}'."
+            critical_error
+            break;
+        fi
+
+        echo "Successfully mounted '${UPDATE_IMAGE}', looking for '${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}' script."
+        if [ ! -x "${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}" ]; then
+            echo "Error, update failed: no '${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}' script found on '${UPDATE_IMG_MOUNT}'."
+            critical_error
+            break
+        fi
+
+        echo "Copying '${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}' from the update image."
+        if ! cp "${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/"; then
+            echo "Error, copy of '${UPDATE_IMG_MOUNT}/${SBINDIR}/${SYSTEM_UPDATE_ENTRYPOINT}' to '${update_tmpfs_mount}' failed."
+            critical_error
+            break
+        fi
+
+        echo "Copied update script from image, cleaning up."
+        if ! umount "${UPDATE_IMG_MOUNT}"; then
+            echo "Warning: unable to unmount '${UPDATE_IMG_MOUNT}'."
+        fi
+
+        echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
+        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "${ARTICLE_NUMBER}"; then
+            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} ${ARTICLE_NUMBER}'."
+            critical_error
+            break
+        fi
+
+        if ! rm "${update_tmpfs_mount}/${UPDATE_IMAGE:?}"; then
+            echo "Warning, unable to remove '${update_tmpfs_mount}/${UPDATE_IMAGE}'."
+        fi
+
+        restart
+    done
+    echo "No updates found."
 }
 
 parse_cmdline()
 {
-	if [ ! -r "/proc/cmdline" ]; then
-		echo "Unable to read /proc/cmdline to parse boot arguments."
-		exit 1
-	fi
+    if [ ! -r "/proc/cmdline" ]; then
+        echo "Unable to read /proc/cmdline to parse boot arguments."
+        exit 1
+    fi
 
-	for cmd in $(cat /proc/cmdline); do
-		case "${cmd}" in
-		rescue)
-			rescue_shell
-		;;
-		ro)
-			rwmode="ro"
-		;;
-		rw)
-			rwmode="rw"
-		;;
-		rootdelay=*)
-			sleep ${cmd#*=}
-		;;
-		root=*)
-			local _root="${cmd#*=}"
-			local _prefix="${_root%%=*}"
+    # shellcheck disable=SC2013
+    # Disabled because it is nos possible in a while read loop
+    for cmd in $(cat /proc/cmdline); do
+        case "${cmd}" in
+        um_an=*)
+            ARTICLE_NUMBER="$(echo $((0x${cmd#*=})))"
+        ;;
+        rescue)
+            RESCUE_SHELL="yes"
+        ;;
+        ro)
+            rwmode="ro"
+        ;;
+        rw)
+            rwmode="rw"
+        ;;
+        rootdelay=*)
+            sleep "${cmd#*=}"
+        ;;
+        root=*)
+            _root="${cmd#*=}"
+            _prefix="${_root%%=*}"
 
-			if [ "${_prefix}" = "UUID" ] || \
-			   [ "${_prefix}" = "PARTUUID" ] || \
-			   [ "${_prefix}" = "LABEL" ] || \
-			   [ "${_prefix}" = "PARTLABEL" ]; then
-				root=$(findfs "${_root}")
-			else
-				root="${cmd#*=}"
-			fi
-		;;
-		rootflags=*)
-			rootflags="${cmd#*=}"
-		;;
-		rootfstype=*)
-			rootfstype="${cmd#*=}"
-		;;
-		init=*)
-			init="${cmd#*=}"
-		;;
-		esac
-	done
+            if [ "${_prefix}" = "UUID" ] || \
+               [ "${_prefix}" = "PARTUUID" ] || \
+               [ "${_prefix}" = "LABEL" ] || \
+               [ "${_prefix}" = "PARTLABEL" ]; then
+                root=$(findfs "${_root}")
+            else
+                root="${cmd#*=}"
+            fi
+        ;;
+        rootflags=*)
+            rootflags="${cmd#*=}"
+        ;;
+        rootfstype=*)
+            rootfstype="${cmd#*=}"
+        ;;
+        init=*)
+            init="${cmd#*=}"
+        ;;
+        esac
+    done
 }
 
 kernel_mount()
 {
-	mount -t devtmpfs	-o nosuid,mode=0755	udev	/dev
-	mount -t proc		-o nodev,noexec,nosuid	proc	/proc
-	mount -t sysfs		-o nodev,noexec,nosuid	sysfs	/sys
+    mount -t devtmpfs   -o nosuid,mode=0755 udev    /dev
+    mount -t proc       -o nodev,noexec,nosuid  proc    /proc
+    mount -t sysfs      -o nodev,noexec,nosuid  sysfs   /sys
 }
 
 kernel_umount()
 {
-	umount /sys
-	umount /proc
-	umount /dev
+    umount /sys
+    umount /proc
+    umount /dev
+}
+
+toolcheck()
+{
+    echo "Checking command availability."
+    for cmd in ${CMDS}; do
+        command -V "${cmd}"
+    done
 }
 
 busybox_setup()
 {
-	${BB_BIN} --install -s
+    "${BB_BIN}" --install -s
 }
 
 trap critical_error EXIT
 
 busybox_setup
+toolcheck
 kernel_mount
 parse_cmdline
+enable_framebuffer_device
+if [ "${RESCUE_SHELL}" = "yes" ]; then
+    rescue_shell
+fi
 
 find_and_run_update
-
 boot_root
 
 critical_error

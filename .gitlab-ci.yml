@@ -1,3 +1,4 @@
+# yamllint disable rule:line-length
 # SPDX-License-Identifier: AGPL-3.0+
 #
 # Copyright (C) 2018 Ultimaker B.V.
@@ -7,94 +8,101 @@
 # * Build environment: creates the docker image that is needed for package generation
 # * Package generation: creates the final artifact
 
+---
 stages:
-- lint
-- prepare
-- verify
-- push
-- build
-- cleanup
+  - lint
+  - prepare
+  - push
+  - build
+  - test
+  - cleanup
 
 # Common requisites
 # ==========
 .parameters_template: &parameters_common
   tags:
-  - embedded
-  - docker
+    - docker
 
-.shell_lint_template: &shell_linting
+.changes_docker: &changes_docker
+  changes:
+    - Dockerfile
+    - .dockerignore
+    - dockerfiles/**/*
+
+.shell_linting_common: &shell_linting_common
   <<: *parameters_common
   image: registry.hub.docker.com/koalaman/shellcheck-alpine:stable
   stage: lint
 
-lint build environment:
-  <<: *shell_linting
+lint_build_scripts:
+  <<: *shell_linting_common
   script:
-  - shellcheck -C -f tty -s sh tests/buildenv.sh
+    - shellcheck -C -f tty "build"*".sh"
 
-lint local build script:
-  <<: *shell_linting
+lint_test_scripts:
+  <<: *shell_linting_common
   script:
-  - shellcheck -C -f tty -s sh build_for_ultimaker.sh
+    - find 'tests/' -iname '*.sh' -exec shellcheck -x -C -f tty {} \;
 
 # Build environment
 # =================
-.build environment template: &buildenv_common
+.build_environment_common: &environment_common
   <<: *parameters_common
   image: registry.hub.docker.com/library/docker:stable
-  only:
-    variables:
-    - $CI_COMMIT_MESSAGE =~ /dockerfile/i
 
-prepare build environment:
-  <<: *buildenv_common
+prepare_build_environment:
+  <<: *environment_common
+  # only:
+  #   <<: *changes_docker
   stage: prepare
   script:
-  - docker build --rm -t "$CI_COMMIT_SHA:$CI_PIPELINE_ID" .
+    - docker build --rm -t "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}" .
+    - |
+        docker run \
+        --rm \
+        --privileged \
+        -e "ARM_EMU_BIN=${ARM_EMU_BIN}" \
+        -v "${ARM_EMU_BIN}:${ARM_EMU_BIN}:ro" \
+        "$CI_COMMIT_SHA:$CI_PIPELINE_ID" \
+        /test/buildenv_check.sh
 
-verify build environment:
-  stage: verify
-  <<: *buildenv_common
-  script:
-    - docker run --rm "$CI_COMMIT_SHA:$CI_PIPELINE_ID" /tests/buildenv.sh
-
-push build environment:
-  <<: *buildenv_common
-  except:
-  - /^(?!master$)/
+# The push to the Docker registry is thus only executed when docker changes are
+# performed and the working branch is 'master'
+push_build_environment:
+  <<: *environment_common
+  only:
+    <<: *changes_docker
+    refs:
+      - master
   stage: push
   script:
-  - docker login -u gitlab-ci-token -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
-  - docker tag  "$CI_COMMIT_SHA:$CI_PIPELINE_ID" "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
-  - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
-  - docker tag  "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA" "$CI_REGISTRY_IMAGE:latest"
-  - docker push "$CI_REGISTRY_IMAGE:latest"
+    - docker login -u gitlab-ci-token -p "${CI_JOB_TOKEN}" "${CI_REGISTRY}"
+    - docker tag  "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}" "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+    - docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+    - docker tag  "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" "${CI_REGISTRY_IMAGE}:latest"
+    - docker push "${CI_REGISTRY_IMAGE}:latest"
 
-cleanup build environment:
-  <<: *buildenv_common
+cleanup_build_environment:
+  <<: *environment_common
+  only:
+    <<: *changes_docker
   stage: cleanup
   when: always
   script:
-  - |
-    if docker inspect --type image "$CI_COMMIT_SHA:$CI_PIPELINE_ID" 1> /dev/null; then
-      docker rmi "$CI_COMMIT_SHA:$CI_PIPELINE_ID"
-    fi
+    - |
+      if docker inspect --type image "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}" 1> /dev/null; then
+        docker rmi "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}"
+      fi
 
 # Package generation
 # ==================
-.build pkg template: &pkg_common
+build_pkg_common: &build_pkg_common
   <<: *parameters_common
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
-  image: "$CI_REGISTRY_IMAGE:latest"
-
-build package:
-  <<: *pkg_common
   stage: build
   script:
-  - ./build.sh
+    - ./build.sh
   artifacts:
     name: "$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA"
     paths:
-    - ./*.deb
+      - ./*.deb
     expire_in: 3 days
