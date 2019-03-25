@@ -151,6 +151,9 @@ enable_framebuffer_device()
     fi
     if [ -z "${UM3_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
         probe_module ssd1307fb
+        # Workaround for screen flip/demangled on UM3 ISSUE: EMP-373
+        echo 180 > "/sys/class/graphics/fb0/rotate" || true
+        echo 0 > "/sys/class/graphics/fb0/rotate" || true
     elif [ -z "${SLINE_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
         probe_module sun4i-drm-hdmi
         probe_module sun4i-hdmi-i2c
