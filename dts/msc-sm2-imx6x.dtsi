@@ -682,6 +682,10 @@
 	pmic: pmic@0x58 {
 		reg = <0x58>;
 		status = "okay";
+
+		rtc {
+			compatible = "dlg,da9063-rtc";
+		};
 	};
 
 	thermal: thermal@0x71 {
