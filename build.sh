@@ -66,8 +66,8 @@ fi
 RELEASE_VERSION="${RELEASE_VERSION:-9999.99.99}"
 
 # Initialize repositories
-git submodule init
-git submodule update
+# git submodule init
+# git submodule update
 
 ##
 # busybox_get() - Obtain a statically linked busybox binary

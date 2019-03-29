@@ -21,7 +21,7 @@ RUN apt-get update && \
         xz-utils \
     && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/
+    rm -rf /var/cache/apt/*
 
 ENV CROSS_COMPILE="arm-none-eabi-"
 COPY tests/buildenv.sh /tests/buildenv.sh

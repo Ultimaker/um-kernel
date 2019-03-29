@@ -6,33 +6,18 @@
 # Copyright (C) 2018 Olliver Schinagl <oliver@schinagl.nl>
 #
 
-CI_REGISTRY_IMAGE="${CI_REGISTRY_IMAGE:-registry.gitlab.com/olliver/um-kernel}"
+set -eu
+
+CI_REGISTRY_IMAGE="${CI_REGISTRY_IMAGE:-registry.gitlab.com/ultimaker/embedded/platform/um-kernel}"
 CI_REGISTRY_IMAGE_TAG="${CI_REGISTRY_IMAGE_TAG:-latest}"
 
 WORKDIR="${WORKDIR:-/build}"
 
-set -eu
-
-FAKE_WHOAMI="$(mktemp --suffix=.sh)"
-cleanup() {
-	rm "${FAKE_WHOAMI}"
-}
-
-fake_whoami() {
-	cat <<- EOT > "${FAKE_WHOAMI}"
-		#!/bin/sh
-
-		if [ "\$(id -u)" -ge 1000 ]; then
-		  echo "$(whoami)"
-		else
-		  whoami "\${@}"
-		fi
-	EOT
-
-	chmod +x "${FAKE_WHOAMI}"
-}
-
 trap cleanup EXIT
+
+cleanup() {
+	echo "Cleanup goes here"
+}
 
 git submodule update --init --recursive
 
@@ -44,12 +29,17 @@ if ! command -V docker; then
 fi
 
 echo "Starting build using ${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}."
-docker pull "${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}"
-fake_whoami
+update_docker_image()
+{
+    if ! docker pull "${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}" 2> /dev/null; then
+        echo "Unable to update docker image '${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}', building locally instead."
+        docker build . -t "${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}"
+    fi
+}
+update_docker_image
 docker run --rm -i -t -h "$(hostname)" -u "$(id -u)" \
 	   -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
 	   -v "$(pwd):${WORKDIR}" \
-	   -v "${FAKE_WHOAMI}:/usr/bin/whoami" \
 	   -w "${WORKDIR}" \
 	   "${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}" \
 	   ./build.sh "${@}"
