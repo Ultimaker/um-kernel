@@ -1,2 +1,2 @@
 *
-!tests/buildenv.sh
+!test/buildenv_check.sh

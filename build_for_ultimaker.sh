@@ -36,7 +36,9 @@ update_docker_image()
         docker build . -t "${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}"
     fi
 }
+
 update_docker_image
+
 docker run --rm -i -t -h "$(hostname)" -u "$(id -u)" \
 	   -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
 	   -v "$(pwd):${WORKDIR}" \

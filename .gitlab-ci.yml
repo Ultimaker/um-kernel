@@ -42,7 +42,7 @@ lint_build_scripts:
 lint_test_scripts:
   <<: *shell_linting_common
   script:
-    - find 'tests/' -iname '*.sh' -exec shellcheck -x -C -f tty {} \;
+    - find 'test/' -iname '*.sh' -exec shellcheck -x -C -f tty {} \;
 
 # Build environment
 # =================

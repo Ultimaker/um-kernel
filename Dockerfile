@@ -24,4 +24,4 @@ RUN apt-get update && \
     rm -rf /var/cache/apt/*
 
 ENV CROSS_COMPILE="arm-none-eabi-"
-COPY tests/buildenv.sh /tests/buildenv.sh
+COPY test/buildenv_check.sh /test/buildenv_check.sh
