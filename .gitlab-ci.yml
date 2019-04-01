@@ -106,3 +106,4 @@ build_pkg_common: &build_pkg_common
     paths:
       - ./*.deb
     expire_in: 3 days
+  image: "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}"
