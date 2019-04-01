@@ -28,7 +28,7 @@ if [ "${MAKEFLAGS}" == "" ]; then
     echo -e "\e[0m"
 fi
 
-set -eu
+set -eux
 
 CWD="$(pwd)"
 
@@ -215,8 +215,12 @@ kernel_build_command()
     if [ ! -d "${KERNEL_BUILD_DIR}" ]; then
         mkdir -p "${KERNEL_BUILD_DIR}"
     fi
+    pwd
+    ls -l
+
 
     cd "${LINUX_SRC_DIR}"
+    ls -l
     ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "${@}"
     cd "${CWD}"
 }
