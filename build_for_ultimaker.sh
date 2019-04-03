@@ -244,9 +244,11 @@ kernel_build()
     kernel_build_command LOADADDR=0x40008000 uImage
 
     # Install Kernel image
-    if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
-        mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
+
+    if [ -d "${BOOT_FILE_OUTPUT_DIR}" ] && [ -z "${BOOT_FILE_OUTPUT_DIR##*_build_armhf*}" ]; then
+        rm -r "${BOOT_FILE_OUTPUT_DIR}"
     fi
+    mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
 
     cp "${KERNEL_BUILD_DIR}/arch/arm/boot/uImage" "${BOOT_FILE_OUTPUT_DIR}/uImage-sun7i-a20-opinicus_v1"
     echo "Finished building Kernel."
@@ -266,6 +268,10 @@ kernel_modules_install()
     if [ -z "${KERNEL_RELEASE}" ]; then
         echo "Error, unable to get kernel release version, cannot continue."
         exit 1
+    fi
+
+    if [ -d "${DEBIAN_DIR}/lib/modules" ] && [ -z "${BOOT_FILE_OUTPUT_DIR##*_build_armhf*}" ]; then
+        rm -r "${DEBIAN_DIR}/lib/modules"
     fi
 
     kernel_build_command INSTALL_MOD_PATH="${DEBIAN_DIR}" modules_install
