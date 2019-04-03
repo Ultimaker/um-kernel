@@ -61,8 +61,6 @@ prepare_build_environment:
         docker run \
         --rm \
         --privileged \
-        -e "ARM_EMU_BIN=${ARM_EMU_BIN}" \
-        -v "${ARM_EMU_BIN}:${ARM_EMU_BIN}:ro" \
         "$CI_COMMIT_SHA:$CI_PIPELINE_ID" \
         /test/buildenv_check.sh
 
