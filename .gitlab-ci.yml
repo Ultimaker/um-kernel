@@ -14,7 +14,7 @@ stages:
   - prepare
   - push
   - build
-  - test
+  # - test
   - cleanup
 
 # Common requisites
