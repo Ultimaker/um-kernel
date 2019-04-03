@@ -19,7 +19,7 @@ stages:
 
 # Common requisites
 # ==========
-.parameters_template: &parameters_common
+.parameters_common: &parameters_common
   tags:
     - docker
 
@@ -44,16 +44,16 @@ lint_test_scripts:
   script:
     - find 'test/' -iname '*.sh' -exec shellcheck -x -C -f tty {} \;
 
-# Build environment
-# =================
-.build_environment_common: &environment_common
+# Environment (Docker)
+# ====================
+.build_environment_common: &build_environment_common
   <<: *parameters_common
   image: registry.hub.docker.com/library/docker:stable
 
 prepare_build_environment:
-  <<: *environment_common
-  # only:
-  #   <<: *changes_docker
+  <<: *build_environment_common
+  # only: ################# Remove in production.
+  #   <<: *changes_docker ################# Remove in production.
   stage: prepare
   script:
     - docker build --rm -t "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}" .
@@ -66,7 +66,7 @@ prepare_build_environment:
 # The push to the Docker registry is thus only executed when docker changes are
 # performed and the working branch is 'master'
 push_build_environment:
-  <<: *environment_common
+  <<: *build_environment_common
   only:
     <<: *changes_docker
     refs:
@@ -80,7 +80,7 @@ push_build_environment:
     - docker push "${CI_REGISTRY_IMAGE}:latest"
 
 cleanup_build_environment:
-  <<: *environment_common
+  <<: *build_environment_common
   only:
     <<: *changes_docker
   stage: cleanup
