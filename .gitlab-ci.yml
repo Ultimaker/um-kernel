@@ -60,7 +60,6 @@ prepare_build_environment:
     - |
         docker run \
         --rm \
-        --privileged \
         "$CI_COMMIT_SHA:$CI_PIPELINE_ID" \
         /test/buildenv_check.sh
 
