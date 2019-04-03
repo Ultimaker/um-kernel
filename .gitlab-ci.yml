@@ -93,7 +93,7 @@ cleanup_build_environment:
 
 # Package generation
 # ==================
-build_pkg_common: &build_pkg_common
+.build_pkg_common: &build_pkg_common
   <<: *parameters_common
   stage: build
   variables:
@@ -105,4 +105,39 @@ build_pkg_common: &build_pkg_common
     paths:
       - ./*.deb
     expire_in: 3 days
+
+.dev_docker_candidate: &dev_docker_candidate
+  except:
+    refs:
+      - master
+  only:
+    <<: *changes_docker
   image: "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}"
+
+.dev_docker_latest: &dev_docker_latest
+  except:
+    <<: *changes_docker
+    refs:
+      - master
+  image: "${CI_REGISTRY_IMAGE}:latest"
+
+.master_docker_latest: &master_docker_latest
+  only:
+    refs:
+      - master
+  image: "${CI_REGISTRY_IMAGE}:latest"
+
+  # Build the package on a non-master branch in a modified Docker image.
+build:dev_docker_candidate:
+  <<: *build_pkg_common
+  <<: *dev_docker_candidate
+
+# Build the package on a non-master branch in the latest Docker image.
+build:dev_docker_latest:
+  <<: *build_pkg_common
+  <<: *dev_docker_latest
+
+# Build the package on the master branch in the latest Docker image.
+build:master_docker_latest:
+  <<: *build_pkg_common
+  <<: *master_docker_latest
