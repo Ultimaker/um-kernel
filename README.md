@@ -1,6 +1,4 @@
-[![pipeline status](https://gitlab.com/olliver/um-kernel/badges/master/pipeline.svg)](https://gitlab.com/olliver/um-kernel/commits/master)
-
-This repository contains the Ultimaker package build script for the linux kernel
+This repository contains the Ultimaker package build script for the kernel
 
 The layout of the repository is as follows.
 
@@ -29,4 +27,10 @@ linux
 -----
 This is the linux kernel source tree. Ideally, this contains no changes to the
 upstream kernel. Currently we have a small amount of patches on top of the
-stable linux kernel.
+stable linux kernel. The repository currently has a few branches.
+
+* archive/opinicus_v4.2.0-rc7_v2	Our old kernel tree with modifications
+* opinicus_v4.2.0-rc7			The unmodified kernel from above
+
+* opinicus-4.9.13_0			Our current kernel based on 4.9.13 tag
+* opinicus-4.10.1_0			An experimental future kernel
