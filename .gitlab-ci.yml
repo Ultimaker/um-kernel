@@ -52,8 +52,8 @@ lint_test_scripts:
 
 prepare_build_environment:
   <<: *build_environment_common
-  # only: ################# Remove in production.
-  #   <<: *changes_docker ################# Remove in production.
+  only:
+    <<: *changes_docker
   stage: prepare
   script:
     - docker build --rm -t "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}" .
