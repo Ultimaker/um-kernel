@@ -2,8 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0+
 #
-# Copyright (C) 2018 Ultimaker B.V.
-# Copyright (C) 2018 Olliver Schinagl <oliver@schinagl.nl>
+# Copyright (C) 2019 Ultimaker B.V.
 #
 
 set -eu

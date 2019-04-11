@@ -1,6 +1,6 @@
 FROM registry.hub.docker.com/library/debian:stable-slim
 
-LABEL Maintainer="o.schinagl@ultimaker.com" \
+LABEL Maintainer="software-embedded-platform@ultimaker.com" \
       Comment="Ultimaker kernel build environment"
 
 RUN apt-get update && \
