@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC1117
 
 # This script builds the kernel, kernel modules, device trees and boot scripts for the A20 linux system that we use.
 
@@ -63,10 +64,6 @@ fi
 
 # Set the release version if it's not passed to the script
 RELEASE_VERSION="${RELEASE_VERSION:-9999.99.99}"
-
-# Initialize repositories
-git submodule init
-git submodule update
 
 ##
 # busybox_get() - Obtain a statically linked busybox binary
