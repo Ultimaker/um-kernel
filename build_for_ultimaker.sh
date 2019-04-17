@@ -155,5 +155,3 @@ if [ "${run_tests}" = "yes" ]; then
 fi
 
 exit 0
-
-# Go over all externally inputtable variables again

@@ -85,14 +85,15 @@ check_command_installation()
 
 check_library_installation()
 {
-    for pkg in ${LIBRARIES}; do
-        echo "${pkg}:"
-        PATH="${PATH}:/sbin:/usr/sbin:/usr/local/sbin" ldconfig -p | grep "${pkg}" || \
-            { echo "        ${pkg} could not be found" && result=1; }
+    for lib in ${LIBRARIES}; do
+        echo "${lib}:"
+        PATH="${PATH}:/sbin:/usr/sbin:/usr/local/sbin" ldconfig -p | grep "${lib}" || \
+            { echo "        ${lib} could not be found" && result=1; }
     done
 }
 
-cleanup() {
+cleanup()
+{
        if [ "$(dirname "${TEST_DIR}")" != "/tmp" ]; then
                exit 1
        fi
