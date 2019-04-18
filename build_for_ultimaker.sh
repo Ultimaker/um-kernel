@@ -36,6 +36,7 @@ run_in_docker()
 {
     docker run \
         --rm \
+        -it \
         -u "$(id -u)" \
         -v "$(pwd):${DOCKER_WORK_DIR}" \
         -e "ARCH=${ARCH}" \
@@ -87,7 +88,7 @@ env_check()
 run_build()
 {
     git submodule update --init --recursive
-    run_script "./build.sh"
+    run_script "./build.sh" "${@}"
 }
 
 run_tests()
@@ -148,7 +149,7 @@ if [ "${run_linter}" = "yes" ]; then
     run_linter
 fi
 
-run_build
+run_build "${1-}"
 
 if [ "${run_tests}" = "yes" ]; then
     run_tests
