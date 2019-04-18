@@ -18,6 +18,10 @@ stages:
 
 # Common requisites
 # ==========
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_DEPTH: "1"
+
 .parameters_common: &parameters_common
   tags:
     - docker
@@ -95,8 +99,6 @@ cleanup_build_environment:
 .build_pkg_common: &build_pkg_common
   <<: *parameters_common
   stage: build
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
   script:
     - ./build.sh
   artifacts:
