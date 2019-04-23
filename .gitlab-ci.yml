@@ -48,19 +48,28 @@ lint_test_scripts:
 .build_environment_common: &build_environment_common
   <<: *parameters_common
   image: registry.hub.docker.com/library/docker:stable
+  before_script:
+    - |
+      apk update && apk add git
 
 prepare_build_environment:
   <<: *build_environment_common
-  only:
-    <<: *changes_docker
   stage: prepare
   script:
-    - docker build --rm -t "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}" .
     - |
+      if git whatchanged --name-only --pretty="" master...HEAD | grep "Dockerfile\|.dockerignore"; then
+        echo "Dockerfile changes detected..."
+        docker build --rm -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" .
         docker run \
         --rm \
         "$CI_COMMIT_SHA:$CI_PIPELINE_ID" \
         /test/buildenv_check.sh
+      else
+        echo "No Dockerfile changes..."
+        docker login -u gitlab-ci-token -p "${CI_JOB_TOKEN}" "${CI_REGISTRY}"
+        docker tag "${CI_REGISTRY_IMAGE}:latest" "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+        docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+      fi
 
 # The push to the Docker registry is thus only executed when docker changes are
 # performed and the working branch is 'master'
@@ -72,22 +81,24 @@ push_build_environment:
       - master
   stage: push
   script:
-    - docker login -u gitlab-ci-token -p "${CI_JOB_TOKEN}" "${CI_REGISTRY}"
-    - docker tag  "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}" "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-    - docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-    - docker tag  "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" "${CI_REGISTRY_IMAGE}:latest"
-    - docker push "${CI_REGISTRY_IMAGE}:latest"
+    - |
+      docker login -u gitlab-ci-token -p "${CI_JOB_TOKEN}" "${CI_REGISTRY}"
+      docker tag  "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" "${CI_REGISTRY_IMAGE}:latest"
+      docker push "${CI_REGISTRY_IMAGE}:latest"
 
 cleanup_build_environment:
   <<: *build_environment_common
-  only:
-    <<: *changes_docker
   stage: cleanup
+  except:
+    refs:
+      - master
   when: always
   script:
     - |
-      if docker inspect --type image "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}" 1> /dev/null; then
-        docker rmi "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}"
+      if git whatchanged --name-only --pretty="" master...HEAD | grep "Dockerfile\|.dockerignore"; then
+        if docker inspect --type image "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" 1> /dev/null; then
+          docker rmi "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+        fi
       fi
 
 # Package generation
@@ -105,38 +116,24 @@ cleanup_build_environment:
       - ./*.deb
     expire_in: 3 days
 
-.dev_docker_candidate: &dev_docker_candidate
+.docker_branch: &docker_branch
   except:
     refs:
       - master
-  only:
-    <<: *changes_docker
-  image: "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}"
+  image: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
 
-.dev_docker_latest: &dev_docker_latest
-  except:
-    <<: *changes_docker
-    refs:
-      - master
-  image: "${CI_REGISTRY_IMAGE}:latest"
-
-.master_docker_latest: &master_docker_latest
+.docker_master: &docker_master
   only:
     refs:
       - master
   image: "${CI_REGISTRY_IMAGE}:latest"
 
   # Build the package on a non-master branch in a modified Docker image.
-build:dev_docker_candidate:
+build:branch:
   <<: *build_pkg_common
-  <<: *dev_docker_candidate
-
-# Build the package on a non-master branch in the latest Docker image.
-build:dev_docker_latest:
-  <<: *build_pkg_common
-  <<: *dev_docker_latest
+  <<: *docker_branch
 
 # Build the package on the master branch in the latest Docker image.
-build:master_docker_latest:
+build:master:
   <<: *build_pkg_common
-  <<: *master_docker_latest
+  <<: *docker_master
