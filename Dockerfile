@@ -1,4 +1,4 @@
-FROM registry.hub.docker.com/library/debian:stable-slim
+FROM registry.hub.docker.com/library/debian:jessie-slim
 
 LABEL Maintainer="software-embedded-platform@ultimaker.com" \
       Comment="Ultimaker kernel build environment"

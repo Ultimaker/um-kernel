@@ -35,7 +35,7 @@ run_shellcheck()
     fi
 
     SCRIPTS="$(find "./scripts/" "./test/" -name '*.sh')"
-    for shellcheck_script in "./"*".sh"  "./legacy_test/"*".sh" ${SCRIPTS}; do
+    for shellcheck_script in "./"*".sh" ${SCRIPTS}; do
         if [ ! -r "${shellcheck_script}" ]; then
             echo "--------------------------------------------------------------------------------"
             echo "Warning, skipping shellcheck '${shellcheck_script}'."
