@@ -303,7 +303,6 @@
 		pinctrl_pcie1: pinctrl_pcie1 {
 			fsl,pins = <
 				MX6QDL_PAD_EIM_A22__GPIO2_IO16		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* PCIE reset */
-				MX6QDL_PAD_GPIO_18__GPIO7_IO13		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* RST_OUTn */
 				MX6QDL_PAD_GPIO_19__GPIO4_IO05		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6 P5, SoM P114, SMARC2 GPIO6, Linux GPIO 101, Output to switch PCIe power enable */
 			>;
 		};
@@ -359,7 +358,6 @@
 			fsl,pins = <
 				MX6QDL_PAD_CSI0_DAT8__I2C1_SDA		(PAD__HYS__EN  | PAD__PUS__100K_OHM_PU | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__EN  | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST | IMX_PAD_SION)
 				MX6QDL_PAD_CSI0_DAT9__I2C1_SCL		(PAD__HYS__EN  | PAD__PUS__100K_OHM_PU | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__EN  | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST | IMX_PAD_SION)
-				MX6QDL_PAD_SD4_DAT2__GPIO2_IO10		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6 F17, SoM P116, SMARC2 GPIO8, Linux GPIO 42, PCA9555 interrupt input */
 			>;
 		};
 	};
@@ -415,6 +413,14 @@
 		};
 	};
 
+	carrier_gpio {
+		pinctrl_pca9555: carriergpiogrp-1 {
+			fsl,pins = <
+				MX6QDL_PAD_GPIO_18__GPIO7_IO13		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6 P6,  SoM P126, SMARC2 RESET_OUT#, Linux GPIO 205, Output to reset carrier board Carrier board */
+				MX6QDL_PAD_SD4_DAT2__GPIO2_IO10		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6 F17, SoM P116, SMARC2 GPIO8, Linux GPIO 42, PCA9555 interrupt input */
+			>;
+		};
+	};
 };
 
 / {
@@ -714,11 +720,11 @@
 
 	/* UltiMainboard v4.x GPIO I/O expander (U35) */
 	pca9555: pca9555@20 {
-		compatible = "nxp,pca9555";
+		compatible = "ti,tca6416";
 		reg = <0x20>;
-// TODO: Extract interrupt GPIO pin from pinctrl_i2c1_2, create pinctrl_pca9555 and put it in there.
-//		pinctrl-names = "default";
-//		pinctrl-0 = <&pca9555_pins>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_pca9555>;
+		reset-gpios = <&gpio7 13 GPIO_ACTIVE_LOW>;
 		interrupt-parent = <&gpio2>;		/* GPIO bank 2 */
 		interrupts = <10 IRQ_TYPE_LEVEL_LOW>;	/* GPIO pin 10 */
 		gpio-controller;
