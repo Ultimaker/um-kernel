@@ -760,6 +760,12 @@
 		manufacturer = "Ultimaker";
 		product = "UltiMainboard v4.0 USB hub";
 	};
+
+	/* UltiMainboard v4.x stepper motor driver thermometer (U21) */
+	lm75: lm75@0x4f {
+		compatible = "national,lm75";
+		reg = <0x4f>;
+	};
 };
 
 &i2c2 {
