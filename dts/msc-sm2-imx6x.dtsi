@@ -320,14 +320,6 @@
 		};
 	};
 
-	max98357a {
-		sdmode_en: sdmode-en {
-			fsl,pins = <
-				MX6QDL_PAD_SD4_DAT5__GPIO2_IO13		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6 C19, SoM P119, SMARC2 GPIO11, SD_MODE */
-			>;
-		};
-	};
-
 	flexcan1 {
 		pinctrl_flexcan1_1: flexcan1grp-1 {
 			fsl,pins = <
@@ -424,6 +416,12 @@
 		pinctrl_usb2512b: carriergpiogrp-2 {
 			fsl,pins = <
 				MX6QDL_PAD_SD4_DAT6__GPIO2_IO14		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* MX6 B20, SoM P115, SMARC2 GPIO7, Linux GPIO 46, USB2512b reset input */
+			>;
+		};
+
+		pinctrl_max98357a: carriergpiogrp-3 {
+			fsl,pins = <
+				MX6QDL_PAD_SD4_DAT5__GPIO2_IO13		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6 C19, SoM P119, SMARC2 GPIO11, SD_MODE */
 			>;
 		};
 	};
@@ -662,8 +660,8 @@
 	codec: max98357a@0 {
 		compatible = "maxim,max98357a";
 		pinctrl-names = "default";
-		pinctrl-0 = <&sdmode_en>;
-		sdmode-gpios = <&gpio2 13 GPIO_ACTIVE_HIGH>;	/* TODO: Change to proper GPIO pin */
+		pinctrl-0 = <&pinctrl_max98357a>;
+		sdmode-gpios = <&gpio2 13 GPIO_ACTIVE_HIGH>;
 		sdmode-delay = <2>;
 		#sound-dai-cells = <0>;
 		status = "okay";
