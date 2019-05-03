@@ -391,7 +391,6 @@
 			fsl,pins = <
 				MX6QDL_PAD_NANDF_WP_B__I2C4_SCL		(PAD__HYS__EN  | PAD__PUS__100K_OHM_PU | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__EN  | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST | IMX_PAD_SION)
 				MX6QDL_PAD_NANDF_CS3__I2C4_SDA		(PAD__HYS__EN  | PAD__PUS__100K_OHM_PU | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__EN  | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST | IMX_PAD_SION)
-				MX6QDL_PAD_SD4_DAT4__GPIO2_IO12		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6 E18, SoM P118, SMARC2 GPIO10, Linux GPIO 44, Output to write-protect carrier data EEPROM U12 */
 			>;
 		};
 	};
@@ -422,6 +421,12 @@
 		pinctrl_max98357a: carriergpiogrp-3 {
 			fsl,pins = <
 				MX6QDL_PAD_SD4_DAT5__GPIO2_IO13		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6 C19, SoM P119, SMARC2 GPIO11, SD_MODE */
+			>;
+		};
+
+		pinctrl_24c32wp: carriergpiogrp-4 {
+			fsl,pins = <
+				MX6QDL_PAD_SD4_DAT4__GPIO2_IO12		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6 E18, SoM P118, SMARC2 GPIO10, Linux GPIO 44, Output to write-protect carrier data EEPROM U12 */
 			>;
 		};
 	};
@@ -812,6 +817,8 @@
 	carrierdata@57 {
 		compatible = "atmel,24c32";
 		reg = <0x57>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_24c32wp>;
 		pagesize = <32>;
 		wp-gpios = <&gpio2 12 0>;
 	};
