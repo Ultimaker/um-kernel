@@ -86,7 +86,7 @@
 				MX6QDL_PAD_KEY_COL1__GPIO4_IO08		(IMX_NO_PAD_CTL)																		/* iMX6  U7, SoM  S54, SMARC2 SATA_ACT#, Linux GPIO 104 */
 				MX6QDL_PAD_EIM_D29__GPIO3_IO29		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6 J19, SoM P108, SMARC2 GPIO0,     Linux GPIO  93, Carrier board LED0 */
 				MX6QDL_PAD_GPIO_16__GPIO7_IO11		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6  R2, SoM P109, SMARC2 GPIO1,     Linux GPIO 203, Carrier board LED1 */
-				MX6QDL_PAD_EIM_D28__GPIO3_IO28		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6 G23, SoM P110, SMARC2 GPIO2,     Linux GPIO  92, Carrier board LED2 */
+				MX6QDL_PAD_EIM_D28__GPIO3_IO28		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* iMX6 G23, SoM P110, SMARC2 GPIO2,     Linux GPIO  92, Carrier board SD_LED */
 			>;
 		};
 	};
@@ -604,7 +604,7 @@
 		led6 {
 			label = "carrier:red:um-led-0";
 			gpios = <&gpio3 29 GPIO_ACTIVE_HIGH>;
-			linux,default-trigger = "mmc0";
+			linux,default-trigger = "none";
 			default-state = "off";
 		};
 
@@ -616,11 +616,11 @@
 			default-state = "off";
 		};
 
-		/* UltiMainboard v4.x LED2 (D17) */
+		/* UltiMainboard v4.x SD_LED (D17) */
 		led8 {
 			label = "carrier:red:um-led-2";
 			gpios = <&gpio3 28 GPIO_ACTIVE_HIGH>;
-			linux,default-trigger = "none";
+			linux,default-trigger = "mmc0";
 			default-state = "off";
 		};
 	};
