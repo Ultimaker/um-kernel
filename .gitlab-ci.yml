@@ -13,47 +13,51 @@ stages:
   - prepare
   - push
   - build
-  # - test
   - cleanup
 
-# Common requisites
-# ==========
-.parameters_common: &parameters_common
+# Common parameters to be included in every job
+# =============================================
+.jobs_common: &jobs_common
   tags:
     - docker
 
-.changes_docker: &changes_docker
+# Common parameters used in all environment related jobs
+# ======================================================
+.environment_common: &environment_common
+  <<: *jobs_common
+  image: registry.hub.docker.com/library/docker:stable
+  before_script:
+    - apk update && apk add git
+
+# The following can be included in the 'only', or 'except' statements,
+# so they look for changes in files related to Docker and thus our environment.
+.environment_common_docker_changes: &environment_common_docker_changes
   changes:
     - Dockerfile
     - .dockerignore
     - dockerfiles/**/*
 
-.shell_linting_common: &shell_linting_common
-  <<: *parameters_common
+# Lint stage
+# =============
+.lint_scripts_common: &lint_scripts_common
+  <<: *jobs_common
   image: registry.hub.docker.com/koalaman/shellcheck-alpine:stable
   stage: lint
 
-lint_build_scripts:
-  <<: *shell_linting_common
+lint_scripts_build:
+  <<: *lint_scripts_common
   script:
     - shellcheck -C -f tty "build"*".sh"
 
-lint_test_scripts:
-  <<: *shell_linting_common
+lint_scripts_test:
+  <<: *lint_scripts_common
   script:
     - find 'test/' -iname '*.sh' -exec shellcheck -x -C -f tty {} \;
 
-# Environment (Docker)
-# ====================
-.build_environment_common: &build_environment_common
-  <<: *parameters_common
-  image: registry.hub.docker.com/library/docker:stable
-  before_script:
-    - |
-      apk update && apk add git
-
-prepare_build_environment:
-  <<: *build_environment_common
+# Prepare stage
+# =============
+prepare_environment:
+  <<: *environment_common
   stage: prepare
   script:
     - |
@@ -71,12 +75,12 @@ prepare_build_environment:
         docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
       fi
 
-# The push to the Docker registry is thus only executed when docker changes are
-# performed and the working branch is 'master'
-push_build_environment:
-  <<: *build_environment_common
+# Push stage
+# ==========
+push_environment:
+  <<: *environment_common
   only:
-    <<: *changes_docker
+    <<: *environment_common_docker_changes
     refs:
       - master
   stage: push
@@ -86,8 +90,42 @@ push_build_environment:
       docker tag  "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" "${CI_REGISTRY_IMAGE}:latest"
       docker push "${CI_REGISTRY_IMAGE}:latest"
 
-cleanup_build_environment:
-  <<: *build_environment_common
+# Build stage
+# ===========
+.build_common: &build_common
+  <<: *jobs_common
+  stage: build
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_DEPTH: 1
+  script:
+    - ./build.sh
+  artifacts:
+    name: "$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA"
+    paths:
+      - ./*.deb
+    expire_in: 3 days
+
+# Build the package on a non-master branch in a modified Docker image.
+build_branch:
+  <<: *build_common
+  except:
+    refs:
+      - master
+  image: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+
+# Build the package on the master branch in the latest Docker image.
+build_master:
+  <<: *build_common
+  only:
+    refs:
+      - master
+  image: "${CI_REGISTRY_IMAGE}:latest"
+
+# Cleanup stage
+# =============
+cleanup_environment:
+  <<: *environment_common
   stage: cleanup
   except:
     refs:
@@ -100,40 +138,3 @@ cleanup_build_environment:
           docker rmi "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
         fi
       fi
-
-# Package generation
-# ==================
-.build_pkg_common: &build_pkg_common
-  <<: *parameters_common
-  stage: build
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
-  script:
-    - ./build.sh
-  artifacts:
-    name: "$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA"
-    paths:
-      - ./*.deb
-    expire_in: 3 days
-
-.docker_branch: &docker_branch
-  except:
-    refs:
-      - master
-  image: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-
-.docker_master: &docker_master
-  only:
-    refs:
-      - master
-  image: "${CI_REGISTRY_IMAGE}:latest"
-
-  # Build the package on a non-master branch in a modified Docker image.
-build:branch:
-  <<: *build_pkg_common
-  <<: *docker_branch
-
-# Build the package on the master branch in the latest Docker image.
-build:master:
-  <<: *build_pkg_common
-  <<: *docker_master
