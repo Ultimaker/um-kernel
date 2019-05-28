@@ -60,20 +60,7 @@ prepare_environment:
   <<: *environment_common
   stage: prepare
   script:
-    - |
-      if git whatchanged --name-only --pretty="" master...HEAD | grep "Dockerfile\|.dockerignore"; then
-        echo "Dockerfile changes detected..."
-        docker build --rm -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" .
-        docker run \
-        --rm \
-        "$CI_COMMIT_SHA:$CI_PIPELINE_ID" \
-        /test/buildenv_check.sh
-      else
-        echo "No Dockerfile changes..."
-        docker login -u gitlab-ci-token -p "${CI_JOB_TOKEN}" "${CI_REGISTRY}"
-        docker tag "${CI_REGISTRY_IMAGE}:latest" "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-        docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-      fi
+    - ci/prepare_environment.sh
 
 # Push stage
 # ==========
@@ -85,10 +72,7 @@ push_environment:
       - master
   stage: push
   script:
-    - |
-      docker login -u gitlab-ci-token -p "${CI_JOB_TOKEN}" "${CI_REGISTRY}"
-      docker tag  "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" "${CI_REGISTRY_IMAGE}:latest"
-      docker push "${CI_REGISTRY_IMAGE}:latest"
+    - ci/push_environment.sh
 
 # Build stage
 # ===========
@@ -132,9 +116,4 @@ cleanup_environment:
       - master
   when: always
   script:
-    - |
-      if git whatchanged --name-only --pretty="" master...HEAD | grep "Dockerfile\|.dockerignore"; then
-        if docker inspect --type image "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" 1> /dev/null; then
-          docker rmi "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-        fi
-      fi
+    - ci/cleanup_environment.sh
