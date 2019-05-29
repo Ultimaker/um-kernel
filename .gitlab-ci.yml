@@ -52,6 +52,11 @@ lint_scripts_test:
   script:
     - find 'test/' -iname '*.sh' -exec shellcheck -x -C -f tty {} \;
 
+lint_scripts_ci:
+  <<: *lint_scripts_common
+  script:
+    - find 'ci/' -iname '*.sh' -exec shellcheck -x -C -f tty {} \;
+
 # Prepare stage
 # =============
 prepare_environment:
