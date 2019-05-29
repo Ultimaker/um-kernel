@@ -25,9 +25,7 @@ stages:
 # ======================================================
 .environment_common: &environment_common
   <<: *jobs_common
-  image: registry.hub.docker.com/library/docker:stable
-  before_script:
-    - apk update && apk add git
+  image: registry.hub.docker.com/library/docker:stable-git
 
 # The following can be included in the 'only', or 'except' statements,
 # so they look for changes in files related to Docker and thus our environment.
