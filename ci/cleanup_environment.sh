@@ -4,3 +4,4 @@ if git whatchanged --name-only --pretty="" master...HEAD | grep "Dockerfile\|.do
     docker rmi "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
   fi
 fi
+exit 0

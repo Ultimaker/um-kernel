@@ -36,6 +36,7 @@ run_in_docker()
 {
     docker run \
         --rm \
+        -it \
         -u "$(id -u)" \
         -v "$(pwd):${DOCKER_WORK_DIR}" \
         -e "ARCH=${ARCH}" \
