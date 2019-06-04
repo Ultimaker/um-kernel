@@ -6,6 +6,7 @@ LABEL Maintainer="software-embedded-platform@ultimaker.com" \
 RUN apt-get update && \
     apt-get install -y \
         bc \
+        curl \
         device-tree-compiler \
         fakeroot \
         gcc \
