@@ -79,8 +79,8 @@ restart()
 restore_complete_loop()
 {
     while true; do
-	echo "Restore complete, remove the SD recovery SD card and powercycle the printer."
-	sleep 30s
+    	echo "Restore complete, remove the recovery SD card and powercycle the printer."
+    	sleep 30s
     done 
 }
 
@@ -185,7 +185,7 @@ find_and_run_update()
             continue
         fi
 	
-	base_dev="${dev%p[0-9]}"
+	   base_dev="${dev%p[0-9]}"
 
         echo "Attempting to mount '${dev}'."
         if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}"; then
@@ -239,10 +239,10 @@ find_and_run_update()
             echo "Warning: unable to unmount '${UPDATE_IMG_MOUNT}'."
         fi
 
-	# We need to change the storage device to update when we are running the restore image.
-	if isBootingRestoreImage; then
-	    # The kernel will enumerate the MMC device we boot from as 0, therfore if we boot from SD then the internal eMMC is 1;
-	    base_dev="/dev/mmcblk1"
+    	# We need to change the storage device to update when we are running the restore image.
+    	if isBootingRestoreImage; then
+    	    # The kernel will enumerate the MMC device we boot from as 0, therfore if we boot from SD then the internal eMMC is 1;
+    	    base_dev="/dev/mmcblk1"
         fi
 
         echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
@@ -252,9 +252,9 @@ find_and_run_update()
             break
         fi
 
-	# After restore do not remove the file and loop endlessly
-	if isBootingRestoreImage; then
-	   restore_complete_loop
+    	# After restore do not remove the file and loop endlessly
+    	if isBootingRestoreImage; then
+    	   restore_complete_loop
         fi
 
         if ! rm "${update_tmpfs_mount}/${UPDATE_IMAGE:?}"; then
