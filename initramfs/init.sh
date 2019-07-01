@@ -22,6 +22,7 @@ SLINE_DISPLAY_ARTICLE_NUMBERS="9051"
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
+
 BB_BIN="/bin/busybox"
 CMDS=" \
     [ \
@@ -73,6 +74,14 @@ restart()
     fi
     echo "Failed to reboot, shutting down instead."
     shutdown
+}
+
+restore_complete_loop()
+{
+    while true; do
+    	echo "Restore complete, remove the recovery SD card and powercycle the printer."
+    	sleep 30s
+    done 
 }
 
 rescue_shell()
@@ -161,6 +170,13 @@ enable_framebuffer_device()
     echo "Successfully registered framebuffer device."
 }
 
+isBootingRestoreImage()
+{
+    # The partition label 'recovery_data' is an interface between, the recover image creator and executor,
+    # i.e. jedi-build and um-kernel initrd.
+    findfs LABEL=recovery_data 
+}
+
 find_and_run_update()
 {
     echo "Checking for updates ..."
@@ -168,8 +184,8 @@ find_and_run_update()
         if [ ! -b "${dev}" ]; then
             continue
         fi
-
-        base_dev="${dev%p[0-9]}"
+	
+	   base_dev="${dev%p[0-9]}"
 
         echo "Attempting to mount '${dev}'."
         if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}"; then
@@ -223,11 +239,22 @@ find_and_run_update()
             echo "Warning: unable to unmount '${UPDATE_IMG_MOUNT}'."
         fi
 
+    	# We need to change the storage device to update when we are running the restore image.
+    	if isBootingRestoreImage; then
+    	    # The kernel will enumerate the MMC device we boot from as 0, therfore if we boot from SD then the internal eMMC is 1;
+    	    base_dev="/dev/mmcblk1"
+        fi
+
         echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
         if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "${ARTICLE_NUMBER}"; then
             echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} ${ARTICLE_NUMBER}'."
             critical_error
             break
+        fi
+
+    	# After restore do not remove the file and loop endlessly
+    	if isBootingRestoreImage; then
+    	   restore_complete_loop
         fi
 
         if ! rm "${update_tmpfs_mount}/${UPDATE_IMAGE:?}"; then
