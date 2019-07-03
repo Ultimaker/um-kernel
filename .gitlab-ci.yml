@@ -83,7 +83,6 @@ push_environment:
 .build_common: &build_common
   <<: *jobs_common
   stage: build
-EMP-645_improve_ci_docker_logic
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_DEPTH: 1
