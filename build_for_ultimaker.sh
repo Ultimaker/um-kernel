@@ -88,7 +88,7 @@ env_check()
 run_build()
 {
     git submodule update --init --recursive
-    run_script "./build.sh"
+    run_script "./build.sh" "${@}"
 }
 
 run_tests()
@@ -104,15 +104,18 @@ run_linter()
 usage()
 {
     echo "Usage: ${0} [OPTIONS]"
-    echo "  -c   Skip run of build environment checks"
+    echo "  -C   Skip run of build environment checks"
     echo "  -h   Print usage"
     echo "  -l   Skip linter of shell scripts"
     echo "  -t   Skip run of tests"
+    echo
+    echo "Other options will be passed on to build.sh"
+    echo "Run './build.sh -h' for more information."
 }
 
-while getopts ":chlt" options; do
+while getopts ":Chlt" options; do
     case "${options}" in
-    c)
+    C)
         run_env_check="no"
         ;;
     h)
@@ -149,7 +152,7 @@ if [ "${run_linter}" = "yes" ]; then
     run_linter
 fi
 
-run_build
+run_build "${@}"
 
 if [ "${run_tests}" = "yes" ]; then
     run_tests

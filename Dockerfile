@@ -1,4 +1,4 @@
-FROM registry.hub.docker.com/library/debian:stable-slim
+FROM registry.hub.docker.com/library/debian:jessie-slim
 
 LABEL Maintainer="software-embedded-platform@ultimaker.com" \
       Comment="Ultimaker kernel build environment"
@@ -6,6 +6,7 @@ LABEL Maintainer="software-embedded-platform@ultimaker.com" \
 RUN apt-get update && \
     apt-get install -y \
         bc \
+        curl \
         device-tree-compiler \
         fakeroot \
         gcc \

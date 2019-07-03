@@ -14,6 +14,7 @@ stages:
   - push
   - build
   - cleanup
+  - trigger
 
 # Common parameters to be included in every job
 # =============================================
@@ -82,6 +83,7 @@ push_environment:
 .build_common: &build_common
   <<: *jobs_common
   stage: build
+EMP-645_improve_ci_docker_logic
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_DEPTH: 1
@@ -92,6 +94,19 @@ push_environment:
     paths:
       - ./*.deb
     expire_in: 3 days
+  after_script:
+    - |
+      curl -X POST \
+      -F token=${TRIGGER_BUILD_TOKEN} \
+      -F ref=${CI_COMMIT_REF_NAME} \
+      -F "variables[TRIGGERED]=true" \
+      -F "variables[TRIGGER_PROJECT_ID]=${CI_PROJECT_ID}" \
+      -F "variables[TRIGGER_JOB_ID]=${CI_JOB_ID}" \
+      -F "variables[TRIGGER_JOB_NAME]=${CI_JOB_NAME}" \
+      -F "variables[TRIGGER_REF_NAME]=${CI_COMMIT_REF_NAME}" \
+      -F "variables[TRIGGER_PROJECT_PATH]=${CI_PROJECT_PATH}" \
+      -F "variables[TRIGGER_ARTIFACT_FILENAME]=um-kernel-9999.99.99.deb" \
+      https://gitlab.com/api/v4/projects/12084297/trigger/pipeline
 
 # Build the package on a non-master branch in a modified Docker image.
 build_branch:
