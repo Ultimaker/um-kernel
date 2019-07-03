@@ -7,7 +7,7 @@
 set -eu
 
 DOCKER_WORK_DIR="${DOCKER_WORK_DIR:-/build}"
-SHELLCHECK_ARGS="-x -C -f tty"
+SHELLCHECK_ARGS="shellcheck -x -C -f tty"
 
 usage()
 {
@@ -28,13 +28,13 @@ run_shellcheck()
             --rm \
             -v \"$(pwd):${DOCKER_WORK_DIR}\" \
             -w \"${DOCKER_WORK_DIR}\" \
-            registry.hub.docker.com/koalaman/shellcheck:stable"
+            registry.hub.docker.com/koalaman/shellcheck-alpine:stable"
     else
         echo "You need Docker to run the shellcheck linter."
         return
     fi
 
-    SCRIPTS="$(find "./scripts/" "./test/" -name '*.sh')"
+    SCRIPTS="$(find "./scripts/" "./test/" "./ci/" -name '*.sh')"
     for shellcheck_script in "./"*".sh" ${SCRIPTS}; do
         if [ ! -r "${shellcheck_script}" ]; then
             echo "--------------------------------------------------------------------------------"

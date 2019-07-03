@@ -13,93 +13,79 @@ stages:
   - prepare
   - push
   - build
-  # - test
   - cleanup
   - trigger
 
-# Common requisites
-# ==========
-variables:
-  GIT_SUBMODULE_STRATEGY: recursive
-  GIT_DEPTH: "1"
-
-.parameters_common: &parameters_common
+# Common parameters to be included in every job
+# =============================================
+.jobs_common: &jobs_common
   tags:
     - docker
 
-.changes_docker: &changes_docker
+# Common parameters used in all environment related jobs
+# ======================================================
+.environment_common: &environment_common
+  <<: *jobs_common
+  image: registry.hub.docker.com/library/docker:stable-git
+
+# The following can be included in the 'only', or 'except' statements,
+# so they look for changes in files related to Docker and thus our environment.
+.environment_common_docker_changes: &environment_common_docker_changes
   changes:
     - Dockerfile
     - .dockerignore
     - dockerfiles/**/*
 
-.shell_linting_common: &shell_linting_common
-  <<: *parameters_common
+# Lint stage
+# =============
+.lint_scripts_common: &lint_scripts_common
+  <<: *jobs_common
   image: registry.hub.docker.com/koalaman/shellcheck-alpine:stable
   stage: lint
 
-lint_build_scripts:
-  <<: *shell_linting_common
+lint_scripts_build:
+  <<: *lint_scripts_common
   script:
     - shellcheck -C -f tty "build"*".sh"
 
-lint_test_scripts:
-  <<: *shell_linting_common
+lint_scripts_test:
+  <<: *lint_scripts_common
   script:
     - find 'test/' -iname '*.sh' -exec shellcheck -x -C -f tty {} \;
 
-# Environment (Docker)
-# ====================
-.build_environment_common: &build_environment_common
-  <<: *parameters_common
-  image: registry.hub.docker.com/library/docker:stable
+lint_scripts_ci:
+  <<: *lint_scripts_common
+  script:
+    - find 'ci/' -iname '*.sh' -exec shellcheck -x -C -f tty {} \;
 
-prepare_build_environment:
-  <<: *build_environment_common
-  only:
-    <<: *changes_docker
+# Prepare stage
+# =============
+prepare_environment:
+  <<: *environment_common
   stage: prepare
   script:
-    - docker build --rm -t "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}" .
-    - |
-        docker run \
-        --rm \
-        "$CI_COMMIT_SHA:$CI_PIPELINE_ID" \
-        /test/buildenv_check.sh
+    - ci/prepare_environment.sh
 
-# The push to the Docker registry is thus only executed when docker changes are
-# performed and the working branch is 'master'
-push_build_environment:
-  <<: *build_environment_common
+# Push stage
+# ==========
+push_environment:
+  <<: *environment_common
   only:
-    <<: *changes_docker
+    <<: *environment_common_docker_changes
     refs:
       - master
   stage: push
   script:
-    - docker login -u gitlab-ci-token -p "${CI_JOB_TOKEN}" "${CI_REGISTRY}"
-    - docker tag  "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}" "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-    - docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-    - docker tag  "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" "${CI_REGISTRY_IMAGE}:latest"
-    - docker push "${CI_REGISTRY_IMAGE}:latest"
+    - ci/push_environment.sh
 
-cleanup_build_environment:
-  <<: *build_environment_common
-  only:
-    <<: *changes_docker
-  stage: cleanup
-  when: always
-  script:
-    - |
-      if docker inspect --type image "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}" 1> /dev/null; then
-        docker rmi "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}"
-      fi
-
-# Package generation
-# ==================
-.build_pkg_common: &build_pkg_common
-  <<: *parameters_common
+# Build stage
+# ===========
+.build_common: &build_common
+  <<: *jobs_common
   stage: build
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_DEPTH: 1
   script:
     - ./build.sh
   artifacts:
@@ -121,38 +107,30 @@ cleanup_build_environment:
       -F "variables[TRIGGER_ARTIFACT_FILENAME]=um-kernel-9999.99.99.deb" \
       https://gitlab.com/api/v4/projects/12084297/trigger/pipeline
 
-.dev_docker_candidate: &dev_docker_candidate
+# Build the package on a non-master branch in a modified Docker image.
+build_branch:
+  <<: *build_common
   except:
     refs:
       - master
-  only:
-    <<: *changes_docker
-  image: "${CI_COMMIT_SHA}:${CI_PIPELINE_ID}"
-
-.dev_docker_latest: &dev_docker_latest
-  except:
-    <<: *changes_docker
-    refs:
-      - master
-  image: "${CI_REGISTRY_IMAGE}:latest"
-
-.master_docker_latest: &master_docker_latest
-  only:
-    refs:
-      - master
-  image: "${CI_REGISTRY_IMAGE}:latest"
-
-  # Build the package on a non-master branch in a modified Docker image.
-build:dev_docker_candidate:
-  <<: *build_pkg_common
-  <<: *dev_docker_candidate
-
-# Build the package on a non-master branch in the latest Docker image.
-build:dev_docker_latest:
-  <<: *build_pkg_common
-  <<: *dev_docker_latest
+  image: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
 
 # Build the package on the master branch in the latest Docker image.
-build:master_docker_latest:
-  <<: *build_pkg_common
-  <<: *master_docker_latest
+build_master:
+  <<: *build_common
+  only:
+    refs:
+      - master
+  image: "${CI_REGISTRY_IMAGE}:latest"
+
+# Cleanup stage
+# =============
+cleanup_environment:
+  <<: *environment_common
+  stage: cleanup
+  except:
+    refs:
+      - master
+  when: always
+  script:
+    - ci/cleanup_environment.sh
