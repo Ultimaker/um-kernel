@@ -36,7 +36,7 @@ CWD="$(pwd)"
 LINUX_SRC_DIR=${CWD}/linux
 
 # Which kernel config to build.
-BUILDCONFIG="opinicus"
+BUILDCONFIG="msc-sm2s-imx6dl-ultimain4.2"
 
 # Setup internal variables
 KCONFIG="${CWD}/configs/${BUILDCONFIG}_config"
