@@ -282,14 +282,6 @@ kernel_modules_install()
 
 ##
 # dtb_build() - Compile product specific device-tree binary files
-#
-# In the U-Boot stage the boot script is executed, that in turn reads
-# the machine article number from the I2C EEPROM. This article number
-# is in Hexadecimal format. The boot-script will then load a device-tree
-# with corresponding article number into memory.
-#
-# This function will parse a file called article.links and compile the device-tree
-# binaries described above.
 dtb_build()
 {
     echo "Building Device-trees."
@@ -317,28 +309,6 @@ dtb_build()
         dtc -I dts -o "${BOOT_FILE_OUTPUT_DIR}/${dt}.dtb" -O dtb "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp"
     done
 
-    while IFS='' read -r LINE || [ -n "${LINE}" ]; do
-        if [ -n "${LINE###*}" ] && [ "${LINE}" != "" ]; then
-            ARTICLE_FULL="$(cut -d':' -f1 <<< "${LINE}")"
-            DTS="$(cut -d':' -f2 <<<"${LINE}")"
-
-            ARTICLE_NUMBER="$(cut -d'-' -f1 <<< "${ARTICLE_FULL}")"
-            ARTICLE_REV="$(cut -d'-' -s -f2 <<< "${ARTICLE_FULL}")"
-
-            ARTICLE_NUMBER_HEX="$(printf "%x\n" "${ARTICLE_NUMBER}")"
-            ARTICLE_REV_HEX="$(printf "%x\n" "${ARTICLE_REV}")"
-
-            if [ -z "${ARTICLE_REV}" ]; then
-                NAME="${ARTICLE_NUMBER_HEX}.dtb"
-            else
-                NAME="${ARTICLE_NUMBER_HEX}-${ARTICLE_REV_HEX}.dtb"
-            fi
-
-            ln -s "${DTS}.dtb" "${BOOT_FILE_OUTPUT_DIR}/${NAME}"
-
-            echo "Created link for article ${ARTICLE_NUMBER} ${ARTICLE_REV}"
-        fi
-    done < "dts/article.links"
 
     echo "Finished building Device-trees."
 }
