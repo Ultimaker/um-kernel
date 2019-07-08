@@ -36,11 +36,12 @@ CWD="$(pwd)"
 LINUX_SRC_DIR=${CWD}/linux
 
 # Which kernel config to build.
-BUILDCONFIG="msc-sm2s-imx6dl-ultimain4.2"
+BUILDCONFIG="msc-sm2-imx6dl-ultimain4.2"
 
 # Setup internal variables
 KCONFIG="${CWD}/configs/${BUILDCONFIG}_config"
 KERNEL_BUILD_DIR="${CWD}/_build_armhf/${BUILDCONFIG}-linux"
+KERNEL_IMAGE="uImage-${BUILDCONFIG}"
 BUILD_OUTPUT_DIR="${CWD}/_build_armhf/"
 DEBIAN_DIR="${BUILD_OUTPUT_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
@@ -247,7 +248,7 @@ kernel_build()
     fi
     mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
 
-    cp "${KERNEL_BUILD_DIR}/arch/arm/boot/uImage" "${BOOT_FILE_OUTPUT_DIR}/uImage-sun7i-a20-opinicus_v1"
+    cp "${KERNEL_BUILD_DIR}/arch/arm/boot/uImage" "${BOOT_FILE_OUTPUT_DIR}/${KERNEL_IMAGE}"
     echo "Finished building Kernel."
 }
 
