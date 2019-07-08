@@ -239,7 +239,7 @@ kernel_build()
     # we can add the required Kernel modules to initramfs
     initramfs_add_modules
     # Build the uImage file for a bootable kernel
-    kernel_build_command LOADADDR=0x40008000 uImage
+    kernel_build_command LOADADDR=0x10004000 uImage
 
     # Install Kernel image
 
