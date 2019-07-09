@@ -1117,81 +1117,8 @@
 	fsl,spi-num-chipselects = <2>;
 	cs-gpios = <&gpio5 12 0>, <&gpio5 9 0>;
 	status = "okay";
-
-	test_flash2_0: m25@0 {
-		#address-cells = <1>;
-		#size-cells = <1>;
-		compatible = "w25q64fw";
-		spi-max-frequency = <20000000>;
-		reg = <0>;
-
-		partition@0 {
-			label = "space2_0";
-			reg = <0x0 0x800000>;
-		};
-	};
-
-	test_flash2_1: m25@1 {
-		#address-cells = <1>;
-		#size-cells = <1>;
-		compatible = "w25q64fw";
-		spi-max-frequency = <20000000>;
-		reg = <1>;
-
-		partition@0 {
-			label = "space2_1";
-			reg = <0x0 0x800000>;
-		};
-	};
 };
 
-#ifdef ULTIMAKER_SPI_TEST
-&ecspi3 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_ecspi3_1>;
-	fsl,spi-num-chipselects = <2>;
-	cs-gpios = <&gpio4 24 0>, <&gpio4 25 0>;
-	status = "okay";
-
-	test_flash3_0: m25@0 {
-		#address-cells = <1>;
-		#size-cells = <1>;
-		compatible = "w25q64fw";
-		spi-max-frequency = <20000000>;
-		reg = <0>;
-
-		partition@0 {
-			label = "space3_0";
-			reg = <0x0 0x800000>;
-		};
-	};
-
-#ifdef IMX6DL_ULTIMAKER
-	/*
-	 * user space SPI interface (want kernel to create /dev/spi2.1)
-	 */
-	spidev: spidev@1 {
-		status = "okay";
-		compatible = "linux,spidev";
-		spi-max-frequency = <50000000>;
-		reg = <1>;
-	};
-#else
-	test_flash3_1: m25@1 {
-		#address-cells = <1>;
-		#size-cells = <1>;
-		compatible = "w25q64fw";
-		spi-max-frequency = <20000000>;
-		reg = <1>;
-
-		partition@0 {
-			label = "space3_1";
-			reg = <0x0 0x800000>;
-		};
-	};
-#endif
-};
-#endif
 
 &usbh1 {
 	pinctrl-names = "default";
@@ -1379,11 +1306,9 @@
 #ifdef IMX6DL_ULTIMAKER
 				MX6QDL_PAD_SD4_DAT1__GPIO2_IO09		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)		/* ATMEL nRST - NOT PWM3! */
 #endif
-#ifndef ULTIMAKER_SPI_TEST
 				MX6QDL_PAD_DISP0_DAT2__GPIO4_IO23	(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)
 				MX6QDL_PAD_DISP0_DAT1__GPIO4_IO22	(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)
 				MX6QDL_PAD_DISP0_DAT0__GPIO4_IO21	(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)
-#endif
 				MX6QDL_PAD_EIM_LBA__GPIO2_IO27		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)
 				MX6QDL_PAD_EIM_RW__GPIO2_IO26		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)
 				MX6QDL_PAD_EIM_A16__GPIO2_IO22		(PAD__HYS__DIS | PAD__PUS__100K_OHM_PD | PAD__PUE__PULL | PAD__PKE__EN  | PAD__ODE__DIS | PAD__SPEED__MEDIUM2 | PAD__DSE__43_OHM  | PAD__SRE__FAST)
