@@ -1085,10 +1085,10 @@
 	cs-gpios = <&gpio2 30 0>;
 	status = "okay";
 
-	module_flash: m25@0 {
+	module_flash: boot_flash@0 {
 		#address-cells = <1>;
 		#size-cells = <1>;
-		compatible = "gd25lq64";
+		compatible = "jedec,spi-nor";
 		spi-max-frequency = <50000000>;
 		reg = <0>;
 
