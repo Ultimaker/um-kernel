@@ -19,9 +19,14 @@ SBINDIR="${EXEC_PREFIX}/sbin"
 
 UM3_DISPLAY_ARTICLE_NUMBERS="9066 9511"
 SLINE_DISPLAY_ARTICLE_NUMBERS="9051"
+EMMC_DEV="/dev/mmcblk2"
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
+
+#uc2 : UltiController 2 (UM3,UM3E)
+#uc3 : UltiController 3 (S5,S5r2,S3)
+DISPLAY_TYPE="uc3"
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -184,8 +189,6 @@ find_and_run_update()
         if [ ! -b "${dev}" ]; then
             continue
         fi
-	
-	   base_dev="${dev%p[0-9]}"
 
         echo "Attempting to mount '${dev}'."
         if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}"; then
@@ -248,15 +251,9 @@ find_and_run_update()
             echo "Warning: unable to unmount '${UPDATE_IMG_MOUNT}'."
         fi
 
-    	# We need to change the storage device to update when we are running the restore image.
-    	if isBootingRestoreImage; then
-    	    # The kernel will enumerate the MMC device we boot from as 0, therfore if we boot from SD then the internal eMMC is 1;
-    	    base_dev="/dev/mmcblk1"
-        fi
-
         echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
-        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "${ARTICLE_NUMBER}"; then
-            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} ${ARTICLE_NUMBER}'."
+        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${EMMC_DEV}" "${DISPLAY_TYPE}"; then
+            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${EMMC_DEV} ${DISPLAY_TYPE}'."
             critical_error
             break
         fi
