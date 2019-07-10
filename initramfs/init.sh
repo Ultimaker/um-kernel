@@ -156,13 +156,13 @@ probe_module()
 
 enable_framebuffer_device()
 {
+    echo "Enable frame-buffer driver."
+
     probe_module sun4i-drm-hdmi
     probe_module sun4i-hdmi-i2c
     probe_module sun4i-tcon
     probe_module sun4i-backend
     probe_module sun4i-drm
-
-    echo "Successfully registered framebuffer device."
 }
 
 isBootingRestoreImage()
@@ -281,11 +281,6 @@ parse_cmdline()
     # Disabled because it is not possible in a while read loop
     for cmd in $(cat /proc/cmdline); do
         case "${cmd}" in
-        um_an=*)
-            # shellcheck disable=SC2116
-            # Disabled because echo formats our data
-            ARTICLE_NUMBER="$(echo $((0x${cmd#*=})))"
-        ;;
         rescue)
             RESCUE_SHELL="yes"
         ;;
