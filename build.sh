@@ -14,7 +14,7 @@ if [ "${CROSS_COMPILE}" == "" ]; then
         CROSS_COMPILE="arm-linux-gnueabihf-"
     fi
     if [ "${CROSS_COMPILE}" == "" ]; then
-        echo "No suiteable cross-compiler found."
+        echo "No suitable cross-compiler found."
         echo "One can be set explicitly via the environment variable CROSS_COMPILE='arm-linux-gnueabihf-' for example."
         exit 1
     fi
@@ -47,6 +47,7 @@ DEBIAN_DIR="${BUILD_OUTPUT_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 
 INITRAMFS_MODULES_REQUIRED="sunxi_wdt.ko ssd1307fb.ko drm.ko sun4i-backend.ko sun4i-drm.ko sun4i-tcon.ko sun4i-drm-hdmi.ko sun4i-hdmi-i2c.ko"
+
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 
 BB_PKG="http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/armhf/busybox-static-1.30.1-r2.apk"
