@@ -17,8 +17,6 @@ PREFIX="${PREFIX:-/usr/}"
 EXEC_PREFIX="${PREFIX}"
 SBINDIR="${EXEC_PREFIX}/sbin"
 
-UM3_DISPLAY_ARTICLE_NUMBERS="9066 9511"
-SLINE_DISPLAY_ARTICLE_NUMBERS="9051"
 EMMC_DEV="/dev/mmcblk2"
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
@@ -160,19 +158,7 @@ probe_module()
 
 enable_framebuffer_device()
 {
-    if [ -z "${ARTICLE_NUMBER}" ]; then
-        return
-    fi
-    if [ -z "${UM3_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
-        probe_module ssd1307fb
-    elif [ -z "${SLINE_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
-        probe_module sun4i-drm-hdmi
-        probe_module sun4i-hdmi-i2c
-        probe_module sun4i-tcon
-        probe_module sun4i-backend
-        probe_module sun4i-drm
-    fi
-    echo "Successfully registered framebuffer device."
+    echo "Enable frame-buffer driver."
 }
 
 isBootingRestoreImage()
@@ -283,9 +269,6 @@ parse_cmdline()
     # Disabled because it is nos possible in a while read loop
     for cmd in $(cat /proc/cmdline); do
         case "${cmd}" in
-        um_an=*)
-            ARTICLE_NUMBER="$(echo $((0x${cmd#*=})))"
-        ;;
         rescue)
             RESCUE_SHELL="yes"
         ;;
