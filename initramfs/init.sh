@@ -200,10 +200,19 @@ find_and_run_update()
 
         update_tmpfs_mount="$(mktemp -d)"
         echo "Found '${UPDATE_IMAGE}' on '${dev}', moving to tmpfs."
-        if ! mv "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
-            echo "Error, update failed: unable to move ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
-            critical_error
-            break
+        # When we are restoring we want to keep the update image on the SD card.
+        if isBootingRestoreImage; then
+            if ! cp "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
+                echo "Error, update failed: unable to copy ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
+                critical_error
+                break
+            fi
+        else
+            if ! mv "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
+                echo "Error, update failed: unable to move ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
+                critical_error
+                break
+            fi
         fi
 
         echo "Attempting to unmount '${UPDATE_SRC_MOUNT}' before performing the update."
