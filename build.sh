@@ -322,30 +322,6 @@ dtb_build()
     echo "Finished building Device-trees."
 }
 
-bootscript_build()
-{
-    echo "Building boot scripts."
-    if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
-        mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
-    fi
-
-    # Generate the boot splash script
-    gcc -Wall -Werror -std=c99 "scripts/ultimaker_boot_splash_generator.c" -o "scripts/ultimaker_boot_splash_generator"
-    BOOTSPLASH_COMMANDS="$(scripts/ultimaker_boot_splash_generator)"
-
-    # Create the boot-scripts for these Kernels
-    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst "\${ROOT_DEV},\${ROOT_FS},\${BOOTSPLASH_COMMANDS}" < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_mmc.cmd"
-    ROOT_DEV=mmcblk0p2 ROOT_FS=ext4 BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst "\${ROOT_DEV},\${ROOT_FS},\${BOOTSPLASH_COMMANDS}" < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_installer.cmd"
-    ROOT_DEV=mmcblk1p2 ROOT_FS=f2fs BOOTSPLASH_COMMANDS="${BOOTSPLASH_COMMANDS}" envsubst "\${ROOT_DEV},\${ROOT_FS},\${BOOTSPLASH_COMMANDS}" < scripts/bootscript.cmd > "${BOOT_FILE_OUTPUT_DIR}/boot_emmc.cmd"
-
-    # Convert the boot-scripts into proper U-Boot script images
-    for CMD_FILE in "${BOOT_FILE_OUTPUT_DIR}/"*".cmd"; do
-        SCR_FILE="$(basename "${CMD_FILE%.*}.scr")"
-        mkimage -A arm -O linux -T script -C none -a 0x43100000 -n "Boot script" -d "${CMD_FILE}" "${BOOT_FILE_OUTPUT_DIR}/${SCR_FILE}"
-    done
-    echo "Finished building boot scripts."
-}
-
 deb_build()
 {
     echo "Building Debian package."
@@ -363,11 +339,6 @@ deb_build()
 
     if [ ! -d "${DEBIAN_DIR}/lib" ] || [ ! -f "${DEBIAN_DIR}/lib/modules/${KERNEL_RELEASE}/modules.dep" ]; then
         echo "Error, no modules installed, run 'kernel' build first."
-        exit 1
-    fi
-
-    if ! ls "${BOOT_FILE_OUTPUT_DIR}/"*".scr" 1> /dev/null 2>&1; then
-        echo "Error, no boot-script files installed, run 'bootscript' build first."
         exit 1
     fi
 
@@ -390,7 +361,7 @@ usage()
     echo ""
     echo "This is the build script for Linux Kernel related build artifacts and configure the Kernel."
     echo ""
-    echo "  Usage: ${0} [kernel|dtbs|bootscript|deb]"
+    echo "  Usage: ${0} [kernel|dtbs|deb]"
     echo "  For Kernel config modification use: ${0} menuconfig"
     echo ""
     echo "  -c Clean the build output directory '_build_armhf'."
@@ -447,7 +418,6 @@ fi
 if [ "${#}" -eq 0 ]; then
     kernel_build
     dtb_build
-    bootscript_build
     deb_build
     exit 0
 fi
@@ -459,13 +429,9 @@ case "${1-}" in
     dtbs)
         dtb_build
         ;;
-    bootscript)
-        bootscript_build
-        ;;
     deb)
         kernel_build
         dtb_build
-        bootscript_build
         deb_build
         ;;
     menuconfig)
