@@ -123,8 +123,12 @@ usage()
     echo "Run './build.sh -h' for more information."
 }
 
-while getopts ":Chlt" options; do
+while getopts ":cChlt" options; do
     case "${options}" in
+    c)
+        run_build "${@}"
+        exit 0
+        ;;
     C)
         run_env_check="no"
         ;;
