@@ -8,6 +8,7 @@ dir	/mnt					0755 0 0
 dir	/mnt/root				0755 0 0
 dir	/mnt/update				0755 0 0
 dir	/mnt/update_img				0755 0 0
+dir	/mnt/usb				0755 0 0
 dir	/proc					0755 0 0
 dir	/root					0700 0 0
 dir	/run					0755 0 0

@@ -46,7 +46,8 @@ BUILD_OUTPUT_DIR="${CWD}/_build_armhf/"
 DEBIAN_DIR="${BUILD_OUTPUT_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 
-INITRAMFS_MODULES_REQUIRED="loop.ko imxdrm.ko"
+INITRAMFS_MODULES_REQUIRED="ci_hdrc_imx.ko ci_hdrc.ko usbmisc_imx.ko usb-otg-fsm.ko phy-mxs-usb.ko \
+    dw_hdmi-imx.ko dw-hdmi.ko etnaviv.ko imxdrm.ko imx-ipu-v3.ko loop.ko"
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 
 BB_VERSION="1.31.0"

@@ -11,6 +11,7 @@ ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
 UPDATE_IMG_MOUNT="/mnt/update_img"
 UPDATE_SRC_MOUNT="/mnt/update"
+ARTICLENR_USB_MOUNT="/mnt/usb"
 RESCUE_SHELL="no"
 
 PREFIX="${PREFIX:-/usr/}"
@@ -34,6 +35,7 @@ CMDS=" \
     echo \
     exec \
     findfs \
+    i2ctransfer \
     mktemp \
     modprobe \
     mount \
@@ -156,6 +158,18 @@ probe_module()
     fi
 }
 
+enable_usb_storage_device()
+{
+    echo "Enable usb storage device driver."
+    modules="usbmisc_imx usb_otg_fsm ci_hdrc phy_mxs_usb ci_hdrc_imx"
+    for module in ${modules}; do
+        if ! probe_module "${module}"; then
+            echo "Error, registering usb storage device."
+            return
+        fi
+    done
+}
+
 enable_framebuffer_device()
 {
     echo "Enable frame-buffer driver."
@@ -166,6 +180,43 @@ isBootingRestoreImage()
     # The partition label 'recovery_data' is an interface between, the recover image creator and executor,
     # i.e. jedi-build and um-kernel initrd.
     findfs LABEL=recovery_data 
+}
+
+check_and_set_article_number()
+{
+    dev="/dev/sda1"
+    article_number_file="${ARTICLENR_USB_MOUNT}/article_number"
+
+    retries=5
+    while [ "${retries}" -gt 0 ]; do
+        if [ ! -b "${dev}" ]; then
+            retries="$((retries - 1))"
+            sleep 1
+            continue
+        fi
+
+        echo "Attempting to mount '${dev}'."
+        if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${ARTICLENR_USB_MOUNT}"; then
+            return 0
+        fi
+
+        if [ ! -r "${article_number_file}" ]; then
+            umount "${dev}"
+            echo "No article number file found on '${dev}', skipping."
+            return 0
+        fi
+
+        article_number="$(cat "${article_number_file}")"
+        echo "Trying to write article nr: '${article_number}'."
+        if ! i2ctransfer -y 3 w6@0x57 0x01 0x00 ${article_number}; then
+            umount "${dev}"
+            echo "Failed to write article number to EEPROM, skipping."
+            return 0
+        fi
+
+        umount "${dev}"
+        retries=0
+    done
 }
 
 find_and_run_update()
@@ -341,11 +392,13 @@ toolcheck
 kernel_mount
 parse_cmdline
 enable_framebuffer_device
+enable_usb_storage_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
 
 find_and_run_update
+check_and_set_article_number
 boot_root
 
 critical_error
