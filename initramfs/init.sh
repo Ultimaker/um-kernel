@@ -173,6 +173,13 @@ enable_usb_storage_device()
 enable_framebuffer_device()
 {
     echo "Enable frame-buffer driver."
+    modules="dw_hdmi dw_hdmi_imx imx_ipu_v3 etnaviv imxdrm"
+    for module in ${modules}; do
+        if ! probe_module "${module}"; then
+            echo "Error, registering framebuffer device."
+            return
+        fi
+    done
 }
 
 isBootingRestoreImage()

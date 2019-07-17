@@ -30,5 +30,3 @@ slink	/bin/sh		/bin/busybox		0755 0 0
 # init
 file	/init	initramfs/init.sh	0755 0 0
 
-# module parameters
-file	/etc/modprobe.d/ssd1307fb.conf	initramfs/ssd1307fb.conf	0755 0 0
