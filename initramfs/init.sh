@@ -274,10 +274,12 @@ parse_cmdline()
     fi
 
     # shellcheck disable=SC2013
-    # Disabled because it is nos possible in a while read loop
+    # Disabled because it is not possible in a while read loop
     for cmd in $(cat /proc/cmdline); do
         case "${cmd}" in
         um_an=*)
+            # shellcheck disable=SC2116
+            # Disabled because echo formats our data
             ARTICLE_NUMBER="$(echo $((0x${cmd#*=})))"
         ;;
         rescue)
