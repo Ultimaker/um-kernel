@@ -890,10 +890,11 @@
 		};
 
 		bpro {
+			/* Powers the Ethernet Phy */
 			regulator-name = "bpro";
 			regulator-always-on = <1>;
-			regulator-min-microvolt = <1200000>;
-			regulator-max-microvolt = <1200000>;
+			regulator-min-microvolt = <1320000>;
+			regulator-max-microvolt = <1320000>;
 		};
 
 		bmem {
