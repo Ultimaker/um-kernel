@@ -262,6 +262,8 @@ find_and_run_update()
             fi
         fi
 
+        enable_framebuffer_device
+
         echo "Attempting to unmount '${UPDATE_SRC_MOUNT}' before performing the update."
         if ! umount "${UPDATE_SRC_MOUNT}"; then
             echo "Error, update failed: unable to unmount ${UPDATE_SRC_MOUNT}."
@@ -398,7 +400,6 @@ busybox_setup
 toolcheck
 kernel_mount
 parse_cmdline
-enable_framebuffer_device
 enable_usb_storage_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
