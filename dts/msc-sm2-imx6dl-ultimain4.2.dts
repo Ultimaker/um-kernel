@@ -23,4 +23,10 @@
 	  status = "okay";
       };
 #endif
+
+    aliases {
+        uart_marlin = &uart2;
+        uart_ultibus = &uart3;
+    };
 };
+
