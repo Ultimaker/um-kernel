@@ -26,6 +26,9 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 #uc2 : UltiController 2 (UM3,UM3E)
 #uc3 : UltiController 3 (S5,S5r2,S3)
 DISPLAY_TYPE="uc3"
+UMSPLASH="/umsplash_png.fb"
+FBDEV="/dev/fbo"
+
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -180,6 +183,8 @@ enable_framebuffer_device()
             return
         fi
     done
+
+    cat "${UMSPLASH}" > "${FBDEV}"
 }
 
 isBootingRestoreImage()
@@ -261,8 +266,6 @@ find_and_run_update()
                 break
             fi
         fi
-
-        enable_framebuffer_device
 
         echo "Attempting to unmount '${UPDATE_SRC_MOUNT}' before performing the update."
         if ! umount "${UPDATE_SRC_MOUNT}"; then
@@ -404,7 +407,7 @@ enable_usb_storage_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
-
+enable_framebuffer_device
 find_and_run_update
 check_and_set_article_number
 boot_root

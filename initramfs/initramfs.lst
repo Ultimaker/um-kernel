@@ -30,3 +30,6 @@ slink	/bin/sh		/bin/busybox		0755 0 0
 # init
 file	/init	initramfs/init.sh	0755 0 0
 
+# splash screen
+file	/umsplash_png.fb	initramfs/umsplash_png.fb	0755 0 0
+
