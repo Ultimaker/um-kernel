@@ -23,6 +23,9 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 #uc2 : UltiController 2 (UM3,UM3E) This UltiController is not considered here anymore
 #uc3 : UltiController 3 (S5,S5r2,S3)
 DISPLAY_TYPE="uc3"
+UMSPLASH="/umsplash_png.fb"
+FBDEV="/dev/fbo"
+
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -158,11 +161,15 @@ enable_framebuffer_device()
 {
     echo "Enable frame-buffer driver."
 
-    probe_module sun4i-drm-hdmi
-    probe_module sun4i-hdmi-i2c
-    probe_module sun4i-tcon
-    probe_module sun4i-backend
-    probe_module sun4i-drm
+    modules="sun4i-drm-hdmi sun4i-hdmi-i2c sun4i-tcon sun4i-backend sun4i-drm"
+    for module in ${modules}; do
+        if ! probe_module "${module}"; then
+            echo "Error, registering framebuffer device."
+            return
+        fi
+    done
+
+    cat "${UMSPLASH}" > "${FBDEV}"
 }
 
 isBootingRestoreImage()
@@ -356,7 +363,6 @@ enable_framebuffer_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
-
 find_and_run_update
 boot_root
 
