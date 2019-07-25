@@ -233,6 +233,11 @@ check_and_set_article_number()
 
 find_and_run_update()
 {
+    SOFTWARE_INSTALL_MODE="update"
+    if isBootingRestoreImage; then
+        SOFTWARE_INSTALL_MODE="restore"
+    fi
+
     echo "Checking for updates ..."
     for dev in ${UPDATE_DEVICES}; do
         if [ ! -b "${dev}" ]; then
@@ -252,8 +257,9 @@ find_and_run_update()
 
         update_tmpfs_mount="$(mktemp -d)"
         echo "Found '${UPDATE_IMAGE}' on '${dev}', moving to tmpfs."
+
         # When we are restoring we want to keep the update image on the SD card.
-        if isBootingRestoreImage; then
+        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ]; then
             if ! cp "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
                 echo "Error, update failed: unable to copy ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
                 critical_error
@@ -301,14 +307,14 @@ find_and_run_update()
         fi
 
         echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
-        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${EMMC_DEV}" "${DISPLAY_TYPE}"; then
-            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${EMMC_DEV} ${DISPLAY_TYPE}'."
+        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${EMMC_DEV}" "${DISPLAY_TYPE}" "${SOFTWARE_INSTALL_MODE}"; then
+            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${EMMC_DEV} ${DISPLAY_TYPE} ${SOFTWARE_INSTALL_MODE}'."
             critical_error
             break
         fi
 
     	# After restore do not remove the file and loop endlessly
-    	if isBootingRestoreImage; then
+    	if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ]; then
     	   restore_complete_loop
         fi
 
