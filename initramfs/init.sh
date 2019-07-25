@@ -24,8 +24,7 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 #uc3 : UltiController 3 (S5,S5r2,S3)
 DISPLAY_TYPE="uc3"
 UMSPLASH="/umsplash_png.fb"
-FBDEV="/dev/fbo"
-
+FB_DEVICE="/dev/fb0"
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -169,7 +168,11 @@ enable_framebuffer_device()
         fi
     done
 
-    cat "${UMSPLASH}" > "${FBDEV}"
+    if [ -f "${UMSPLASH}" ] && [ -c "${FB_DEVICE}" ]; then
+        cat "${UMSPLASH}" > "${FB_DEVICE}" || true
+    else
+        echo "Unable to output image: '${UMSPLASH}' to: '${FB_DEVICE}'."
+    fi
 }
 
 isBootingRestoreImage()
