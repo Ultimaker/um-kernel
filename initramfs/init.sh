@@ -75,7 +75,7 @@ restart()
     echo "Rebooting in 5 seconds ..."
     sleep 5s
     reboot
-    modprobe sunxi_wdt || true
+    modprobe imx2_wdt || true
     if [ -w "${WATCHDOG_DEV}" ]; then
         watchdog -T 1 -t 60 -F "${WATCHDOG_DEV}"
     fi
