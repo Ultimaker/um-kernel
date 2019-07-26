@@ -106,6 +106,7 @@ run_linter()
 usage()
 {
     echo "Usage: ${0} [OPTIONS]"
+    echo "  -c   Clean the workspace"
     echo "  -C   Skip run of build environment checks"
     echo "  -h   Print usage"
     echo "  -l   Skip linter of shell scripts"
