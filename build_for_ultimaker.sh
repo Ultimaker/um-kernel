@@ -114,7 +114,8 @@ run_shellcheck()
 usage()
 {
     echo "Usage: ${0} [OPTIONS]"
-    echo "  -C   Skip build environment checks"
+    echo "  -c   Clean the workspace"
+    echo "  -C   Skip run of build environment checks"
     echo "  -h   Print usage"
     echo "  -l   Skip code linting"
     echo "  -t   Skip tests"
