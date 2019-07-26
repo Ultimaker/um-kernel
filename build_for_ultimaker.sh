@@ -106,6 +106,7 @@ run_linter()
 usage()
 {
     echo "Usage: ${0} [OPTIONS]"
+    echo "  -c   Clean the workspace"
     echo "  -C   Skip run of build environment checks"
     echo "  -h   Print usage"
     echo "  -l   Skip linter of shell scripts"
@@ -115,8 +116,12 @@ usage()
     echo "Run './build.sh -h' for more information."
 }
 
-while getopts ":Chlt" options; do
+while getopts ":cChlt" options; do
     case "${options}" in
+    c)
+        run_build "${@}"
+        exit 0
+        ;;
     C)
         run_env_check="no"
         ;;

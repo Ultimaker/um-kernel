@@ -9,6 +9,7 @@ CROSS_COMPILE="${CROSS_COMPILE:-""}"
 COMMANDS=" \
     basename \
     bc \
+    bzip2 \
     cpp \
     cut \
     dtc \
@@ -23,6 +24,9 @@ COMMANDS=" \
     mkimage \
     mktemp \
     openssl \
+    pod2html \
+    pod2man \
+    pod2text \
     sed \
     tar \
     wget \

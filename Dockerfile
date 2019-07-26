@@ -1,4 +1,4 @@
-FROM registry.hub.docker.com/library/debian:jessie-slim
+FROM registry.hub.docker.com/library/debian:stretch-slim
 
 LABEL Maintainer="software-embedded-platform@ultimaker.com" \
       Comment="Ultimaker kernel build environment"
@@ -6,17 +6,19 @@ LABEL Maintainer="software-embedded-platform@ultimaker.com" \
 RUN apt-get update && \
     apt-get install -y \
         bc \
+        bzip2 \
         curl \
         device-tree-compiler \
         fakeroot \
         gcc \
-        gcc-arm-none-eabi \
+        gcc-arm-linux-gnueabihf \
         gettext \
         kmod \
         libssl-dev \
         lzop \
         make \
         ncurses-dev \
+        perl \
         u-boot-tools \
         wget \
         xz-utils \
@@ -24,5 +26,4 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/cache/apt/*
 
-ENV CROSS_COMPILE="arm-none-eabi-"
 COPY test/buildenv_check.sh /test/buildenv_check.sh

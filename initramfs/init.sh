@@ -11,17 +11,23 @@ ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
 UPDATE_IMG_MOUNT="/mnt/update_img"
 UPDATE_SRC_MOUNT="/mnt/update"
+ARTICLENR_USB_MOUNT="/mnt/usb"
 RESCUE_SHELL="no"
 
 PREFIX="${PREFIX:-/usr/}"
 EXEC_PREFIX="${PREFIX}"
 SBINDIR="${EXEC_PREFIX}/sbin"
 
-UM3_DISPLAY_ARTICLE_NUMBERS="9066 9511"
-SLINE_DISPLAY_ARTICLE_NUMBERS="9051"
+EMMC_DEV="/dev/mmcblk2"
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
+
+#uc2 : UltiController 2 (UM3,UM3E)
+#uc3 : UltiController 3 (S5,S5r2,S3)
+DISPLAY_TYPE="uc3"
+UMSPLASH="/umsplash_png.fb"
+FB_DEVICE="/dev/fb0"
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -31,6 +37,7 @@ CMDS=" \
     echo \
     exec \
     findfs \
+    i2ctransfer \
     mktemp \
     modprobe \
     mount \
@@ -68,7 +75,7 @@ restart()
     echo "Rebooting in 5 seconds ..."
     sleep 5s
     reboot
-    modprobe sunxi_wdt || true
+    modprobe imx2_wdt || true
     if [ -w "${WATCHDOG_DEV}" ]; then
         watchdog -T 1 -t 60 -F "${WATCHDOG_DEV}"
     fi
@@ -153,21 +160,34 @@ probe_module()
     fi
 }
 
+enable_usb_storage_device()
+{
+    echo "Enable usb storage device driver."
+    modules="usbmisc_imx usb_otg_fsm ci_hdrc phy_mxs_usb ci_hdrc_imx"
+    for module in ${modules}; do
+        if ! probe_module "${module}"; then
+            echo "Error, registering usb storage device."
+            return
+        fi
+    done
+}
+
 enable_framebuffer_device()
 {
-    if [ -z "${ARTICLE_NUMBER}" ]; then
-        return
+    echo "Enable frame-buffer driver."
+    modules="dw_hdmi dw_hdmi_imx imx_ipu_v3 etnaviv imxdrm"
+    for module in ${modules}; do
+        if ! probe_module "${module}"; then
+            echo "Error, registering framebuffer device."
+            return
+        fi
+    done
+
+    if [ -f "${UMSPLASH}" ] && [ -c "${FB_DEVICE}" ]; then
+        cat "${UMSPLASH}" > "${FB_DEVICE}" || true
+    else
+        echo "Unable to output image: '${UMSPLASH}' to: '${FB_DEVICE}'."
     fi
-    if [ -z "${UM3_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
-        probe_module ssd1307fb
-    elif [ -z "${SLINE_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
-        probe_module sun4i-drm-hdmi
-        probe_module sun4i-hdmi-i2c
-        probe_module sun4i-tcon
-        probe_module sun4i-backend
-        probe_module sun4i-drm
-    fi
-    echo "Successfully registered framebuffer device."
 }
 
 isBootingRestoreImage()
@@ -177,15 +197,55 @@ isBootingRestoreImage()
     findfs LABEL=recovery_data 
 }
 
+check_and_set_article_number()
+{
+    dev="/dev/sda1"
+    article_number_file="${ARTICLENR_USB_MOUNT}/article_number"
+
+    retries=5
+    while [ "${retries}" -gt 0 ]; do
+        if [ ! -b "${dev}" ]; then
+            retries="$((retries - 1))"
+            sleep 1
+            continue
+        fi
+
+        echo "Attempting to mount '${dev}'."
+        if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${ARTICLENR_USB_MOUNT}"; then
+            return 0
+        fi
+
+        if [ ! -r "${article_number_file}" ]; then
+            umount "${dev}"
+            echo "No article number file found on '${dev}', skipping."
+            return 0
+        fi
+
+        article_number="$(cat "${article_number_file}")"
+        echo "Trying to write article nr: '${article_number}'."
+        if ! i2ctransfer -y 3 w6@0x57 0x01 0x00 ${article_number}; then
+            umount "${dev}"
+            echo "Failed to write article number to EEPROM, skipping."
+            return 0
+        fi
+
+        umount "${dev}"
+        retries=0
+    done
+}
+
 find_and_run_update()
 {
+    SOFTWARE_INSTALL_MODE="update"
+    if isBootingRestoreImage; then
+        SOFTWARE_INSTALL_MODE="restore"
+    fi
+
     echo "Checking for updates ..."
     for dev in ${UPDATE_DEVICES}; do
         if [ ! -b "${dev}" ]; then
             continue
         fi
-	
-	   base_dev="${dev%p[0-9]}"
 
         echo "Attempting to mount '${dev}'."
         if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}"; then
@@ -200,10 +260,20 @@ find_and_run_update()
 
         update_tmpfs_mount="$(mktemp -d)"
         echo "Found '${UPDATE_IMAGE}' on '${dev}', moving to tmpfs."
-        if ! mv "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
-            echo "Error, update failed: unable to move ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
-            critical_error
-            break
+
+        # When we are restoring we want to keep the update image on the SD card.
+        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ]; then
+            if ! cp "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
+                echo "Error, update failed: unable to copy ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
+                critical_error
+                break
+            fi
+        else
+            if ! mv "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
+                echo "Error, update failed: unable to move ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
+                critical_error
+                break
+            fi
         fi
 
         echo "Attempting to unmount '${UPDATE_SRC_MOUNT}' before performing the update."
@@ -239,21 +309,15 @@ find_and_run_update()
             echo "Warning: unable to unmount '${UPDATE_IMG_MOUNT}'."
         fi
 
-    	# We need to change the storage device to update when we are running the restore image.
-    	if isBootingRestoreImage; then
-    	    # The kernel will enumerate the MMC device we boot from as 0, therfore if we boot from SD then the internal eMMC is 1;
-    	    base_dev="/dev/mmcblk1"
-        fi
-
         echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
-        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "${ARTICLE_NUMBER}"; then
-            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} ${ARTICLE_NUMBER}'."
+        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${EMMC_DEV}" "${DISPLAY_TYPE}" "${SOFTWARE_INSTALL_MODE}"; then
+            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${EMMC_DEV} ${DISPLAY_TYPE} ${SOFTWARE_INSTALL_MODE}'."
             critical_error
             break
         fi
 
     	# After restore do not remove the file and loop endlessly
-    	if isBootingRestoreImage; then
+    	if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ]; then
     	   restore_complete_loop
         fi
 
@@ -277,9 +341,6 @@ parse_cmdline()
     # Disabled because it is nos possible in a while read loop
     for cmd in $(cat /proc/cmdline); do
         case "${cmd}" in
-        um_an=*)
-            ARTICLE_NUMBER="$(echo $((0x${cmd#*=})))"
-        ;;
         rescue)
             RESCUE_SHELL="yes"
         ;;
@@ -351,12 +412,13 @@ busybox_setup
 toolcheck
 kernel_mount
 parse_cmdline
-enable_framebuffer_device
+enable_usb_storage_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
-
+enable_framebuffer_device
 find_and_run_update
+check_and_set_article_number
 boot_root
 
 critical_error
