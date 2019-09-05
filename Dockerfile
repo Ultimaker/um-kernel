@@ -20,6 +20,7 @@ RUN apt-get update && \
         u-boot-tools \
         wget \
         xz-utils \
+        openssh-client \
     && \
     apt-get clean && \
     rm -rf /var/cache/apt/*

@@ -1,7 +1,6 @@
 #!/bin/sh
 # Note that because this script is run in the current shell (using `.` or `source),
 # it can't have exit 0 at the end!
-command -v ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )
 
 eval "$(ssh-agent -s)"
 echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null
