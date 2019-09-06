@@ -18,6 +18,7 @@ RUN apt-get update && \
         lzop \
         make \
         ncurses-dev \
+        openssh-client \
         perl \
         u-boot-tools \
         wget \

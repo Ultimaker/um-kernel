@@ -28,6 +28,7 @@ COMMANDS=" \
     pod2man \
     pod2text \
     sed \
+    ssh-keyscan \
     tar \
     wget \
     xz \
