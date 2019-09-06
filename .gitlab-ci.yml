@@ -65,6 +65,7 @@ prepare_environment:
   stage: prepare
   script:
     - ci/prepare_environment.sh
+    - ci/add_private_key.sh
 
 # Push stage
 # ==========
