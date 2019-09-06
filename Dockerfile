@@ -17,6 +17,7 @@ RUN apt-get update && \
         lzop \
         make \
         ncurses-dev \
+        openssh-client \
         u-boot-tools \
         wget \
         xz-utils \

@@ -24,6 +24,7 @@ COMMANDS=" \
     mktemp \
     openssl \
     sed \
+    ssh-keyscan \
     tar \
     wget \
     xz \
