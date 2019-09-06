@@ -27,9 +27,6 @@ stages:
 .build_test_common: &build_test_common
   image: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
 
-before_script:
-  - . ci/add_private_key.sh
-
 # Lint stage
 # =============
 lint_shellscripts:
@@ -49,6 +46,7 @@ prepare_environment:
     GIT_STRATEGY: clone
   script:
     - ci/prepare_environment.sh
+    - ci/add_private_key.sh
 
 # Build stage
 # ===========

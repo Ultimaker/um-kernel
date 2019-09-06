@@ -17,10 +17,10 @@ RUN apt-get update && \
         lzop \
         make \
         ncurses-dev \
+        openssh-client \
         u-boot-tools \
         wget \
         xz-utils \
-        openssh-client \
     && \
     apt-get clean && \
     rm -rf /var/cache/apt/*
