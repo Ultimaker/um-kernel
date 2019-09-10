@@ -630,6 +630,18 @@
 		};
 	};
 
+	gpio-keys {
+		compatible = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		sw_air_manager_detected {
+			label = "air_manager_detected";
+			gpios = <&pca9555 15 0>;        /* AIR_MANAGER_DETECTED */
+			linux,code = <108>;             /* down */
+			gpio-key;
+		};
+	};
+
 	lvds0_bl: lvds0_backlight {
 		compatible = "pwm-backlight";
 		pwms = <&pwm1 0 1000000>;	/* 1000 Hz */
