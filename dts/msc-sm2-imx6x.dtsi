@@ -742,6 +742,10 @@
 		interrupts = <10 IRQ_TYPE_LEVEL_LOW>;	/* GPIO pin 10 */
 		gpio-controller;
 		#gpio-cells = <2>;
+		ngpios = <16>;
+		gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_BUS_EN", "VCC5_BUS_OK", "HDMI_PWR_EN",
+				"HDMI_PWR_OK", "VCC5_PH_EN", "VCC5_PH_OK", "TP110", "TP127", "TP128",
+				"TP130", "TP132", "NFC_ID", "TP137", "AIR_MANAGER_PRESENT"; /* In the datasheet this could be called TOPCAP_PRESENT */
 		interrupt-controller;
 		#interrupt-cells = <2>;
 	};
