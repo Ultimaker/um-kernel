@@ -630,6 +630,18 @@
 		};
 	};
 
+	gpio-keys {
+		compatible = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		sw_air_manager_detected {
+			label = "air_manager_detected";
+			gpios = <&pca9555 15 0>;        /* AIR_MANAGER_DETECTED */
+			linux,code = <108>;             /* down */
+			gpio-key;
+		};
+	};
+
 	lvds0_bl: lvds0_backlight {
 		compatible = "pwm-backlight";
 		pwms = <&pwm1 0 1000000>;	/* 1000 Hz */
@@ -742,6 +754,10 @@
 		interrupts = <10 IRQ_TYPE_LEVEL_LOW>;	/* GPIO pin 10 */
 		gpio-controller;
 		#gpio-cells = <2>;
+		ngpios = <16>;
+		gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_BUS_EN", "VCC5_BUS_OK", "HDMI_PWR_EN",
+				"HDMI_PWR_OK", "VCC5_PH_EN", "VCC5_PH_OK", "TP110", "TP127", "TP128",
+				"TP130", "TP132", "NFC_ID", "TP137", "AIR_MANAGER_PRESENT"; /* In the datasheet this could be called TOPCAP_PRESENT */
 		interrupt-controller;
 		#interrupt-cells = <2>;
 	};
