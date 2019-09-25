@@ -268,8 +268,14 @@ find_and_run_update()
         echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
         if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "${DISPLAY_TYPE}" "${SOFTWARE_INSTALL_MODE}"; then
             echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} ${DISPLAY_TYPE} ${SOFTWARE_INSTALL_MODE}'."
-            critical_error
-            break
+            echo "Trying old interface firmwares <= 5.2.x."
+            # Old interface depended on U-Boot for passing the article number and it did not have support for te restore image.
+            # Passing article number 9051 will show Ulticontroller 3 update images"
+            if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "9051"; then
+                echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} 9051'."
+                critical_error
+                break
+            fi
         fi
 
     	# After restore do not remove the file and loop endlessly
