@@ -27,8 +27,13 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 #uc2 : UltiController 2 (UM3,UM3E) This UltiController is not considered here anymore
 #uc3 : UltiController 3 (S5,S5r2,S3)
 DISPLAY_TYPE="uc3"
-UMSPLASH="/umsplash_png.fb"
+UMSPLASH="/SplashUM.fb"
+S3SPLASH="/SplashS3.fb"
+S5SPLASH="/SplashS5.fb"
 FB_DEVICE="/dev/fb0"
+S3_ARTNUM="0x00 0x03 0x41 0xea"
+S5_ARTNUM="0x00 0x03 0x45 0xcb"
+
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -173,6 +178,29 @@ enable_usb_storage_device()
     done
 }
 
+set_display_splash()
+{
+    echo "Setting display image."
+
+    #Get the article number from EEPROM
+    art_num=$(i2ctransfer -y 3 w2@0x57 0x01 0x00 r4)
+    echo "---> Article number read from EEPROM: ${art_num}"
+    
+    splash_img="${UMSPLASH}"
+    
+    if [ "${art_num}" = "${S3_ARTNUM}" ]; then
+        splash_img="${S3SPLASH}"
+    elif [ "${art_num}" = "${S5_ARTNUM}" ]; then
+        splash_img="${S5SPLASH}"
+    fi
+        
+    if [ -f "${splash_img}" ] && [ -c "${FB_DEVICE}" ]; then
+        cat "${splash_img}" > "${FB_DEVICE}" || true
+    else
+        echo "Unable to output image: '${splash_img}' to: '${FB_DEVICE}'."
+    fi    
+}
+
 enable_framebuffer_device()
 {
     echo "Enable frame-buffer driver."
@@ -184,12 +212,6 @@ enable_framebuffer_device()
             return
         fi
     done
-
-    if [ -f "${UMSPLASH}" ] && [ -c "${FB_DEVICE}" ]; then
-        cat "${UMSPLASH}" > "${FB_DEVICE}" || true
-    else
-        echo "Unable to output image: '${UMSPLASH}' to: '${FB_DEVICE}'."
-    fi
 }
 
 isBootingRestoreImage()
@@ -421,8 +443,10 @@ if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
 
+set_display_splash
 find_and_run_update
 check_and_set_article_number
+set_display_splash
 boot_root
 
 critical_error
