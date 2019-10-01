@@ -14,7 +14,7 @@ if [ "${CROSS_COMPILE}" == "" ]; then
         CROSS_COMPILE="arm-linux-gnueabihf-"
     fi
     if [ "${CROSS_COMPILE}" == "" ]; then
-        echo "No suiteable cross-compiler found."
+        echo "No suitable cross-compiler found."
         echo "One can be set explicitly via the environment variable CROSS_COMPILE='arm-linux-gnueabihf-' for example."
         exit 1
     fi
@@ -41,15 +41,20 @@ BUILDCONFIG="opinicus"
 # Setup internal variables
 KCONFIG="${CWD}/configs/${BUILDCONFIG}_config"
 KERNEL_BUILD_DIR="${CWD}/_build_armhf/${BUILDCONFIG}-linux"
+KERNEL_IMAGE="uImage-sun7i-a20-opinicus_v1"
 BUILD_OUTPUT_DIR="${CWD}/_build_armhf/"
 DEBIAN_DIR="${BUILD_OUTPUT_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 
-INITRAMFS_MODULES_REQUIRED="sunxi_wdt.ko ssd1307fb.ko drm.ko sun4i-backend.ko sun4i-drm.ko sun4i-tcon.ko sun4i-drm-hdmi.ko sun4i-hdmi-i2c.ko"
+INITRAMFS_MODULES_REQUIRED="sunxi_wdt.ko drm.ko sun4i-backend.ko sun4i-drm.ko sun4i-tcon.ko sun4i-drm-hdmi.ko sun4i-hdmi-i2c.ko"
+
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 
-BB_PKG="http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/armhf/busybox-static-1.30.1-r2.apk"
+BB_VERSION="1.31.0"
+BB_URL="https://busybox.net/downloads/busybox-${BB_VERSION}.tar.bz2"
 BB_BIN="busybox"
+BB_PKG="busybox-${BB_VERSION}.tar.bz2"
+BB_DIR="busybox-${BB_VERSION}"
 
 DEPMOD="${DEPMOD:-/sbin/depmod}"
 
@@ -66,14 +71,12 @@ fi
 RELEASE_VERSION="${RELEASE_VERSION:-9999.99.99}"
 
 ##
-# busybox_get() - Obtain a statically linked busybox binary
-# param1:	Writable path where to store the retrieved binary
+# busybox_get() - Download and build the Busybox package
+# param1:	Writable path where to store the Busybox binary
 #
 # Busybox is downloaded from the global variable ${BB_PKG}.
 busybox_get()
 {
-    BB_DIR="$(mktemp -d)"
-    BB_APK="${BB_DIR}/busybox-static_armhf.apk"
     DEST_DIR="${1}"
 
     if [ ! -d "${DEST_DIR}" ]; then
@@ -81,19 +84,27 @@ busybox_get()
         exit 1
     fi
 
+    if [ ! -f "${BB_PKG}" ]; then
+        if ! wget -q "${BB_URL}"; then
+            echo "Unable to download the busybox package '${BB_URL}'. Update the download URL."
+            exit 1
+        fi
+    fi
+
     if [ ! -d "${BB_DIR}" ]; then
-        echo "Unable to create temporary directory to get busybox."
-        exit 1
+        if ! tar xvjf "${BB_PKG}" > /dev/null 2>&1; then
+            echo "Unable to extract Busybox package '${BB_PKG}'."
+            exit 1
+        fi
     fi
 
-    if ! wget -q "${BB_PKG}" -O "${BB_APK}"; then
-        echo "Unable to download the busybox package '${BB_PKG}'. Update the download URL."
-        exit 1
-    fi
+    cd "${BB_DIR}"
+    cp "${CWD}/configs/busybox_defconfig" ".config"
 
-    tar -xf "${BB_APK}" --strip=1 -C "${BB_DIR}" "bin/busybox.static"
-    mv "${BB_DIR}/busybox.static" "${DEST_DIR}/${BB_BIN}"
-    rm -r "${BB_DIR}"
+    ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}" make
+
+    mv "${BB_BIN}" "${DEST_DIR}/${BB_BIN}"
+    cd "${CWD}"
 
     if [ ! -x "${DEST_DIR}/${BB_BIN}" ]; then
         echo "Failed to get busybox."
@@ -195,9 +206,7 @@ initramfs_prepare()
 
     cp -a "${INITRAMFS_SRC_DIR}/"* "${INITRAMFS_DST_DIR}"
 
-    if [ ! -x "${INITRAMFS_DST_DIR}/${BB_BIN}" ]; then
-        busybox_get "${INITRAMFS_DST_DIR}"
-    fi
+    busybox_get "${INITRAMFS_DST_DIR}"
 
     echo "Finished preparing initramfs."
 }
@@ -247,7 +256,7 @@ kernel_build()
     fi
     mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
 
-    cp "${KERNEL_BUILD_DIR}/arch/arm/boot/uImage" "${BOOT_FILE_OUTPUT_DIR}/uImage-sun7i-a20-opinicus_v1"
+    cp "${KERNEL_BUILD_DIR}/arch/arm/boot/uImage" "${BOOT_FILE_OUTPUT_DIR}/${KERNEL_IMAGE}"
     echo "Finished building Kernel."
 }
 
@@ -432,6 +441,14 @@ while getopts ":ch" options; do
             rm -rf "${BUILD_OUTPUT_DIR}"
         fi
         echo "Cleaned up '${BUILD_OUTPUT_DIR}'."
+        if [ -d "${BB_DIR}" ] && [ -z "${BB_DIR##*busybox-*}" ]; then
+            rm -rf "${BB_DIR}"
+        fi
+        echo "Cleaned up '${BB_DIR}'."
+        if [ -f "${BB_PKG}" ]; then
+            unlink "${BB_PKG}"
+        fi
+        echo "Removed '${BB_PKG}'."
         exit 0
         ;;
     h)

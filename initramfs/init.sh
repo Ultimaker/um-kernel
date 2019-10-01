@@ -17,11 +17,14 @@ PREFIX="${PREFIX:-/usr/}"
 EXEC_PREFIX="${PREFIX}"
 SBINDIR="${EXEC_PREFIX}/sbin"
 
-UM3_DISPLAY_ARTICLE_NUMBERS="9066 9511"
-SLINE_DISPLAY_ARTICLE_NUMBERS="9051"
-
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
+
+#uc2 : UltiController 2 (UM3,UM3E) This UltiController is not considered here anymore
+#uc3 : UltiController 3 (S5,S5r2,S3)
+DISPLAY_TYPE="uc3"
+UMSPLASH="/umsplash_png.fb"
+FB_DEVICE="/dev/fb0"
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -155,19 +158,21 @@ probe_module()
 
 enable_framebuffer_device()
 {
-    if [ -z "${ARTICLE_NUMBER}" ]; then
-        return
+    echo "Enable frame-buffer driver."
+
+    modules="sun4i-drm-hdmi sun4i-hdmi-i2c sun4i-tcon sun4i-backend sun4i-drm"
+    for module in ${modules}; do
+        if ! probe_module "${module}"; then
+            echo "Error, registering framebuffer device."
+            return
+        fi
+    done
+
+    if [ -f "${UMSPLASH}" ] && [ -c "${FB_DEVICE}" ]; then
+        cat "${UMSPLASH}" > "${FB_DEVICE}" || true
+    else
+        echo "Unable to output image: '${UMSPLASH}' to: '${FB_DEVICE}'."
     fi
-    if [ -z "${UM3_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
-        probe_module ssd1307fb
-    elif [ -z "${SLINE_DISPLAY_ARTICLE_NUMBERS##*${ARTICLE_NUMBER}*}" ]; then
-        probe_module sun4i-drm-hdmi
-        probe_module sun4i-hdmi-i2c
-        probe_module sun4i-tcon
-        probe_module sun4i-backend
-        probe_module sun4i-drm
-    fi
-    echo "Successfully registered framebuffer device."
 }
 
 isBootingRestoreImage()
@@ -179,13 +184,18 @@ isBootingRestoreImage()
 
 find_and_run_update()
 {
+    SOFTWARE_INSTALL_MODE="update"
+    if isBootingRestoreImage; then
+        SOFTWARE_INSTALL_MODE="restore"
+    fi
+
     echo "Checking for updates ..."
     for dev in ${UPDATE_DEVICES}; do
         if [ ! -b "${dev}" ]; then
             continue
         fi
-	
-	   base_dev="${dev%p[0-9]}"
+
+        base_dev="${dev%p[0-9]}"
 
         echo "Attempting to mount '${dev}'."
         if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}"; then
@@ -200,10 +210,20 @@ find_and_run_update()
 
         update_tmpfs_mount="$(mktemp -d)"
         echo "Found '${UPDATE_IMAGE}' on '${dev}', moving to tmpfs."
-        if ! mv "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
-            echo "Error, update failed: unable to move ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
-            critical_error
-            break
+
+        # When we are restoring we want to keep the update image on the SD card.
+        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ]; then
+            if ! cp "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
+                echo "Error, update failed: unable to copy ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
+                critical_error
+                break
+            fi
+        else
+            if ! mv "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
+                echo "Error, update failed: unable to move ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
+                critical_error
+                break
+            fi
         fi
 
         echo "Attempting to unmount '${UPDATE_SRC_MOUNT}' before performing the update."
@@ -239,21 +259,27 @@ find_and_run_update()
             echo "Warning: unable to unmount '${UPDATE_IMG_MOUNT}'."
         fi
 
-    	# We need to change the storage device to update when we are running the restore image.
+        # We need to change the storage device to update when we are running the restore image.
     	if isBootingRestoreImage; then
-    	    # The kernel will enumerate the MMC device we boot from as 0, therfore if we boot from SD then the internal eMMC is 1;
+    	    # The kernel will enumerate the MMC device we boot from as 0, therefore if we boot from SD then the internal eMMC is 1;
     	    base_dev="/dev/mmcblk1"
         fi
 
         echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
-        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "${ARTICLE_NUMBER}"; then
-            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} ${ARTICLE_NUMBER}'."
-            critical_error
-            break
+        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "${DISPLAY_TYPE}" "${SOFTWARE_INSTALL_MODE}"; then
+            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} ${DISPLAY_TYPE} ${SOFTWARE_INSTALL_MODE}'."
+            echo "Trying old interface firmwares <= 5.2.x."
+            # Old interface depended on U-Boot for passing the article number and it did not have support for te restore image.
+            # Passing article number 9051 will show Ulticontroller 3 update images"
+            if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "9051"; then
+                echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} 9051'."
+                critical_error
+                break
+            fi
         fi
 
     	# After restore do not remove the file and loop endlessly
-    	if isBootingRestoreImage; then
+    	if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ]; then
     	   restore_complete_loop
         fi
 
@@ -277,11 +303,6 @@ parse_cmdline()
     # Disabled because it is not possible in a while read loop
     for cmd in $(cat /proc/cmdline); do
         case "${cmd}" in
-        um_an=*)
-            # shellcheck disable=SC2116
-            # Disabled because echo formats our data
-            ARTICLE_NUMBER="$(echo $((0x${cmd#*=})))"
-        ;;
         rescue)
             RESCUE_SHELL="yes"
         ;;
@@ -357,7 +378,6 @@ enable_framebuffer_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
-
 find_and_run_update
 boot_root
 
