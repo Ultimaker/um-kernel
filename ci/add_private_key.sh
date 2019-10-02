@@ -10,3 +10,5 @@ chmod 700 ~/.ssh
 
 ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
 chmod 644 ~/.ssh/known_hosts
+
+exit 0

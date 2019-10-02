@@ -2,16 +2,11 @@
 # SPDX-License-Identifier: AGPL-3.0+
 #
 # Copyright (C) 2019 Ultimaker B.V.
-#
-# GitLab CI package build is split up into two parts.
-# * Build environment: creates the docker image that is needed for package generation
-# * Package generation: creates the final artifact
 
 ---
 stages:
   - lint
   - prepare
-  - push
   - build
   - cleanup
   - trigger
@@ -25,64 +20,39 @@ stages:
 # Common parameters used in all environment related jobs
 # ======================================================
 .environment_common: &environment_common
-  <<: *jobs_common
   image: registry.hub.docker.com/library/docker:stable-git
 
-# The following can be included in the 'only', or 'except' statements,
-# so they look for changes in files related to Docker and thus our environment.
-.environment_common_docker_changes: &environment_common_docker_changes
-  changes:
-    - Dockerfile
-    - .dockerignore
-    - dockerfiles/**/*
+# Common parameters used in all build/test related jobs
+# =====================================================
+.build_test_common: &build_test_common
+  image: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
 
 # Lint stage
 # =============
-.lint_scripts_common: &lint_scripts_common
+lint_shellscripts:
   <<: *jobs_common
-  image: registry.hub.docker.com/koalaman/shellcheck-alpine:stable
   stage: lint
-
-lint_scripts_build:
-  <<: *lint_scripts_common
+  image: registry.hub.docker.com/koalaman/shellcheck-alpine:stable
   script:
-    - shellcheck -C -f tty "build"*".sh"
-
-lint_scripts_test:
-  <<: *lint_scripts_common
-  script:
-    - find 'test/' -iname '*.sh' -exec shellcheck -x -C -f tty {} \;
-
-lint_scripts_ci:
-  <<: *lint_scripts_common
-  script:
-    - find 'ci/' -iname '*.sh' -exec shellcheck -x -C -f tty {} \;
+    - ./run_shellcheck.sh
 
 # Prepare stage
 # =============
 prepare_environment:
+  <<: *jobs_common
   <<: *environment_common
   stage: prepare
+  variables:
+    GIT_STRATEGY: clone
   script:
     - ci/prepare_environment.sh
     - ci/add_private_key.sh
 
-# Push stage
-# ==========
-push_environment:
-  <<: *environment_common
-  only:
-    <<: *environment_common_docker_changes
-    refs:
-      - master
-  stage: push
-  script:
-    - ci/push_environment.sh
-
 # Build stage
 # ===========
-.build_common: &build_common
+build:
   <<: *jobs_common
+  <<: *build_test_common
   stage: build
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
@@ -93,45 +63,23 @@ push_environment:
     name: "$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA"
     paths:
       - ./*.deb
-    expire_in: 3 days
-  after_script:
-    - |
-      curl -X POST \
-      -F token=${TRIGGER_BUILD_TOKEN} \
-      -F ref=${CI_COMMIT_REF_NAME} \
-      -F "variables[TRIGGERED]=true" \
-      -F "variables[TRIGGER_PROJECT_ID]=${CI_PROJECT_ID}" \
-      -F "variables[TRIGGER_JOB_ID]=${CI_JOB_ID}" \
-      -F "variables[TRIGGER_JOB_NAME]=${CI_JOB_NAME}" \
-      -F "variables[TRIGGER_REF_NAME]=${CI_COMMIT_REF_NAME}" \
-      -F "variables[TRIGGER_PROJECT_PATH]=${CI_PROJECT_PATH}" \
-      -F "variables[TRIGGER_ARTIFACT_FILENAME]=um-kernel-9999.99.99.deb" \
-      https://gitlab.com/api/v4/projects/12084297/trigger/pipeline
-
-# Build the package on a non-master branch in a modified Docker image.
-build_branch:
-  <<: *build_common
-  except:
-    refs:
-      - master
-  image: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-
-# Build the package on the master branch in the latest Docker image.
-build_master:
-  <<: *build_common
-  only:
-    refs:
-      - master
-  image: "${CI_REGISTRY_IMAGE}:latest"
+    expire_in: 28 days
 
 # Cleanup stage
 # =============
 cleanup_environment:
+  <<: *jobs_common
   <<: *environment_common
   stage: cleanup
-  except:
-    refs:
-      - master
   when: always
   script:
     - ci/cleanup_environment.sh
+
+# Trigger stage
+# =============
+trigger:
+  <<: *jobs_common
+  stage: trigger
+  image: "${CI_REGISTRY_IMAGE}/trigger:latest"
+  script:
+    - ci/trigger_image_build.sh

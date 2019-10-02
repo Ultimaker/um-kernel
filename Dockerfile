@@ -27,4 +27,4 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/cache/apt/*
 
-COPY test/buildenv_check.sh /test/buildenv_check.sh
+COPY docker_env/buildenv_check.sh /test/buildenv_check.sh

@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2018 Ultimaker B.V.
 # Copyright (C) 2018 Olliver Schinagl <oliver@schinagl.nl>
+# Copyright (C) 2019 Raymond Siudak <raysiudak@gmail.com>
 #
 # SPDX-License-Identifier: AGPL-3.0+
 
@@ -23,7 +24,7 @@ EMMC_DEV="/dev/mmcblk2"
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 
-#uc2 : UltiController 2 (UM3,UM3E)
+#uc2 : UltiController 2 (UM3,UM3E) This UltiController is not considered here anymore
 #uc3 : UltiController 3 (S5,S5r2,S3)
 DISPLAY_TYPE="uc3"
 UMSPLASH="/umsplash_png.fb"
@@ -175,6 +176,7 @@ enable_usb_storage_device()
 enable_framebuffer_device()
 {
     echo "Enable frame-buffer driver."
+
     modules="dw_hdmi dw_hdmi_imx imx_ipu_v3 etnaviv imxdrm"
     for module in ${modules}; do
         if ! probe_module "${module}"; then
@@ -223,6 +225,7 @@ check_and_set_article_number()
 
         article_number="$(cat "${article_number_file}")"
         echo "Trying to write article nr: '${article_number}'."
+        # shellcheck disable=SC2086
         if ! i2ctransfer -y 3 w6@0x57 0x01 0x00 ${article_number}; then
             umount "${dev}"
             echo "Failed to write article number to EEPROM, skipping."
@@ -338,7 +341,7 @@ parse_cmdline()
     fi
 
     # shellcheck disable=SC2013
-    # Disabled because it is nos possible in a while read loop
+    # Disabled because it is not possible in a while read loop
     for cmd in $(cat /proc/cmdline); do
         case "${cmd}" in
         rescue)
@@ -413,10 +416,11 @@ toolcheck
 kernel_mount
 parse_cmdline
 enable_usb_storage_device
+enable_framebuffer_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
-enable_framebuffer_device
+
 find_and_run_update
 check_and_set_article_number
 boot_root
