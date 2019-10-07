@@ -27,9 +27,9 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 #uc2 : UltiController 2 (UM3,UM3E) This UltiController is not considered here anymore
 #uc3 : UltiController 3 (S5,S5r2,S3)
 DISPLAY_TYPE="uc3"
-UMSPLASH="/SplashUM.fb"
-S3SPLASH="/SplashS3.fb"
-S5SPLASH="/SplashS5.fb"
+UM_SPLASH="/SplashUM.fb"
+S3_SPLASH="/SplashS3.fb"
+S5_SPLASH="/SplashS5.fb"
 FB_DEVICE="/dev/fb0"
 S3_ARTNUM="0x00 0x03 0x41 0xea"
 S5_ARTNUM="0x00 0x03 0x45 0xcb"
@@ -186,12 +186,12 @@ set_display_splash()
     art_num=$(i2ctransfer -y 3 w2@0x57 0x01 0x00 r4)
     echo "---> Article number read from EEPROM: ${art_num}"
     
-    splash_img="${UMSPLASH}"
+    splash_img="${UM_SPLASH}"
     
     if [ "${art_num}" = "${S3_ARTNUM}" ]; then
-        splash_img="${S3SPLASH}"
+        splash_img="${S3_SPLASH}"
     elif [ "${art_num}" = "${S5_ARTNUM}" ]; then
-        splash_img="${S5SPLASH}"
+        splash_img="${S5_SPLASH}"
     fi
         
     if [ -f "${splash_img}" ] && [ -c "${FB_DEVICE}" ]; then

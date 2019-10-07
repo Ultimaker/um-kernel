@@ -1,37 +1,37 @@
 # directory structure
-dir	/bin					0755 0 0
-dir	/dev					0755 0 0
-dir	/etc					0755 0 0
-dir	/etc/modprobe.d/			0755 0 0
-dir	/lib					0755 0 0
-dir	/mnt					0755 0 0
-dir	/mnt/root				0755 0 0
-dir	/mnt/update				0755 0 0
-dir	/mnt/update_img				0755 0 0
-dir	/mnt/usb				0755 0 0
-dir	/proc					0755 0 0
-dir	/root					0700 0 0
-dir	/run					0755 0 0
-dir	/sbin					0755 0 0
-dir	/sys					0755 0 0
-dir	/tmp					1777 0 0
-dir	/usr					0755 0 0
-dir	/usr/bin				0755 0 0
-dir	/usr/sbin				0755 0 0
+dir    /bin                    0755 0 0
+dir    /dev                    0755 0 0
+dir    /etc                    0755 0 0
+dir    /etc/modprobe.d/        0755 0 0
+dir    /lib                    0755 0 0
+dir    /mnt                    0755 0 0
+dir    /mnt/root               0755 0 0
+dir    /mnt/update             0755 0 0
+dir    /mnt/update_img         0755 0 0
+dir    /mnt/usb                0755 0 0
+dir    /proc                   0755 0 0
+dir    /root                   0700 0 0
+dir    /run                    0755 0 0
+dir    /sbin                   0755 0 0
+dir    /sys                    0755 0 0
+dir    /tmp                    1777 0 0
+dir    /usr                    0755 0 0
+dir    /usr/bin                0755 0 0
+dir    /usr/sbin               0755 0 0
 
 # device nodes
-nod	/dev/console				600 0 0 c 5 1
+nod    /dev/console            600 0 0 c 5 1
 
 # busybox
-file	/bin/busybox	initramfs/busybox	0755 0 0
-slink	/sh		/bin/busybox		0755 0 0
-slink	/bin/sh		/bin/busybox		0755 0 0
+file    /bin/busybox    initramfs/busybox       0755 0 0
+slink   /sh             /bin/busybox            0755 0 0
+slink   /bin/sh         /bin/busybox            0755 0 0
 
 # init
-file	/init	initramfs/init.sh	0755 0 0
+file    /init           initramfs/init.sh       0755 0 0
 
 # splash screen
-file	/SplashUM.fb	initramfs/SplashUM.fb	0755 0 0
+file    /SplashUM.fb    initramfs/SplashUM.fb   0755 0 0
 file    /SplashS3.fb    initramfs/SplashS3.fb   0755 0 0
 file    /SplashS5.fb    initramfs/SplashS5.fb   0755 0 0
 
