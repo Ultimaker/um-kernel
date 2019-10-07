@@ -1,0 +1,22 @@
+#!/bin/bash
+# Make sure /boot is mounted before unpacking.
+
+# When building an image, the script will run inside a bootstrap.
+# In that case, we should exit before try to mount.
+# This situation is realized by checking if the dropbear ssh service
+# is running - common situation when deploying new packages to the printer
+if [ ! -r /run/dropbear.pid ]; then
+    exit 0
+fi;
+
+# Check if /boot is already monted
+if ! mountpoint -q /boot; then
+
+    # Get the root partition
+    root_part=$(findmnt -o source -n /)
+
+    # Set the device for the boot partition
+    boot_part=${root_part/%p2/p1}
+
+    mount "${boot_part}" /boot
+fi

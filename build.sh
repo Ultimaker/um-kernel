@@ -350,6 +350,9 @@ deb_build()
     # Create a Debian control file to pack up a Debian package
     RELEASE_VERSION="${RELEASE_VERSION}" envsubst "\${RELEASE_VERSION}" < scripts/debian_control > "${DEBIAN_DIR}/DEBIAN/control"
 
+    # Copy Debian preinst script file
+    cp scripts/preinst "${DEBIAN_DIR}/DEBIAN/"
+
     # Build the Debian package
     fakeroot dpkg-deb --build "${DEBIAN_DIR}" "um-kernel-${RELEASE_VERSION}.deb"
 
