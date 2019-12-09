@@ -36,7 +36,7 @@ CWD="$(pwd)"
 LINUX_SRC_DIR=${CWD}/linux
 
 # Which kernel config to build.
-BUILDCONFIG="ultimain4.2-sm2-msc-sm2-imx6-03A-uc3"
+BUILDCONFIG="ultimain4.2-sm2-msc-sm2-imx6-183-uc3"
 
 # Setup internal variables
 KCONFIG="${CWD}/configs/${BUILDCONFIG}_defconfig"
