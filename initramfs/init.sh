@@ -438,15 +438,15 @@ toolcheck
 kernel_mount
 parse_cmdline
 enable_usb_storage_device
-enable_framebuffer_device
+#enable_framebuffer_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
 
-set_display_splash
+#set_display_splash
 find_and_run_update
-check_and_set_article_number
-set_display_splash
+#check_and_set_article_number
+#set_display_splash
 boot_root
 
 critical_error

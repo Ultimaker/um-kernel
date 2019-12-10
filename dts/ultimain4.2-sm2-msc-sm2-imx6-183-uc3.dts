@@ -15,12 +15,13 @@
 #define IMX6DL_ULTIMAKER 1
 
 #include "msc-sm2-imx6-183.dtsi"
-#include "part201258-ulticontroller3.dtsi"
+/*#include "part201258-ulticontroller3.dtsi"*/
 
 / {
-    model = "Ultimaker mainboard 4.2-SMARC2, MSC 03A SOM, Freescale imx6dl";
-    compatible = "ultimaker,ultimain4.2", "fsl,imx6dl";
+    model = "Ultimaker mainboard 4.2-SMARC2, MSC 183 SOM, Freescale i.MX6QUAD PLUS";
+    compatible = "ultimaker,ultimain4.2", "msc,imx6q_SMARC", "fsl,imx6qp";
 
+/*
 	usb0-kill {
 		compatible = "linux,rfkill-gpio";
 		type = "fm";
@@ -35,8 +36,10 @@
 		compatible = "linux,rfkill-gpio";
 		type = "fm";
 	};
+*/
 };
 
+/*
 &i2c1 {
 	cabin_light: pca9632@61 {
 		compatible = "nxp,pca9632";
@@ -72,3 +75,4 @@
 		};
 	};
 };
+*/
