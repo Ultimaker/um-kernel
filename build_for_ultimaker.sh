@@ -7,15 +7,24 @@
 
 set -eu
 
-CI_REGISTRY_IMAGE="${CI_REGISTRY_IMAGE:-registry.gitlab.com/ultimaker/embedded/platform/um-kernel}"
-CI_REGISTRY_IMAGE_TAG="${CI_REGISTRY_IMAGE_TAG:-latest}"
+LOCAL_REGISTRY_IMAGE="um_kernel"
+
+SRC_DIR="$(pwd)"
+PREFIX="/usr"
+RELEASE_VERSION="${RELEASE_VERSION:-9999.99.99}"
+DOCKER_WORK_DIR="/build"
+BUILD_DIR_TEMPLATE="_build"
+BUILD_DIR="${BUILD_DIR_TEMPLATE}"
+
+ARMv7_MAGIC="7f454c4601010100000000000000000002002800"
+
+run_env_check="yes"
+run_linters="yes"
+run_tests="yes"
 
 ARCH="${ARCH:-armhf}"
 
-PREFIX="/usr"
-RELEASE_VERSION="${RELEASE_VERSION:-}"
 CROSS_COMPILE="${CROSS_COMPILE:-""}"
-DOCKER_WORK_DIR="${WORKDIR:-/build}"
 
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 DEPMOD="${DEPMOD:-/sbin/depmod}"
@@ -26,58 +35,54 @@ run_tests="yes"
 
 update_docker_image()
 {
-    if ! docker pull "${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}" 2> /dev/null; then
-        echo "Unable to update docker image '${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}', building locally instead."
-        docker build . -t "${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}"
+    echo "Building local Docker build environment."
+    echo "!! Make sure you implement a proper 'buildenv_check.sh' script.!!"
+    echo "This script should check your docker env, in order to get early feedback."
+    docker build ./docker_env -t "${LOCAL_REGISTRY_IMAGE}"
+}
+
+setup_emulation_support()
+{
+    for emu in /proc/sys/fs/binfmt_misc/*; do
+        if [ ! -r "${emu}" ]; then
+            continue
+        fi
+
+        if grep -q "${ARMv7_MAGIC}" "${emu}"; then
+            ARM_EMU_BIN="$(sed 's|interpreter ||;t;d' "${emu}")"
+            break
+        fi
+    done
+
+    if [ ! -x "${ARM_EMU_BIN}" ]; then
+        echo "Unusable ARMv7 interpreter '${ARM_EMU_BIN}'."
+        echo "Install an arm-emulator, such as qemu-arm-static for example."
+        exit 1
     fi
+
+    export ARM_EMU_BIN
 }
 
 run_in_docker()
 {
     docker run \
+        --privileged \
         --rm \
         -it \
         -u "$(id -u)" \
-        -v "$(pwd):${DOCKER_WORK_DIR}" \
+        -e "ARM_EMU_BIN=${ARM_EMU_BIN}" \
+        -e "BUILD_DIR=${DOCKER_WORK_DIR}/${BUILD_DIR}" \
         -e "ARCH=${ARCH}" \
         -e "PREFIX=${PREFIX}" \
         -e "RELEASE_VERSION=${RELEASE_VERSION}" \
-        -e "CROSS_COMPILE=${CROSS_COMPILE}" \
         -e "INITRAMFS_SOURCE=${INITRAMFS_SOURCE}" \
         -e "DEPMOD=${DEPMOD}" \
         -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
+        -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
+        -v "${ARM_EMU_BIN}:${ARM_EMU_BIN}:ro" \
         -w "${DOCKER_WORK_DIR}" \
-        "${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}" \
+        "${LOCAL_REGISTRY_IMAGE}" \
         "${@}"
-}
-
-run_in_shell()
-{
-    ARCH="${ARCH}" \
-    PREFIX="${PREFIX}" \
-    RELEASE_VERSION="${RELEASE_VERSION}" \
-    CROSS_COMPILE="${CROSS_COMPILE}" \
-    INITRAMFS_SOURCE="${INITRAMFS_SOURCE}" \
-    DEPMOD="${DEPMOD}" \
-    eval "${@}"
-}
-
-run_script()
-{
-    if ! command -v docker; then
-        echo "Docker not found, docker-less builds are not supported."
-        echo "Are you sure you want to continue? (y/n)"
-        read -r __sure
-        echo ""
-        if [ "${__sure}" != "y" ]; then
-            exit 1
-        fi
-
-        echo "Attempting native build ..."
-        run_in_shell "${@}"
-    else
-        run_in_docker "${@}"
-    fi
 }
 
 env_check()
@@ -159,6 +164,8 @@ if ! command -V docker; then
     echo "Docker not found, docker-less builds are not supported."
     exit 1
 fi
+
+setup_emulation_support
 
 update_docker_image
 
