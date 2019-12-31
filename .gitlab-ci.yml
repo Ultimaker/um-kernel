@@ -11,6 +11,7 @@ include:
 # Build stage
 # ===========
 build:
+  timeout: 2h
   script:
     - ci/add_private_key.sh
     - ./build.sh

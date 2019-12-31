@@ -9,6 +9,7 @@ set -eu
 
 LOCAL_REGISTRY_IMAGE="um_kernel"
 
+ARCH="${ARCH:-armhf}"
 SRC_DIR="$(pwd)"
 PREFIX="/usr"
 RELEASE_VERSION="${RELEASE_VERSION:-9999.99.99}"
@@ -21,8 +22,6 @@ ARMv7_MAGIC="7f454c4601010100000000000000000002002800"
 run_env_check="yes"
 run_linters="yes"
 run_tests="yes"
-
-ARCH="${ARCH:-armhf}"
 
 CROSS_COMPILE="${CROSS_COMPILE:-""}"
 
