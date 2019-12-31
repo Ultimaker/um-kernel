@@ -23,8 +23,6 @@ run_env_check="yes"
 run_linters="yes"
 run_tests="yes"
 
-CROSS_COMPILE="${CROSS_COMPILE:-""}"
-
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 DEPMOD="${DEPMOD:-/sbin/depmod}"
 
@@ -35,8 +33,6 @@ run_tests="yes"
 update_docker_image()
 {
     echo "Building local Docker build environment."
-    echo "!! Make sure you implement a proper 'buildenv_check.sh' script.!!"
-    echo "This script should check your docker env, in order to get early feedback."
     docker build ./docker_env -t "${LOCAL_REGISTRY_IMAGE}"
 }
 
