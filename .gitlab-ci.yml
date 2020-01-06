@@ -4,8 +4,8 @@
 # Copyright (C) 2019 Ultimaker B.V.
 
 include:
-  - project: ultimaker/embedded/platform/alt_prime_jedi
-    ref: CHANGE_use_extend_instead_of_anchors
+  - project: ultimaker/embedded/prime-jedi
+    ref: master
     file: /gitlab_ci_templates/jedi-gitlab-ci-template.yml
 
 # Build stage
