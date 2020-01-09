@@ -15,3 +15,4 @@ build:
   script:
     - ci/add_private_key.sh
     - ./build.sh
+    - cp -v ./_build*/*.deb "./"

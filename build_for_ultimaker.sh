@@ -17,8 +17,6 @@ DOCKER_WORK_DIR="/build"
 BUILD_DIR_TEMPLATE="_build"
 BUILD_DIR="${BUILD_DIR_TEMPLATE}"
 
-ARMv7_MAGIC="7f454c4601010100000000000000000002002800"
-
 run_env_check="yes"
 run_linters="yes"
 run_tests="yes"
@@ -36,28 +34,6 @@ update_docker_image()
     docker build ./docker_env -t "${LOCAL_REGISTRY_IMAGE}"
 }
 
-setup_emulation_support()
-{
-    for emu in /proc/sys/fs/binfmt_misc/*; do
-        if [ ! -r "${emu}" ]; then
-            continue
-        fi
-
-        if grep -q "${ARMv7_MAGIC}" "${emu}"; then
-            ARM_EMU_BIN="$(sed 's|interpreter ||;t;d' "${emu}")"
-            break
-        fi
-    done
-
-    if [ ! -x "${ARM_EMU_BIN}" ]; then
-        echo "Unusable ARMv7 interpreter '${ARM_EMU_BIN}'."
-        echo "Install an arm-emulator, such as qemu-arm-static for example."
-        exit 1
-    fi
-
-    export ARM_EMU_BIN
-}
-
 run_in_docker()
 {
     docker run \
@@ -65,7 +41,6 @@ run_in_docker()
         --rm \
         -it \
         -u "$(id -u)" \
-        -e "ARM_EMU_BIN=${ARM_EMU_BIN}" \
         -e "BUILD_DIR=${DOCKER_WORK_DIR}/${BUILD_DIR}" \
         -e "ARCH=${ARCH}" \
         -e "PREFIX=${PREFIX}" \
@@ -74,7 +49,6 @@ run_in_docker()
         -e "DEPMOD=${DEPMOD}" \
         -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
         -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
-        -v "${ARM_EMU_BIN}:${ARM_EMU_BIN}:ro" \
         -w "${DOCKER_WORK_DIR}" \
         "${LOCAL_REGISTRY_IMAGE}" \
         "${@}"
@@ -89,6 +63,11 @@ run_build()
 {
     git submodule update --init --recursive --depth 1
     run_in_docker "./build.sh" "${@}"
+}
+
+deliver_pkg()
+{
+    cp "${BUILD_DIR}/"*".deb" "./"
 }
 
 run_tests()
@@ -160,8 +139,6 @@ if ! command -V docker; then
     exit 1
 fi
 
-setup_emulation_support
-
 update_docker_image
 
 if [ "${run_env_check}" = "yes" ]; then
@@ -177,5 +154,7 @@ run_build "${@}"
 if [ "${run_tests}" = "yes" ]; then
     run_tests
 fi
+
+deliver_pkg
 
 exit 0

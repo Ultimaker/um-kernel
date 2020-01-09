@@ -9,11 +9,8 @@ Session.vim
 # auto-generated tag files
 tags
 
-# Debian is a generated dir
-debian/
-
 # Ignore temporary build output
-_build_armhf
+_build*
 
 # Ignore the final build
 *.deb
