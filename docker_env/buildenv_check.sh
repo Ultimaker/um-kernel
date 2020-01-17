@@ -14,7 +14,6 @@ COMMANDS=" \
     cut \
     dtc \
     envsubst \
-    fakeroot \
     gcc \
     gettext \
     grep \
