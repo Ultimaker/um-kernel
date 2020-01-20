@@ -17,6 +17,7 @@ COMMANDS=" \
     gcc \
     gettext \
     grep \
+    fakeroot \
     kmod \
     lzop \
     make \

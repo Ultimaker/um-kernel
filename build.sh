@@ -424,7 +424,7 @@ create_debian_package()
     DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}-${UM_ARCH}_${ARCH}.deb"
 
     # Build the Debian package
-    dpkg-deb --build --root-owner-group "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
+    fakeroot dpkg-deb --build "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
     dpkg-deb -c "${BUILD_DIR}/${DEB_PACKAGE}"
 
     echo "Finished building Debian package."
