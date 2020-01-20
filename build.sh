@@ -51,7 +51,7 @@ BUILDCONFIG="opinicus"
 
 # Setup internal variables
 KCONFIG="${SRC_DIR}/configs/${BUILDCONFIG}_config"
-KERNEL_BUILD_DIR="${SRC_DIR}/_build_armhf/${BUILDCONFIG}-linux"
+KERNEL_BUILD_DIR="${BUILD_DIR}/${BUILDCONFIG}-linux"
 KERNEL_IMAGE="uImage-sun7i-a20-opinicus_v1"
 DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
@@ -261,7 +261,7 @@ kernel_build()
 
     # Install Kernel image
 
-    if [ -d "${BOOT_FILE_OUTPUT_DIR}" ] && [ -z "${BOOT_FILE_OUTPUT_DIR##*_build_armhf*}" ]; then
+    if [ -d "${BOOT_FILE_OUTPUT_DIR}" ] && [ -z "${BOOT_FILE_OUTPUT_DIR##*_build*}" ]; then
         rm -r "${BOOT_FILE_OUTPUT_DIR}"
     fi
     mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
@@ -286,7 +286,7 @@ kernel_modules_install()
         exit 1
     fi
 
-    if [ -d "${DEBIAN_DIR}/lib/modules" ] && [ -z "${BOOT_FILE_OUTPUT_DIR##*_build_armhf*}" ]; then
+    if [ -d "${DEBIAN_DIR}/lib/modules" ] && [ -z "${BOOT_FILE_OUTPUT_DIR##*_build*}" ]; then
         rm -r "${DEBIAN_DIR}/lib/modules"
     fi
 
@@ -415,21 +415,19 @@ create_debian_package()
         exit 1
     fi
 
-    DEB_DIR="${BUILD_DIR}/debian_deb_build"
-
-    mkdir -p "${DEB_DIR}/DEBIAN"
+    mkdir -p "${DEBIAN_DIR}/DEBIAN"
     sed -e 's|@ARCH@|'"${ARCH}"'|g' \
         -e 's|@PACKAGE_NAME@|'"${PACKAGE_NAME}"'|g' \
         -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}"'|g' \
-        "${SRC_DIR}/debian/control.in" > "${DEB_DIR}/DEBIAN/control"
+        "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
 
     DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}-${UM_ARCH}_${ARCH}.deb"
 
     # Build the Debian package
-    dpkg-deb --build --root-owner-group "${DEB_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
-    dpkg-deb -c "${BUILD_DIR}/${DEB_PACKAGE}"
+    fakeroot dpkg-deb --build "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
 
     echo "Finished building Debian package."
+    echo "To check the contents of the Debian package run 'dpkg-deb -c um-kernel*.deb'"
 }
 
 usage()
@@ -440,7 +438,7 @@ usage()
     echo "  Usage: ${0} [kernel|dtbs|bootscript|deb]"
     echo "  For Kernel config modification use: ${0} menuconfig"
     echo ""
-    echo "  -c Clean the build output directory '_build_armhf'."
+    echo "  -c Clean the build output directory '_build'."
     echo "  -h Print this help text and exit"
     echo ""
     echo "  By default the script can be executed with 'no' arguments, all required artifacts"
@@ -454,7 +452,7 @@ usage()
 while getopts ":ch" options; do
     case "${options}" in
     c)
-        if [ -d "${BUILD_DIR}" ] && [ -z "${BUILD_DIR##*_build_armhf*}" ]; then
+        if [ -d "${BUILD_DIR}" ] && [ -z "${BUILD_DIR##*_build*}" ]; then
             rm -rf "${BUILD_DIR}"
         fi
         echo "Cleaned up '${BUILD_DIR}'."

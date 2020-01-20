@@ -17,10 +17,6 @@ DOCKER_WORK_DIR="/build"
 BUILD_DIR_TEMPLATE="_build"
 BUILD_DIR="${BUILD_DIR_TEMPLATE}"
 
-run_env_check="yes"
-run_linters="yes"
-run_tests="yes"
-
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 DEPMOD="${DEPMOD:-/sbin/depmod}"
 
