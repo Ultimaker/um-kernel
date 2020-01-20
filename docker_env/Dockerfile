@@ -9,10 +9,10 @@ RUN apt-get update && \
         bzip2 \
         curl \
         device-tree-compiler \
-        fakeroot \
         gcc \
         gcc-arm-linux-gnueabihf \
         gettext \
+        fakeroot \
         kmod \
         libssl-dev \
         lzop \
@@ -27,4 +27,4 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/cache/apt/*
 
-COPY docker_env/buildenv_check.sh /test/buildenv_check.sh
+COPY buildenv_check.sh buildenv_check.sh

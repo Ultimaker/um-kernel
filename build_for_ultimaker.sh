@@ -7,15 +7,15 @@
 
 set -eu
 
-CI_REGISTRY_IMAGE="${CI_REGISTRY_IMAGE:-registry.gitlab.com/ultimaker/embedded/platform/um-kernel}"
-CI_REGISTRY_IMAGE_TAG="${CI_REGISTRY_IMAGE_TAG:-latest}"
+LOCAL_REGISTRY_IMAGE="um_kernel"
 
 ARCH="${ARCH:-armhf}"
-
+SRC_DIR="$(pwd)"
 PREFIX="/usr"
-RELEASE_VERSION="${RELEASE_VERSION:-}"
-CROSS_COMPILE="${CROSS_COMPILE:-""}"
-DOCKER_WORK_DIR="${WORKDIR:-/build}"
+RELEASE_VERSION="${RELEASE_VERSION:-9999.99.99}"
+DOCKER_WORK_DIR="/build"
+BUILD_DIR_TEMPLATE="_build"
+BUILD_DIR="${BUILD_DIR_TEMPLATE}"
 
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 DEPMOD="${DEPMOD:-/sbin/depmod}"
@@ -26,28 +26,27 @@ run_tests="yes"
 
 update_docker_image()
 {
-    if ! docker pull "${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}" 2> /dev/null; then
-        echo "Unable to update docker image '${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}', building locally instead."
-        docker build . -t "${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}"
-    fi
+    echo "Building local Docker build environment."
+    docker build ./docker_env -t "${LOCAL_REGISTRY_IMAGE}"
 }
 
 run_in_docker()
 {
     docker run \
+        --privileged \
         --rm \
         -it \
         -u "$(id -u)" \
-        -v "$(pwd):${DOCKER_WORK_DIR}" \
+        -e "BUILD_DIR=${DOCKER_WORK_DIR}/${BUILD_DIR}" \
         -e "ARCH=${ARCH}" \
         -e "PREFIX=${PREFIX}" \
         -e "RELEASE_VERSION=${RELEASE_VERSION}" \
-        -e "CROSS_COMPILE=${CROSS_COMPILE}" \
         -e "INITRAMFS_SOURCE=${INITRAMFS_SOURCE}" \
         -e "DEPMOD=${DEPMOD}" \
         -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
+        -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
         -w "${DOCKER_WORK_DIR}" \
-        "${CI_REGISTRY_IMAGE}:${CI_REGISTRY_IMAGE_TAG}" \
+        "${LOCAL_REGISTRY_IMAGE}" \
         "${@}"
 }
 
@@ -71,6 +70,11 @@ run_build()
 {
     git submodule update --init --recursive --depth 1
     run_in_docker "./build.sh" "${@}"
+}
+
+deliver_pkg()
+{
+    cp "${BUILD_DIR}/"*".deb" "./"
 }
 
 run_tests()
@@ -157,5 +161,7 @@ run_build "${@}"
 if [ "${run_tests}" = "yes" ]; then
     run_tests
 fi
+
+deliver_pkg
 
 exit 0

@@ -18,10 +18,6 @@ SHELLCHECK_PATHS=" \
 # shellcheck disable=SC2086
 SCRIPTS="$(find ${SHELLCHECK_PATHS} -name '*.sh')"
 
-echo_line(){
-    echo "--------------------------------------------------------------------------------"
-}
-
 for script in ${SCRIPTS}; do
     if [ ! -r "${script}" ]; then
         echo_line
@@ -34,13 +30,12 @@ for script in ${SCRIPTS}; do
     shellcheck -x -C -f tty "${script}" || SHELLCHECK_FAILURE="true"
 done
 
-echo_line
-
-if [ "$SHELLCHECK_FAILURE" = "true" ]; then
+if [ "${SHELLCHECK_FAILURE}" = "true" ]; then
     echo "WARNING: One or more scripts did not pass shellcheck."
     exit 1
-else
-    echo "All scripts passed shellcheck."
 fi
 
+echo "All scripts passed shellcheck."
+
 exit 0
+

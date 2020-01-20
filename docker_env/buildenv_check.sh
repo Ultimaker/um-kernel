@@ -14,10 +14,10 @@ COMMANDS=" \
     cut \
     dtc \
     envsubst \
-    fakeroot \
     gcc \
     gettext \
     grep \
+    fakeroot \
     kmod \
     lzop \
     make \
