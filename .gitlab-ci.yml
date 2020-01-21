@@ -14,5 +14,12 @@ build:
   timeout: 2h
   script:
     - ci/add_private_key.sh
-    - ./build.sh
-    - cp -v ./_build*/*.deb "./"
+    - |
+      echo "CI commit ref name: '${CI_COMMIT_REF_NAME}'"
+      if echo "${CI_COMMIT_REF_NAME}" | grep -E -e '-v[0-9]{1,3}+\.[0-9]{1,3}+\.[0-9]{1,3}+(-dev)?$'; then
+        RELEASE_VERSION="${CI_COMMIT_REF_NAME##*-v}"
+      else
+        RELEASE_VERSION="999.999.999"
+      fi
+      ./build.sh
+      cp -v ./_build*/*.deb "./"
