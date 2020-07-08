@@ -246,7 +246,7 @@ kernel_build()
     kernel_modules_install
     # New that all modules have been build and the dependency file is properly generated,
     # we can add the required Kernel modules to initramfs
-    initramfs_add_modules
+#    initramfs_add_modules
     # Build the uImage file for a bootable kernel
     kernel_build_command LOADADDR=0x10004000 uImage
 
