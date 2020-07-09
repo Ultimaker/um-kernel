@@ -11,7 +11,7 @@ RUN apt-get update && \
         device-tree-compiler \
         fakeroot \
         gcc \
-        gcc-arm-linux-gnueabihf \
+        gcc-aarch64-linux-gnu \
         gettext \
         kmod \
         libssl-dev \

@@ -7,12 +7,9 @@
 # using arm-none-eabi-gcc, so we need to ensure it exists. Because printenv and
 # which can cause bash -e to exit, so run this before setting this up.
 if [ "${CROSS_COMPILE}" == "" ]; then
-    if [ "$(command -v arm-none-eabi-gcc)" != "" ]; then
-        CROSS_COMPILE="arm-none-eabi-"
-    fi
-    if [ "$(command -v arm-linux-gnueabihf-gcc)" != "" ]; then
-        CROSS_COMPILE="arm-linux-gnueabihf-"
-    fi
+#    if [ "$(command -v aarch64-linux-gnu-gcc)" != "" ]; then
+        CROSS_COMPILE="aarch64-linux-gnu-"
+#    fi
     if [ "${CROSS_COMPILE}" == "" ]; then
         echo "No suitable cross-compiler found."
         echo "One can be set explicitly via the environment variable CROSS_COMPILE='arm-linux-gnueabihf-' for example."
@@ -102,7 +99,7 @@ busybox_get()
     cd "${BB_DIR}"
     cp "${CWD}/configs/busybox_defconfig" ".config"
 
-    ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}" make
+    ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" make
 
     mv "${BB_BIN}" "${DEST_DIR}/${BB_BIN}"
     cd "${CWD}"
@@ -223,7 +220,7 @@ kernel_build_command()
     fi
 
     cd "${LINUX_SRC_DIR}"
-    ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "${@}"
+    ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "${@}"
     cd "${CWD}"
 }
 
@@ -248,7 +245,7 @@ kernel_build()
     # we can add the required Kernel modules to initramfs
 #    initramfs_add_modules
     # Build the uImage file for a bootable kernel
-    kernel_build_command LOADADDR=0x10004000 uImage
+    kernel_build_command LOADADDR=0x40480000 Image
 
     # Install Kernel image
 
@@ -257,7 +254,7 @@ kernel_build()
     fi
     mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
 
-    cp "${KERNEL_BUILD_DIR}/arch/arm/boot/uImage" "${BOOT_FILE_OUTPUT_DIR}/${KERNEL_IMAGE}"
+    cp "${KERNEL_BUILD_DIR}/arch/arm64/boot/Image" "${BOOT_FILE_OUTPUT_DIR}/${KERNEL_IMAGE}"
     echo "Finished building Kernel."
 }
 
