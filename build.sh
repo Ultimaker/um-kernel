@@ -220,6 +220,7 @@ kernel_build_command()
     fi
 
     cd "${LINUX_SRC_DIR}"
+    ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" sx8m_defconfig
     ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "${@}"
     cd "${CWD}"
 }
