@@ -3,83 +3,16 @@
 #
 # Copyright (C) 2019 Ultimaker B.V.
 
----
-stages:
-  - lint
-  - prepare
-  - build
-  - cleanup
-  - trigger
-
-# Common parameters to be included in every job
-# =============================================
-.jobs_common: &jobs_common
-  tags:
-    - docker
-
-# Common parameters used in all environment related jobs
-# ======================================================
-.environment_common: &environment_common
-  image: registry.hub.docker.com/library/docker:stable-git
-
-# Common parameters used in all build/test related jobs
-# =====================================================
-.build_test_common: &build_test_common
-  image: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-
-# Lint stage
-# =============
-lint_shellscripts:
-  <<: *jobs_common
-  stage: lint
-  image: registry.hub.docker.com/koalaman/shellcheck-alpine:stable
-  script:
-    - ./run_shellcheck.sh
-
-# Prepare stage
-# =============
-prepare_environment:
-  <<: *jobs_common
-  <<: *environment_common
-  stage: prepare
-  variables:
-    GIT_STRATEGY: clone
-  script:
-    - ci/prepare_environment.sh
-    - ci/add_private_key.sh
+include:
+  - project: ultimaker/embedded/prime-jedi
+    ref: master
+    file: /gitlab_ci_templates/jedi-gitlab-ci-template.yml
 
 # Build stage
 # ===========
 build:
-  <<: *jobs_common
-  <<: *build_test_common
-  stage: build
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
-    GIT_DEPTH: 1
+  timeout: 2h
   script:
+    - ci/add_private_key.sh
     - ./build.sh
-  artifacts:
-    name: "$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA"
-    paths:
-      - ./*.deb
-    expire_in: 28 days
-
-# Cleanup stage
-# =============
-cleanup_environment:
-  <<: *jobs_common
-  <<: *environment_common
-  stage: cleanup
-  when: always
-  script:
-    - ci/cleanup_environment.sh
-
-# Trigger stage
-# =============
-trigger:
-  <<: *jobs_common
-  stage: trigger
-  image: "${CI_REGISTRY_IMAGE}/trigger:latest"
-  script:
-    - ci/trigger_image_build.sh
+    - cp -v ./_build*/*.deb "./"

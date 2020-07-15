@@ -1,0 +1,10 @@
+Package: @PACKAGE_NAME@
+Conflicts: linux-sunxi
+Replaces: linux-sunxi
+Version: @RELEASE_VERSION@
+Architecture: @ARCH@
+Maintainer: Ultimaker <info@ultimaker.com>
+Section: kernel
+Priority: optional
+Homepage: http://www.kernel.org/
+Description: Linux kernel, kernel modules, binary device trees and boot scripts. All in a single package.

@@ -27,10 +27,21 @@ fi
 
 set -eu
 
-CWD="$(pwd)"
+ARCH="armhf"
+UM_ARCH="imx6dl" # Empty string, or sun7i for R1, or imx6dl for R2
+
+# common directory variablesS
+SYSCONFDIR="${SYSCONFDIR:-/etc}"
+SRC_DIR="$(pwd)"
+BUILD_DIR_TEMPLATE="_build"
+BUILD_DIR="${BUILD_DIR:-${SRC_DIR}/${BUILD_DIR_TEMPLATE}}"
+
+# Debian package information
+PACKAGE_NAME="${PACKAGE_NAME:-um-kernel}"
+RELEASE_VERSION="${RELEASE_VERSION:-999.999.999}"
 
 # Which kernel to build
-LINUX_SRC_DIR=${CWD}/linux
+LINUX_SRC_DIR=${SRC_DIR}/linux
 
 # Which kernel config to build.
 BUILDCONFIG="sx8m"
@@ -39,8 +50,7 @@ BUILDCONFIG="sx8m"
 KCONFIG="${CWD}/configs/${BUILDCONFIG}_defconfig"
 KERNEL_BUILD_DIR="${CWD}/_build_armhf/${BUILDCONFIG}-linux"
 KERNEL_IMAGE="uImage-${BUILDCONFIG}"
-BUILD_OUTPUT_DIR="${CWD}/_build_armhf/"
-DEBIAN_DIR="${BUILD_OUTPUT_DIR}/debian"
+DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 
 INITRAMFS_MODULES_REQUIRED="loop.ko"
@@ -95,12 +105,12 @@ busybox_get()
     fi
 
     cd "${BB_DIR}"
-    cp "${CWD}/configs/busybox_defconfig" ".config"
+    cp "${SRC_DIR}/configs/busybox_defconfig" ".config"
 
     ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" make
 
     mv "${BB_BIN}" "${DEST_DIR}/${BB_BIN}"
-    cd "${CWD}"
+    cd "${SRC_DIR}"
 
     if [ ! -x "${DEST_DIR}/${BB_BIN}" ]; then
         echo "Failed to get busybox."
@@ -189,7 +199,7 @@ initramfs_prepare()
 {
     echo "Preparing initramfs."
 
-    INITRAMFS_SRC_DIR="${CWD}/initramfs"
+    INITRAMFS_SRC_DIR="${SRC_DIR}/initramfs"
     INITRAMFS_DST_DIR="${KERNEL_BUILD_DIR}/initramfs"
     INITRAMFS_MODULES_DIR="${KERNEL_BUILD_DIR}/initramfs/lib/modules"
     INITRAMFS_DEST="${INITRAMFS_DST_DIR}/$(basename "${INITRAMFS_SOURCE}")"
@@ -221,7 +231,7 @@ kernel_build_command()
     cp "$KCONFIG" arch/arm64/configs/
     ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "$(basename "$KCONFIG")"
     ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "${@}"
-    cd "${CWD}"
+    cd "${SRC_DIR}"
 }
 
 ##
@@ -249,7 +259,7 @@ kernel_build()
 
     # Install Kernel image
 
-    if [ -d "${BOOT_FILE_OUTPUT_DIR}" ] && [ -z "${BOOT_FILE_OUTPUT_DIR##*_build_armhf*}" ]; then
+    if [ -d "${BOOT_FILE_OUTPUT_DIR}" ] && [ -z "${BOOT_FILE_OUTPUT_DIR##*_build*}" ]; then
         rm -r "${BOOT_FILE_OUTPUT_DIR}"
     fi
     mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
@@ -274,7 +284,7 @@ kernel_modules_install()
         exit 1
     fi
 
-    if [ -d "${DEBIAN_DIR}/lib/modules" ] && [ -z "${BOOT_FILE_OUTPUT_DIR##*_build_armhf*}" ]; then
+    if [ -d "${DEBIAN_DIR}/lib/modules" ] && [ -z "${BOOT_FILE_OUTPUT_DIR##*_build*}" ]; then
         rm -r "${DEBIAN_DIR}/lib/modules"
     fi
 
@@ -289,6 +299,14 @@ kernel_modules_install()
 
 ##
 # dtb_build() - Compile product specific device-tree binary files
+#
+# In the U-Boot stage the boot script is executed, that in turn reads
+# the machine article number from the I2C EEPROM. This article number
+# is in Hexadecimal format. The boot-script will then load a device-tree
+# with corresponding article number into memory.
+#
+# This function will parse a file called article.links and compile the device-tree
+# binaries described above.
 dtb_build()
 {
     echo "Building Device-trees."
@@ -320,10 +338,9 @@ dtb_build()
     echo "Finished building Device-trees."
 }
 
-deb_build()
+create_debian_package()
 {
     echo "Building Debian package."
-    mkdir -p "${DEBIAN_DIR}/DEBIAN"
 
     if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
         echo "Error, boot directory not created, no boot files to package."
@@ -345,16 +362,19 @@ deb_build()
         exit 1
     fi
 
-    # Create a Debian control file to pack up a Debian package
-    RELEASE_VERSION="${RELEASE_VERSION}" envsubst "\${RELEASE_VERSION}" < scripts/debian_control > "${DEBIAN_DIR}/DEBIAN/control"
+    mkdir -p "${DEBIAN_DIR}/DEBIAN"
+    sed -e 's|@ARCH@|'"${ARCH}"'|g' \
+        -e 's|@PACKAGE_NAME@|'"${PACKAGE_NAME}"'|g' \
+        -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}"'|g' \
+        "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
 
-    # Copy Debian preinst script file
-    cp scripts/preinst "${DEBIAN_DIR}/DEBIAN/"
+    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}-${UM_ARCH}_${ARCH}.deb"
 
     # Build the Debian package
-    fakeroot dpkg-deb --build "${DEBIAN_DIR}" "um-kernel-${RELEASE_VERSION}.deb"
+    fakeroot dpkg-deb --build "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
 
     echo "Finished building Debian package."
+    echo "To check the contents of the Debian package run 'dpkg-deb -c um-kernel*.deb'"
 }
 
 usage()
@@ -365,7 +385,7 @@ usage()
     echo "  Usage: ${0} [kernel|dtbs|deb]"
     echo "  For Kernel config modification use: ${0} menuconfig"
     echo ""
-    echo "  -c Clean the build output directory '_build_armhf'."
+    echo "  -c Clean the build output directory '_build'."
     echo "  -h Print this help text and exit"
     echo ""
     echo "  By default the script can be executed with 'no' arguments, all required artifacts"
@@ -379,10 +399,10 @@ usage()
 while getopts ":ch" options; do
     case "${options}" in
     c)
-        if [ -d "${BUILD_OUTPUT_DIR}" ] && [ -z "${BUILD_OUTPUT_DIR##*_build_armhf*}" ]; then
-            rm -rf "${BUILD_OUTPUT_DIR}"
+        if [ -d "${BUILD_DIR}" ] && [ -z "${BUILD_DIR##*_build*}" ]; then
+            rm -rf "${BUILD_DIR}"
         fi
-        echo "Cleaned up '${BUILD_OUTPUT_DIR}'."
+        echo "Cleaned up '${BUILD_DIR}'."
         if [ -d "${BB_DIR}" ] && [ -z "${BB_DIR##*busybox-*}" ]; then
             rm -rf "${BB_DIR}"
         fi
@@ -419,7 +439,7 @@ fi
 if [ "${#}" -eq 0 ]; then
     kernel_build
     dtb_build
-    deb_build
+    create_debian_package
     exit 0
 fi
 
@@ -433,7 +453,7 @@ case "${1-}" in
     deb)
         kernel_build
         dtb_build
-        deb_build
+        create_debian_package
         ;;
     menuconfig)
         kernel_build_command menuconfig
