@@ -27,8 +27,8 @@ fi
 
 set -eu
 
-ARCH="armhf"
-UM_ARCH="imx6dl" # Empty string, or sun7i for R1, or imx6dl for R2
+ARCH="arm64"
+UM_ARCH="imx8mm" # Empty string, or sun7i for R1, or imx6dl for R2
 
 # common directory variablesS
 SYSCONFDIR="${SYSCONFDIR:-/etc}"
@@ -47,8 +47,8 @@ LINUX_SRC_DIR=${SRC_DIR}/linux
 BUILDCONFIG="sx8m"
 
 # Setup internal variables
-KCONFIG="${CWD}/configs/${BUILDCONFIG}_defconfig"
-KERNEL_BUILD_DIR="${CWD}/_build_armhf/${BUILDCONFIG}-linux"
+KCONFIG="${SRC_DIR}/configs/${BUILDCONFIG}_defconfig"
+KERNEL_BUILD_DIR="${SRC_DIR}/_build_armhf/${BUILDCONFIG}-linux"
 KERNEL_IMAGE="uImage-${BUILDCONFIG}"
 DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
