@@ -27,8 +27,8 @@ fi
 
 set -eu
 
-ARCH="arm64"
-UM_ARCH="imx8mm" # Empty string, or sun7i for R1, or imx6dl for R2
+ARCH="${ARCH:-arm64}"
+UM_ARCH="imx8mm" # Empty string, or sun7i for R1, or imx6dl for R2, or imx8mm for Colorado
 
 # common directory variablesS
 SYSCONFDIR="${SYSCONFDIR:-/etc}"
@@ -47,7 +47,7 @@ LINUX_SRC_DIR=${SRC_DIR}/linux
 BUILDCONFIG="sx8m"
 
 # Setup internal variables
-KCONFIG="${SRC_DIR}/configs/${BUILDCONFIG}_defconfig"
+KCONFIG="${SRC_DIR}/configs/${BUILDCONFIG}_config"
 KERNEL_BUILD_DIR="${SRC_DIR}/_build_armhf/${BUILDCONFIG}-linux"
 KERNEL_IMAGE="uImage-${BUILDCONFIG}"
 DEBIAN_DIR="${BUILD_DIR}/debian"
@@ -105,9 +105,9 @@ busybox_get()
     fi
 
     cd "${BB_DIR}"
-    cp "${SRC_DIR}/configs/busybox_defconfig" ".config"
+    cp "${SRC_DIR}/configs/busybox_config" ".config"
 
-    ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" make
+    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make
 
     mv "${BB_BIN}" "${DEST_DIR}/${BB_BIN}"
     cd "${SRC_DIR}"
@@ -228,9 +228,7 @@ kernel_build_command()
     fi
 
     cd "${LINUX_SRC_DIR}"
-    cp "$KCONFIG" arch/arm64/configs/
-    ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "$(basename "$KCONFIG")"
-    ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "${@}"
+    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "${@}"
     cd "${SRC_DIR}"
 }
 
@@ -343,7 +341,7 @@ create_debian_package()
     echo "Building Debian package."
 
     if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
-        echo "Error, boot directory not created, no boot files to package."
+        echo "Error, boot directory not created, no boot files to package."config
         exit 1
     fi
 
