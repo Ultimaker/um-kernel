@@ -1,0 +1,78 @@
+/*
+ * Copyright 2019 Ultimaker B.V
+ *
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
+ *
+ */
+
+/dts-v1/;
+
+#define IMX6DL_ULTIMAKER 1
+
+#include "msc-sm2-imx6-183.dtsi"
+/*#include "part201258-ulticontroller3.dtsi"*/
+
+/ {
+    model = "Ultimaker mainboard 4.2-SMARC2, MSC 183 SOM, Freescale i.MX6QUAD PLUS";
+    compatible = "ultimaker,ultimain4.2", "msc,imx6q_SMARC", "fsl,imx6qp";
+
+/*
+	usb0-kill {
+		compatible = "linux,rfkill-gpio";
+		type = "fm";
+	};
+
+	usb1-kill {
+		compatible = "linux,rfkill-gpio";
+		type = "fm";
+	};
+
+	usb2-kill {
+		compatible = "linux,rfkill-gpio";
+		type = "fm";
+	};
+*/
+};
+
+/*
+&i2c1 {
+	cabin_light: pca9632@61 {
+		compatible = "nxp,pca9632";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x61>;
+		nxp,totem-pole;
+		nxp,inverted-out;
+		nxp,hw-blink;
+
+		red@0 {
+			label = "red:cabin_light";
+			reg = <0>;
+			linux,default-trigger = "none";
+		};
+
+		green@1 {
+			label = "green:cabin_light";
+			reg = <1>;
+			linux,default-trigger = "none";
+		};
+
+		blue@2 {
+			label = "blue:cabin_light";
+			reg = <2>;
+			linux,default-trigger = "none";
+		};
+
+		white@3 {
+			label = "white:cabin_light";
+			reg = <3>;
+			linux,default-trigger = "default-on";
+		};
+	};
+};
+*/

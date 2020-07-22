@@ -10,4 +10,4 @@
  */
 /dts-v1/;
 
-#include "msc-sm2-imx6-03A.dtsi"
+#include "msc-sm2-imx6-183.dtsi"

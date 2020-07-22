@@ -7,12 +7,9 @@
 # using arm-none-eabi-gcc, so we need to ensure it exists. Because printenv and
 # which can cause bash -e to exit, so run this before setting this up.
 if [ "${CROSS_COMPILE}" == "" ]; then
-    if [ "$(command -v arm-none-eabi-gcc)" != "" ]; then
-        CROSS_COMPILE="arm-none-eabi-"
-    fi
-    if [ "$(command -v arm-linux-gnueabihf-gcc)" != "" ]; then
-        CROSS_COMPILE="arm-linux-gnueabihf-"
-    fi
+#    if [ "$(command -v aarch64-linux-gnu-gcc)" != "" ]; then
+        CROSS_COMPILE="aarch64-linux-gnu-"
+#    fi
     if [ "${CROSS_COMPILE}" == "" ]; then
         echo "No suitable cross-compiler found."
         echo "One can be set explicitly via the environment variable CROSS_COMPILE='arm-linux-gnueabihf-' for example."
@@ -30,8 +27,8 @@ fi
 
 set -eu
 
-ARCH="armhf"
-UM_ARCH="imx6dl" # Empty string, or sun7i for R1, or imx6dl for R2
+ARCH="${ARCH:-arm64}"
+UM_ARCH="imx8mm" # Empty string, or sun7i for R1, or imx6dl for R2, or imx8mm for Colorado
 
 # common directory variablesS
 SYSCONFDIR="${SYSCONFDIR:-/etc}"
@@ -47,17 +44,16 @@ RELEASE_VERSION="${RELEASE_VERSION:-999.999.999}"
 LINUX_SRC_DIR=${SRC_DIR}/linux
 
 # Which kernel config to build.
-BUILDCONFIG="msc-sm2-imx6dl-ultimain4.2"
+BUILDCONFIG="sx8m"
 
 # Setup internal variables
 KCONFIG="${SRC_DIR}/configs/${BUILDCONFIG}_config"
-KERNEL_BUILD_DIR="${BUILD_DIR}/${BUILDCONFIG}-linux"
+KERNEL_BUILD_DIR="${SRC_DIR}/_build_armhf/${BUILDCONFIG}-linux"
 KERNEL_IMAGE="uImage-${BUILDCONFIG}"
 DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 
-INITRAMFS_MODULES_REQUIRED="ci_hdrc_imx.ko ci_hdrc.ko usbmisc_imx.ko usb-otg-fsm.ko phy-mxs-usb.ko \
-    dw_hdmi-imx.ko dw-hdmi.ko etnaviv.ko imxdrm.ko imx-ipu-v3.ko loop.ko imx2_wdt.ko"
+INITRAMFS_MODULES_REQUIRED="loop.ko"
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 
 BB_VERSION="1.31.0"
@@ -109,9 +105,9 @@ busybox_get()
     fi
 
     cd "${BB_DIR}"
-    cp "${SRC_DIR}/configs/busybox_defconfig" ".config"
+    cp "${SRC_DIR}/configs/busybox_config" ".config"
 
-    ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}" make
+    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make
 
     mv "${BB_BIN}" "${DEST_DIR}/${BB_BIN}"
     cd "${SRC_DIR}"
@@ -232,7 +228,7 @@ kernel_build_command()
     fi
 
     cd "${LINUX_SRC_DIR}"
-    ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "${@}"
+    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "${@}"
     cd "${SRC_DIR}"
 }
 
@@ -257,7 +253,7 @@ kernel_build()
     # we can add the required Kernel modules to initramfs
     initramfs_add_modules
     # Build the uImage file for a bootable kernel
-    kernel_build_command LOADADDR=0x10004000 uImage
+    kernel_build_command LOADADDR=0x40480000 Image
 
     # Install Kernel image
 
@@ -266,7 +262,7 @@ kernel_build()
     fi
     mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
 
-    cp "${KERNEL_BUILD_DIR}/arch/arm/boot/uImage" "${BOOT_FILE_OUTPUT_DIR}/${KERNEL_IMAGE}"
+    cp "${KERNEL_BUILD_DIR}/arch/arm64/boot/Image" "${BOOT_FILE_OUTPUT_DIR}/${KERNEL_IMAGE}"
     echo "Finished building Kernel."
 }
 
@@ -345,7 +341,7 @@ create_debian_package()
     echo "Building Debian package."
 
     if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
-        echo "Error, boot directory not created, no boot files to package."
+        echo "Error, boot directory not created, no boot files to package."config
         exit 1
     fi
 

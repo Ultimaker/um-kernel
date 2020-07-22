@@ -10,7 +10,7 @@ RUN apt-get update && \
         curl \
         device-tree-compiler \
         gcc \
-        gcc-arm-linux-gnueabihf \
+        gcc-aarch64-linux-gnu \
         gettext \
         fakeroot \
         kmod \

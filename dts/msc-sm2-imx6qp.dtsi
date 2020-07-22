@@ -8,6 +8,13 @@
  * http://www.opensource.org/licenses/gpl-license.html
  * http://www.gnu.org/copyleft/gpl.html
  */
-/dts-v1/;
 
-#include "msc-sm2-imx6-03A.dtsi"
+#include "msc-sm2-imx6qdp.dtsi"
+
+/ {
+	model = "MSC SMARC i.MX6QUAD PLUS";
+	compatible = "msc,imx6q_SMARC", "fsl,imx6qp";
+	memory: memory {
+		reg = <0x10000000 0x80000000>;	/* 2GiB */
+	};
+};
