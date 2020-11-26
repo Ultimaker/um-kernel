@@ -17,3 +17,7 @@ _build*
 
 # Ignore busybox build files
 busybox-*
+
+cmake-build*
+
+.idea*
