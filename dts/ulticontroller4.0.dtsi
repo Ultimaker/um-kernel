@@ -4,3 +4,19 @@
 */
 
 
+&i2c2	{
+	clock-frequency = <100000>;
+	panel_touchscreen: ft5426@38 {
+		compatible = "edt,edt-ft5406";
+		reg = <0x38>;
+	    poll-interval = <10>;
+		reset-gpios = <&panel_gpio 0 GPIO_ACTIVE_LOW>;
+	};
+
+	panel_gpio: pca9570@24 {
+		compatible = "nxp,pca9557";
+		gpio-controller;
+		#gpio-cells = <2>;
+		reg = <0x24>;
+	};
+};
