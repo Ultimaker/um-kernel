@@ -1,7 +1,38 @@
+/*
+ * Copyright (C) 2020 - Ultimaker B.V.
+ * Copyright (C) 2020 - Raymond Siudak <raysiudak@gmail.com>
+*/
+
 /dts-v1/;
 
 #include "congatec/imx8mm-cgtsx8m.dts"
 #include "ulticontroller4.0.dtsi"
+
+/* See Documentation/devicetree/bindings/video/display-timing.txt */
+/* HX8282-A11 1024x600@60Hz */
+&i2c4 {
+    /* DSI-LVDS bridge */
+    lvdsbridge: sn65dsi84@2c {
+        status = "okay";
+
+        /delete-property/ lvds,use-uboot-settings; // will get replaced by dp props
+
+        /* LVDS 1024x600@60Hz pixclock 51.2MHz*/
+        lvds,pixelclock = <51206400>;
+        lvds,hactive = <1024>;
+        lvds,vactive = <600>;
+        lvds,hfront_porch = <160>;
+        lvds,hback_porch = <160>;
+        lvds,hsync_len = <10>; // Must be more then 1, number does not matter
+        lvds,vfront_porch = <12>;
+        lvds,vback_porch = <23>;
+        lvds,vsync_len = <10>; // Must be more then 1, number does not matter
+        lvds,color_depth = "rgb24";
+        lvds,hsync_pol = <0>;
+        lvds,vsync_pol = <0>;
+        lvds,datamap = "spwg";
+    };
+};
 
 / {
 	chosen {
