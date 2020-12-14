@@ -4,19 +4,52 @@
 */
 
 
-&i2c2	{
-	clock-frequency = <100000>;
-	panel_touchscreen: ft5426@38 {
-		compatible = "edt,edt-ft5406";
-		reg = <0x38>;
-	    poll-interval = <10>;
-		reset-gpios = <&panel_gpio 0 GPIO_ACTIVE_LOW>;
-	};
+&i2c2 {
+    clock-frequency = <100000>;
+    panel_touchscreen: ft5426@38 {
+        compatible = "edt,edt-ft5406";
+        reg = <0x38>;
+        poll-interval = <10>;
+        reset-gpios = <&panel_gpio 0 GPIO_ACTIVE_LOW>;
+    };
 
-	panel_gpio: pca9570@24 {
-		compatible = "nxp,pca9557";
-		gpio-controller;
-		#gpio-cells = <2>;
-		reg = <0x24>;
-	};
+    panel_gpio: pca9570@24 {
+        compatible = "nxp,pca9557";
+        gpio-controller;
+        #gpio-cells = <2>;
+        reg = <0x24>;
+    };
+
+    pca9632: pca9632 {
+        compatible = "nxp,pca9632";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        reg = <0x60>;
+        nxp,totem-pole;
+        nxp,hw-blink;
+
+        led0@0 {
+            label = "unused";
+            reg = <0>;
+            linux,default-trigger = "none";
+        };
+        led1@1 {
+            label = "unused";
+            reg = <1>;
+            linux,default-trigger = "none";
+        };
+        led2@2 {
+            label = "unused";
+            reg = <2>;
+            linux,default-trigger = "none";
+        };
+        panel_backlight: backlight@3 {
+            label = "panel_backlight";
+            reg = <3>;
+            linux,default-trigger = "default-on";
+        };
+    };
 };
+
+
+/* 24LC02B eeprom */
