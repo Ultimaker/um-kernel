@@ -50,6 +50,24 @@
     >;
 };
 
+&pinctrl_gpio4 {
+	fsl,pins = <
+        MX8MM_IOMUXC_SAI3_RXC_GPIO4_IO29        0x140 /* GPIO4*/
+        MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1         0x140 /* GPIO7 */
+        MX8MM_IOMUXC_SAI3_RXFS_GPIO4_IO28       0x100 /* GPIO6 / TACHIN / SOM_BOOT */
+        MX8MM_IOMUXC_SAI1_RXFS_GPIO4_IO0        0x140 /* GPIO8 */
+        MX8MM_IOMUXC_SAI1_TXC_GPIO4_IO11        0x140 /* GPIO9 */
+        MX8MM_IOMUXC_SAI1_TXFS_GPIO4_IO10       0x140 /* GPIO10 */
+        MX8MM_IOMUXC_SAI1_MCLK_GPIO4_IO20       0x140 /* GPIO11 */
+        MX8MM_IOMUXC_SAI1_TXD3_GPIO4_IO15       0x140 /* PM_CHARGING# */
+        MX8MM_IOMUXC_SAI1_TXD2_GPIO4_IO14       0x140 /* PM_CHARGER_PRSNT# */
+        MX8MM_IOMUXC_SAI1_TXD4_GPIO4_IO16       0x140 /* BOOT_SEL0# */
+        MX8MM_IOMUXC_SAI1_TXD5_GPIO4_IO17       0x140 /* BOOT_SEL1# */
+        MX8MM_IOMUXC_SAI1_TXD6_GPIO4_IO18       0x140 /* BOOT_SEL2# */
+        MX8MM_IOMUXC_SAI1_RXD5_GPIO4_IO7        0x100 /* SAI1_RXD5 -> RESET_OUT# / SOM_RST*/
+	>;
+};
+
 /* Redefine pinctrl settings for GPIOs to be re-purposed. */
 &pinctrl_gpio5 {
     fsl,pins = <
