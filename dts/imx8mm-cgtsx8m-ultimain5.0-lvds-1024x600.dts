@@ -34,14 +34,68 @@
     };
 };
 
+
+/* GPIO PAD setting */
+/* 0x1C0 -- pull-up,   HYST, no-OD, slow, X1 */
+/* 0x140 -- pull-up,   CMOS, no-OD, slow, X1 */
+/* 0x100 -- pull-down, CMOS, no-OD, slow, X1 */
+/* 0x080 -- pull-off,  HYST, no-OD, slow, X1 */
+/* 0x000 -- pull-off,  CMOS, no-OD, slow, X1 */
+
+/* Redefine pinctrl settings for GPIOs to be re-purposed. */
+&pinctrl_gpio1 {
+    fsl,pins = <
+        MX8MM_IOMUXC_GPIO1_IO07_GPIO1_IO7       0x140 /* GPIO0 / CSI0 PWR */
+        MX8MM_IOMUXC_GPIO1_IO15_GPIO1_IO15      0x140 /* TEST# */
+    >;
+};
+
+/* Redefine pinctrl settings for GPIOs to be re-purposed. */
+&pinctrl_gpio5 {
+    fsl,pins = <
+        MX8MM_IOMUXC_SPDIF_RX_GPIO5_IO4         0x140 /* GPIO5 / PWMOUT */
+    >;
+};
+
+/* Re-purpose, used for led driver. */
+&iomuxc {
+    led {
+        pinctrl_leds_1: ledsgrp-1 {
+            fsl,pins = <
+                MX8MM_IOMUXC_SPDIF_TX_GPIO5_IO3         0x100 /* GPIO1 / CSI1 PWR */
+                MX8MM_IOMUXC_SPDIF_EXT_CLK_GPIO5_IO5    0x100 /* GPIO3 / CSI1 RST */
+                MX8MM_IOMUXC_GPIO1_IO06_GPIO1_IO6       0x100 /* GPIO2 / CSI0 RST */
+            >;
+        };
+    };
+};
+
 / {
-	chosen {
-		bootargs = "console=ttymxc2,115200 earlycon=ec_imx6q,0x30880000,115200";
-		stdout-path = &uart3;
+    leds {
+        compatible = "gpio-leds";
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_leds_1>;
+
+        led0 {
+            label = "som:red:carrier-led0";
+            gpios = <&gpio5 5 GPIO_ACTIVE_HIGH>;
+            linux,default-trigger = "heartbeat";
+            default-state = "keep";
+        };
+
+        led1 {
+            label = "som:red:carrier-led1";
+            gpios = <&gpio5 3 GPIO_ACTIVE_HIGH>;
+            linux,default-trigger = "none";
+            default-state = "keep";
+        };
+
+        led2 {
+            label = "som:red:carrier-sd-led";
+            gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
+            linux,default-trigger = "mmc1";
+            default-state = "keep";
+		};
 	};
 };
 
-&uart3 { /* SER0 Remove DMA rtscts*/
-    /delete-property/ fsl,uart-has-rtscts;
-	status = "okay";
-};
