@@ -29,17 +29,17 @@
         nxp,hw-blink;
 
         led0@0 {
-            label = "unused";
+            label = "unused0";
             reg = <0>;
             linux,default-trigger = "none";
         };
         led1@1 {
-            label = "unused";
+            label = "unused1";
             reg = <1>;
             linux,default-trigger = "none";
         };
         led2@2 {
-            label = "unused";
+            label = "unused2";
             reg = <2>;
             linux,default-trigger = "none";
         };
