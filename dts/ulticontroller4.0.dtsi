@@ -49,7 +49,10 @@
             linux,default-trigger = "default-on";
         };
     };
+
+    edid_eeprom: 24c02@50 { /* 24LC02B 2K Microchip EEPROM */
+        compatible = "microchip,24c02", "at24";
+        reg = <0x50>;
+    };
 };
 
-
-/* 24LC02B eeprom */

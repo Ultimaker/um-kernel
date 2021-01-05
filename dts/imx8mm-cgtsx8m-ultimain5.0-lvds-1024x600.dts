@@ -13,11 +13,15 @@
 &i2c4 {
     /* DSI-LVDS bridge */
     lvdsbridge: sn65dsi84@2c {
+        /delete-property/ lvds,use-uboot-settings; // will get replaced by dp props
         status = "okay";
 
-        /delete-property/ lvds,use-uboot-settings; // will get replaced by dp props
+        i2c-edid = <&edid_eeprom>; // This will load the configuration from the EEPROM.
 
-        /* LVDS 1024x600@60Hz pixclock 51.2MHz*/
+        /*
+           LVDS 1024x600@60Hz pixclock 51.2MHz
+           These settings will be ignored because 'i2c-edid' is defined, leaving them in for documentation
+        */
         lvds,pixelclock = <51206400>;
         lvds,hactive = <1024>;
         lvds,vactive = <600>;
