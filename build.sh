@@ -56,8 +56,8 @@ KERNEL_IMAGE="uImage-${BUILDCONFIG}"
 DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 
-INITRAMFS_MODULES_REQUIRED="ci_hdrc_imx.ko ci_hdrc.ko usbmisc_imx.ko usb-otg-fsm.ko phy-mxs-usb.ko \
-    dw_hdmi-imx.ko dw-hdmi.ko etnaviv.ko imxdrm.ko imx-ipu-v3.ko loop.ko imx2_wdt.ko"
+INITRAMFS_MODULES_REQUIRED="ci_hdrc_imx.ko ci_hdrc.ko usbmisc_imx.ko usb-otg-fsm.ko phy-mxs-usb.ko hid.ko usbhid.ko hid-generic.ko\
+    dw_hdmi-imx.ko dw-hdmi.ko etnaviv.ko imxdrm.ko imx-ipu-v3.ko loop.ko imx2_wdt.ko fbcon.ko bitblit.ko font.ko tileblit.ko"
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 
 BB_VERSION="1.31.0"
@@ -340,6 +340,23 @@ dtb_build()
     echo "Finished building Device-trees."
 }
 
+copy_system_config_files()
+{
+ls -la "${SRC_DIR}"
+    echo "Copy system config files."
+    if [ ! -d "${DEBIAN_DIR}/sbin" ]; then
+        mkdir -p "${DEBIAN_DIR}/sbin"
+    fi
+    
+    if [ ! -d "${DEBIAN_DIR}/etc/udev/rules.d" ]; then
+        mkdir -p "${DEBIAN_DIR}/etc/udev/rules.d"
+    fi
+    
+    cp -r "${SRC_DIR}/system_config/sbin" "${DEBIAN_DIR}/"
+    cp -r "${SRC_DIR}/system_config/etc" "${DEBIAN_DIR}/"
+    
+}
+
 create_debian_package()
 {
     echo "Building Debian package."
@@ -441,6 +458,7 @@ fi
 if [ "${#}" -eq 0 ]; then
     kernel_build
     dtb_build
+    copy_system_config_files
     create_debian_package
     exit 0
 fi
@@ -455,6 +473,7 @@ case "${1-}" in
     deb)
         kernel_build
         dtb_build
+        copy_system_config_files
         create_debian_package
         ;;
     menuconfig)
