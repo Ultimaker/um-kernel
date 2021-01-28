@@ -4,3 +4,4 @@
 #SUBSYSTEM=="input", SUBSYSTEMS=="usb", ACTION=="add|remove", ATTR{name}=="*Keyboard*", RUN+="/sbin/enable_fbcon.sh $env{ACTION}"
 #SUBSYSTEM=="input", SUBSYSTEMS=="usb", ACTION=="add|remove", ATTRS{bInterfaceProtocol}=="01", RUN+="/sbin/enable_fbcon.sh $env{ACTION}"
 SUBSYSTEM=="input", SUBSYSTEMS=="usb", ACTION=="add|remove", ATTRS{idVendor}=="03f0", ATTRS{idProduct}=="0024", RUN+="/sbin/enable_fbcon.sh $env{ACTION}"
+SUBSYSTEM=="input", SUBSYSTEMS=="usb", ACTION=="add|remove", ATTRS{idVendor}=="05ac", ATTRS{idProduct}=="0221", RUN+="/sbin/enable_fbcon.sh $env{ACTION}"
