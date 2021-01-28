@@ -25,13 +25,31 @@ append=''
 sample_rate=
 """
 
-#/dev/input/by-id/usb-Logitech_USB_Optical_Mouse-event-mouse
+
+def is_opinicus_reacting():
+    cmd = "dbus-send --system --dest=nl.ultimaker.system --type=method_call --print-reply=literal /nl/ultimaker/system nl.ultimaker.isDeveloperModeActive"
+    completed_process = subprocess.run(cmd.split(), capture_output=True)
+    return b"boolean" in completed_process.stdout
+
 
 def is_dev_mode():
-    # dbus-send --system --dest=nl.ultimaker.system --type=method_call --print-reply=literal /nl/ultimaker/system nl.ultimaker.isDeveloperModeActive
     cmd = "dbus-send --system --dest=nl.ultimaker.system --type=method_call --print-reply=literal /nl/ultimaker/system nl.ultimaker.isDeveloperModeActive"
     completed_process = subprocess.run(cmd.split(), capture_output=True)
     return b"true" in completed_process.stdout
+
+
+def is_okuda_running():
+    cmd = "ps aux"
+    completed_process = subprocess.run(cmd.split(), capture_output=True)
+    return b"okuda_app" in completed_process.stdout
+
+
+#uptime from https://stackoverflow.com/questions/42471475/fastest-way-to-get-system-uptime-in-python-in-linux
+def uptime():
+    with open('/proc/uptime', 'r') as f:
+        uptime_seconds = float(f.readline().split()[0])
+        return uptime_seconds
+
 
 def detect_device_id(device_folder, ends_with):
     for (dirpath, dirnames, filenames) in os.walk(device_folder):
@@ -40,11 +58,15 @@ def detect_device_id(device_folder, ends_with):
                 return os.path.join(dirpath, filename)
     return None
 
+
 def detect_mouse_id():
+    # we'd return something like /dev/input/by-id/usb-Logitech_USB_Optical_Mouse-event-mouse
     return detect_device_id("/dev/input/by-id", "-mouse")
+
 
 def detect_keyboard_id():
     return detect_device_id("/dev/input/by-id", "-kbd")
+
 
 def setup_mouse():
     detected_mouse_id = detect_mouse_id()
@@ -78,25 +100,36 @@ def enable_fbcon():
     systemctl start *okuda*                                       
 """
 def disable_fbcon():
-    #os.spawnl(os.P_DETACH, "systemctl start oku*")
-    os.system("echo \"Keyboard removed, unloading fbcon module\" > /dev/kmsg")
-    os.system("echo 0 > /sys/class/vtconsole/vtcon0/bind")
-    #subprocess.run("modprobe -r fbcon".split())
+    os.system("echo \"Keyboard not present, unloading fbcon module if present\" > /dev/kmsg")
+    for i in range(10):
+        os.system("echo 0 > /sys/class/vtconsole/vtcon%d/bind" % i)
     os.system("modprobe -r fbcon")
+    for i in range(10):
+        os.system("echo 1 > /sys/class/vtconsole/vtcon%d/bind" % i)
     os.system("systemctl start oku*")
 
 
 if __name__ == "__main__":
-    if not is_dev_mode():
-        print("Not dev mode - do nothing")
-        exit(0)
+    print("Start or stop fbcon module")
+    uptime_seconds = uptime()
+    okuda_running = is_okuda_running()
+    opinicus_reacting = is_opinicus_reacting()
+    dev_mode = is_dev_mode()
     keyboard_device_id = detect_keyboard_id()
+    msg = "Opinicus [%s] dev mode [%s] Okuda [%s] uptime [%s]" % (opinicus_reacting, dev_mode, okuda_running, uptime_seconds)
+    print(msg)
+    if dev_mode or (uptime_seconds > 10*60 and (not okuda_running or not opinicus_reacting)):
+        print("fbcon is allowed!")
+        os.system("echo \"FBCON " + msg + ": fbcon is allowed!\" > /dev/kmsg")
+    else:
+        os.system("echo \"FBCON " + msg + ": fbcon is NOT allowed!\" > /dev/kmsg")
+        print("Not dev mode, Okuda is not running or uptime [%s] seconds is not met - do nothing" % uptime_seconds)
+        print("Dev mode [%s] Okuda [%s] uptime [%s]" % (dev_mode, okuda_running, uptime_seconds))
+        exit(0)
     if keyboard_device_id is not None:
         print("Keyboard detected at [%s]" % keyboard_device_id)
         setup_mouse()
         enable_fbcon()
-        print("end of program")
     else:
         print("No keyboard detected")
         disable_fbcon()
-        print("end of program")
