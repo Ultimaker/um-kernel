@@ -127,6 +127,7 @@ rescue_shell()
     ${BB_BIN} echo "# Tip: type help<enter> for available commands.  #"
     ${BB_BIN} echo "#                                                #"
     ${BB_BIN} echo "##################################################"
+
     exec ${BB_BIN} sh
 }
 
@@ -212,6 +213,21 @@ enable_framebuffer_device()
             return
         fi
     done
+}
+
+enable_framebuffer_console()
+{
+    echo "Enable frame-buffer console and HID USB keyboard."
+
+    modules="font bitblit tileblit fbcon hid usbhid hid-generic"
+    for module in ${modules}; do
+        if ! probe_module "${module}"; then
+            echo "Error, registering framebuffer console or USB HID drivers."
+            return
+        fi
+    done
+
+    exec ${BB_BIN} setsid sh -c 'exec sh < /dev/tty1 > /dev/tty1 2>&1' &
 }
 
 isBootingRestoreImage()
@@ -440,6 +456,7 @@ parse_cmdline
 enable_usb_storage_device
 enable_framebuffer_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
+    enable_framebuffer_console
     rescue_shell
 fi
 

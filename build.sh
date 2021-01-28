@@ -56,7 +56,7 @@ KERNEL_IMAGE="uImage-${BUILDCONFIG}"
 DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 
-INITRAMFS_MODULES_REQUIRED="ci_hdrc_imx.ko ci_hdrc.ko usbmisc_imx.ko usb-otg-fsm.ko phy-mxs-usb.ko hid.ko usbhid.ko hid-generic.ko\
+INITRAMFS_MODULES_REQUIRED="ci_hdrc_imx.ko ci_hdrc.ko usbmisc_imx.ko usb-otg-fsm.ko phy-mxs-usb.ko hid.ko usbhid.ko hid-generic.ko \
     dw_hdmi-imx.ko dw-hdmi.ko etnaviv.ko imxdrm.ko imx-ipu-v3.ko loop.ko imx2_wdt.ko fbcon.ko bitblit.ko font.ko tileblit.ko"
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 
