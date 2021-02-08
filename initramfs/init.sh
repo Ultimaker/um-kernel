@@ -227,6 +227,16 @@ enable_framebuffer_console()
         fi
     done
 
+    ${BB_BIN} echo -e "##################################################" > /dev/tty1
+    ${BB_BIN} echo -e "#                   ▄▄▄      ▄▄▄                 # Something unexpected happend..." > /dev/tty1
+    ${BB_BIN} echo -e "#                   ███████▄▄███▄                # You ended up in the rescue console. " > /dev/tty1
+    ${BB_BIN} echo -e "#                 ▄███  ▄▄   ▄▄ ▐█               #" > /dev/tty1
+    ${BB_BIN} echo -e "#              ▄██  ██ ▀▀▀   ▀▀▀▐█▄              # Please attach a USB keyboard and insert and USB stick." > /dev/tty1
+    ${BB_BIN} echo -e "#              ███▄▄██  ▄▄▄▄▄▄▄ ▐██              # Then type: dump_logs" > /dev/tty1
+    ${BB_BIN} echo -e "#               ██████ ▀       ▀ ▐█              # Send the logs on the USB stick to your support contact." > /dev/tty1
+    ${BB_BIN} echo -e "#            ▄████▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█▄           #" > /dev/tty1
+    ${BB_BIN} echo -e "################################################## We apologize for any inconvenience.\n" > /dev/tty1
+
     exec ${BB_BIN} setsid sh -c 'exec sh < /dev/tty1 > /dev/tty1 2>&1' &
 }
 
