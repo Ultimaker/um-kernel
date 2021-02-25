@@ -28,12 +28,8 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 #uc3 : UltiController 3 (S5,S5r2,S3)
 DISPLAY_TYPE="uc3"
 UM_SPLASH="/SplashUM.fb"
-S3_SPLASH="/SplashS3.fb"
-S5_SPLASH="/SplashS5.fb"
 FB_DEVICE="/dev/fb0"
-S3_ARTNUM="0x00 0x03 0x41 0xea"
-S5_ARTNUM="0x00 0x03 0x45 0xcb"
-
+COLORADO_ARTNUM="0x00 0x03 0x78 0x34"
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -188,10 +184,8 @@ set_display_splash()
     
     splash_img="${UM_SPLASH}"
     
-    if [ "${art_num}" = "${S3_ARTNUM}" ]; then
-        splash_img="${S3_SPLASH}"
-    elif [ "${art_num}" = "${S5_ARTNUM}" ]; then
-        splash_img="${S5_SPLASH}"
+    if [ "${art_num}" = "${COLORADO_ARTNUM}" ]; then
+        splash_img="${COLORADO_SPLASH}"
     fi
         
     if [ -f "${splash_img}" ] && [ -c "${FB_DEVICE}" ]; then

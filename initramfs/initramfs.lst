@@ -32,6 +32,3 @@ file    /init           initramfs/init.sh       0755 0 0
 
 # splash screen
 file    /SplashUM.fb    initramfs/SplashUM.fb   0755 0 0
-file    /SplashS3.fb    initramfs/SplashS3.fb   0755 0 0
-file    /SplashS5.fb    initramfs/SplashS5.fb   0755 0 0
-
