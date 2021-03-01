@@ -165,7 +165,7 @@ probe_module()
 enable_usb_storage_device()
 {
     echo "Enable usb storage device driver."
-    modules="usbmisc_imx usb_otg_fsm ci_hdrc phy_mxs_usb ci_hdrc_imx"
+    modules=""
     for module in ${modules}; do
         if ! probe_module "${module}"; then
             echo "Error, registering usb storage device."
@@ -179,7 +179,7 @@ set_display_splash()
     echo "Setting display image."
 
     #Get the article number from EEPROM
-    art_num=$(i2ctransfer -y 3 w2@0x57 0x01 0x00 r4)
+    art_num=$(i2ctransfer -y 1 w2@0x57 0x01 0x00 r4)
     echo "---> Article number read from EEPROM: ${art_num}"
     
     splash_img="${UM_SPLASH}"
@@ -199,7 +199,7 @@ enable_framebuffer_device()
 {
     echo "Enable frame-buffer driver."
 
-    modules="dw_hdmi dw_hdmi_imx imx_ipu_v3 etnaviv imxdrm"
+    modules=""
     for module in ${modules}; do
         if ! probe_module "${module}"; then
             echo "Error, registering framebuffer device."
@@ -242,7 +242,7 @@ check_and_set_article_number()
         article_number="$(cat "${article_number_file}")"
         echo "Trying to write article nr: '${article_number}'."
         # shellcheck disable=SC2086
-        if ! i2ctransfer -y 3 w6@0x57 0x01 0x00 ${article_number}; then
+        if ! i2ctransfer -y 1 w6@0x57 0x01 0x00 ${article_number}; then
             umount "${dev}"
             echo "Failed to write article number to EEPROM, skipping."
             return 0
@@ -432,6 +432,7 @@ toolcheck
 kernel_mount
 parse_cmdline
 enable_usb_storage_device
+# TODO re-enable when screen is attached
 #enable_framebuffer_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
