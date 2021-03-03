@@ -149,7 +149,7 @@ boot_root()
         restart
     fi
 
-    echo "Starting linux on ${root} of type ${rootfstype} with init=${init}."
+    echo "Starting linux on ${ROOT_MOUNT} of type ${rootfstype} with init=${init}."
     exec switch_root "${ROOT_MOUNT}" "${init}"
 }
 
@@ -165,7 +165,7 @@ probe_module()
 enable_usb_storage_device()
 {
     echo "Enable usb storage device driver."
-    modules="usb251xb"
+    modules="usb251xb usbmisc_imx ci_hdrc phy_mxs_usb ci_hdrc_imx"
     for module in ${modules}; do
         if ! probe_module "${module}"; then
             echo "Error, registering usb storage device."
