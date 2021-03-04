@@ -26,7 +26,8 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 
 #uc2 : UltiController 2 (UM3,UM3E) This UltiController is not considered here anymore
 #uc3 : UltiController 3 (S5,S5r2,S3)
-DISPLAY_TYPE="uc3"
+#uc4 : UltiController 4 (Colorado)
+DISPLAY_TYPE="uc4"
 UM_SPLASH="/SplashUM.fb"
 FB_DEVICE="/dev/fb0"
 COLORADO_ARTNUM="0x00 0x03 0x78 0x34"
@@ -179,7 +180,7 @@ set_display_splash()
     echo "Setting display image."
 
     #Get the article number from EEPROM
-    art_num=$(i2ctransfer -y 1 w2@0x57 0x01 0x00 r4)
+    art_num=$(i2ctransfer -y 1 w2@0x50 0x01 0x00 r4)
     echo "---> Article number read from EEPROM: ${art_num}"
     
     splash_img="${UM_SPLASH}"
@@ -242,7 +243,7 @@ check_and_set_article_number()
         article_number="$(cat "${article_number_file}")"
         echo "Trying to write article nr: '${article_number}'."
         # shellcheck disable=SC2086
-        if ! i2ctransfer -y 1 w6@0x57 0x01 0x00 ${article_number}; then
+        if ! i2ctransfer -y 1 w6@0x50 0x01 0x00 ${article_number}; then
             umount "${dev}"
             echo "Failed to write article number to EEPROM, skipping."
             return 0
