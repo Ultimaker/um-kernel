@@ -6,7 +6,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0+
 
-set -eu
+set -eux
 
 ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
@@ -60,6 +60,7 @@ init="/sbin/init"
 root=""
 rootflags=""
 rootfstype="auto"
+nfs_root=""
 rwmode=""
 
 update_tmpfs_mount=""
@@ -136,8 +137,9 @@ critical_error()
 
 boot_root()
 {
-    echo "Mounting ${root}."
-    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root}" "${ROOT_MOUNT}"
+    echo "Mounting ${root}${nfs_root}."
+    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root}" "${nfs_root}" "${ROOT_MOUNT}"  
+    
     kernel_umount
 
     test_init="${init}"
@@ -361,6 +363,9 @@ parse_cmdline()
     # Disabled because it is not possible in a while read loop
     for cmd in $(cat /proc/cmdline); do
         case "${cmd}" in
+        nfsroot=*)
+            nfs_root="${cmd#*=}"
+        ;;
         rescue)
             RESCUE_SHELL="yes"
         ;;
