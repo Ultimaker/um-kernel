@@ -440,7 +440,7 @@ fi
 
 #set_display_splash
 find_and_run_update
-#check_and_set_article_number
+check_and_set_article_number
 #set_display_splash
 boot_root
 
