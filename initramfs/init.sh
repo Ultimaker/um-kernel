@@ -6,7 +6,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0+
 
-set -eux
+set -eu
 
 ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
@@ -30,7 +30,6 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 DISPLAY_TYPE="uc4"
 UM_SPLASH="/SplashUM.fb"
 FB_DEVICE="/dev/fb0"
-COLORADO_ARTNUM="0x00 0x03 0x78 0x34"
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -138,7 +137,7 @@ critical_error()
 boot_root()
 {
     echo "Mounting ${root}${nfs_root}."
-    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root}" "${nfs_root}" "${ROOT_MOUNT}"  
+    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root}" "${ROOT_MOUNT}"
     
     kernel_umount
 
@@ -156,59 +155,17 @@ boot_root()
     exec switch_root "${ROOT_MOUNT}" "${init}"
 }
 
-probe_module()
-{
-    if ! modprobe -v "${1}"; then
-        echo "Failed to probe module: '${1}', removing."
-        rmmod "${1}.ko" || true
-        return
-    fi
-}
-
-enable_usb_storage_device()
-{
-    echo "Enable usb storage device driver."
-    modules=""
-    for module in ${modules}; do
-        if ! probe_module "${module}"; then
-            echo "Error, registering usb storage device."
-            return
-        fi
-    done
-}
-
 set_display_splash()
 {
     echo "Setting display image."
 
-    #Get the article number from EEPROM
-    art_num=$(i2ctransfer -y 1 w2@0x50 0x01 0x00 r4)
-    echo "---> Article number read from EEPROM: ${art_num}"
-    
     splash_img="${UM_SPLASH}"
-    
-    if [ "${art_num}" = "${COLORADO_ARTNUM}" ]; then
-        splash_img="${COLORADO_SPLASH}"
-    fi
-        
+ 
     if [ -f "${splash_img}" ] && [ -c "${FB_DEVICE}" ]; then
         cat "${splash_img}" > "${FB_DEVICE}" || true
     else
         echo "Unable to output image: '${splash_img}' to: '${FB_DEVICE}'."
     fi    
-}
-
-enable_framebuffer_device()
-{
-    echo "Enable frame-buffer driver."
-
-    modules=""
-    for module in ${modules}; do
-        if ! probe_module "${module}"; then
-            echo "Error, registering framebuffer device."
-            return
-        fi
-    done
 }
 
 isBootingRestoreImage()
@@ -437,17 +394,12 @@ busybox_setup
 toolcheck
 kernel_mount
 parse_cmdline
-enable_usb_storage_device
-# TODO re-enable when screen is attached
-#enable_framebuffer_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
-
-#set_display_splash
+set_display_splash
 find_and_run_update
 check_and_set_article_number
-#set_display_splash
 boot_root
 
 critical_error
