@@ -56,11 +56,12 @@ CMDS=" \
 WATCHDOG_DEV="/dev/watchdog"
 
 init="/sbin/init"
-root=""
 rootflags=""
 rootfstype="auto"
 nfs_root=""
 rwmode=""
+nfsdevice=""
+nfsargs=""
 
 update_tmpfs_mount=""
 
@@ -136,9 +137,8 @@ critical_error()
 
 boot_root()
 {
-    echo "Mounting ${root}${nfs_root}."
-    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root}" "${ROOT_MOUNT}"
-    
+    echo "Mounting ${nfsdevice}."
+    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${nfsargs},${rootflags},${rwmode}" "${nfsdevice}" "${ROOT_MOUNT}"
     kernel_umount
 
     test_init="${init}"
@@ -151,7 +151,7 @@ boot_root()
         restart
     fi
 
-    echo "Starting linux on ${root} of type ${rootfstype} with init=${init}."
+    echo "Starting linux on ${nfsdevice} of type ${rootfstype} with init=${init}."
     exec switch_root "${ROOT_MOUNT}" "${init}"
 }
 
@@ -322,6 +322,8 @@ parse_cmdline()
         case "${cmd}" in
         nfsroot=*)
             nfs_root="${cmd#*=}"
+            nfsdevice="${nfs_root%%,*}"
+            nfsargs="${nfs_root#*,}"
         ;;
         rescue)
             RESCUE_SHELL="yes"
@@ -334,19 +336,6 @@ parse_cmdline()
         ;;
         rootdelay=*)
             sleep "${cmd#*=}"
-        ;;
-        root=*)
-            _root="${cmd#*=}"
-            _prefix="${_root%%=*}"
-
-            if [ "${_prefix}" = "UUID" ] || \
-               [ "${_prefix}" = "PARTUUID" ] || \
-               [ "${_prefix}" = "LABEL" ] || \
-               [ "${_prefix}" = "PARTLABEL" ]; then
-                root=$(findfs "${_root}")
-            else
-                root="${cmd#*=}"
-            fi
         ;;
         rootflags=*)
             rootflags="${cmd#*=}"
