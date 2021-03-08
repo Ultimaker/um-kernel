@@ -56,10 +56,11 @@ CMDS=" \
 WATCHDOG_DEV="/dev/watchdog"
 
 init="/sbin/init"
-root=""
 rootflags=""
 rootfstype="auto"
 rwmode=""
+nfsdevice=""
+nfsargs=""
 
 update_tmpfs_mount=""
 
@@ -135,8 +136,8 @@ critical_error()
 
 boot_root()
 {
-    echo "Mounting ${root}."
-    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root}" "${ROOT_MOUNT}"
+    echo "Mounting ${nfsdevice}."
+    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${nfsargs},${rootflags},${rwmode}" "${nfsdevice}" "${ROOT_MOUNT}"
     kernel_umount
 
     test_init="${init}"
@@ -149,7 +150,7 @@ boot_root()
         restart
     fi
 
-    echo "Starting linux on ${root} of type ${rootfstype} with init=${init}."
+    echo "Starting linux on ${nfsdevice} of type ${rootfstype} with init=${init}."
     exec switch_root "${ROOT_MOUNT}" "${init}"
 }
 
@@ -181,13 +182,13 @@ set_display_splash()
     #Get the article number from EEPROM
     art_num=$(i2ctransfer -y 1 w2@0x57 0x01 0x00 r4)
     echo "---> Article number read from EEPROM: ${art_num}"
-    
+
     splash_img="${UM_SPLASH}"
-    
+
     if [ "${art_num}" = "${COLORADO_ARTNUM}" ]; then
         splash_img="${COLORADO_SPLASH}"
     fi
-        
+
     if [ -f "${splash_img}" ] && [ -c "${FB_DEVICE}" ]; then
         cat "${splash_img}" > "${FB_DEVICE}" || true
     else
@@ -360,6 +361,11 @@ parse_cmdline()
     # Disabled because it is not possible in a while read loop
     for cmd in $(cat /proc/cmdline); do
         case "${cmd}" in
+        nfsroot=*)
+            nfs_root="${cmd#*=}"
+            nfsdevice="${nfs_root%%,*}"
+            nfsargs="${nfs_root#*,}"
+        ;;
         rescue)
             RESCUE_SHELL="yes"
         ;;
@@ -371,19 +377,6 @@ parse_cmdline()
         ;;
         rootdelay=*)
             sleep "${cmd#*=}"
-        ;;
-        root=*)
-            _root="${cmd#*=}"
-            _prefix="${_root%%=*}"
-
-            if [ "${_prefix}" = "UUID" ] || \
-               [ "${_prefix}" = "PARTUUID" ] || \
-               [ "${_prefix}" = "LABEL" ] || \
-               [ "${_prefix}" = "PARTLABEL" ]; then
-                root=$(findfs "${_root}")
-            else
-                root="${cmd#*=}"
-            fi
         ;;
         rootflags=*)
             rootflags="${cmd#*=}"
