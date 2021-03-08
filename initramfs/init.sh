@@ -60,8 +60,6 @@ rootflags=""
 rootfstype="auto"
 nfs_root=""
 rwmode=""
-nfsdevice=""
-nfsargs=""
 
 update_tmpfs_mount=""
 
@@ -137,8 +135,8 @@ critical_error()
 
 boot_root()
 {
-    echo "Mounting ${nfsdevice}."
-    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${nfsargs},${rootflags},${rwmode}" "${nfsdevice}" "${ROOT_MOUNT}"
+    echo "Mounting ${nfs_root}."
+    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${nfs_root}" "${ROOT_MOUNT}"
     kernel_umount
 
     test_init="${init}"
@@ -151,7 +149,7 @@ boot_root()
         restart
     fi
 
-    echo "Starting linux on ${nfsdevice} of type ${rootfstype} with init=${init}."
+    echo "Starting linux on ${nfs_root} of type ${rootfstype} with init=${init}."
     exec switch_root "${ROOT_MOUNT}" "${init}"
 }
 
@@ -322,8 +320,6 @@ parse_cmdline()
         case "${cmd}" in
         nfsroot=*)
             nfs_root="${cmd#*=}"
-            nfsdevice="${nfs_root%%,*}"
-            nfsargs="${nfs_root#*,}"
         ;;
         rescue)
             RESCUE_SHELL="yes"
