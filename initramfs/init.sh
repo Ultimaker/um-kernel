@@ -56,9 +56,10 @@ CMDS=" \
 WATCHDOG_DEV="/dev/watchdog"
 
 init="/sbin/init"
+root=""
+nfs_root=""
 rootflags=""
 rootfstype="auto"
-nfs_root=""
 rwmode=""
 
 update_tmpfs_mount=""
@@ -135,8 +136,13 @@ critical_error()
 
 boot_root()
 {
-    echo "Mounting ${nfs_root}."
-    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${nfs_root}" "${ROOT_MOUNT}"
+    root_device=${root}
+    if [ "${rootfstype}" = "nfs" ]
+    then
+        root_device=${nfs_root}
+    fi
+    echo "Mounting ${root_device}."
+    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root_device}" "${ROOT_MOUNT}"
     kernel_umount
 
     test_init="${init}"
@@ -200,7 +206,7 @@ check_and_set_article_number()
         article_number="$(cat "${article_number_file}")"
         echo "Trying to write article nr: '${article_number}'."
         # shellcheck disable=SC2086
-        if ! i2ctransfer -y 1 w6@0x50 0x01 0x00 ${article_number}; then
+        if ! i2ctransfer -y 1 w6@0x57 0x01 0x00 ${article_number}; then
             umount "${dev}"
             echo "Failed to write article number to EEPROM, skipping."
             return 0
@@ -332,6 +338,19 @@ parse_cmdline()
         ;;
         rootdelay=*)
             sleep "${cmd#*=}"
+        ;;
+        root=*)
+            _root="${cmd#*=}"
+            _prefix="${_root%%=*}"
+
+            if [ "${_prefix}" = "UUID" ] || \
+               [ "${_prefix}" = "PARTUUID" ] || \
+               [ "${_prefix}" = "LABEL" ] || \
+               [ "${_prefix}" = "PARTLABEL" ]; then
+                root=$(findfs "${_root}")
+            else
+                root="${cmd#*=}"
+            fi
         ;;
         rootflags=*)
             rootflags="${cmd#*=}"
