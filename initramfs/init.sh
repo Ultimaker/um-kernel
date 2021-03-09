@@ -161,18 +161,6 @@ probe_module()
     fi
 }
 
-enable_usb_storage_device()
-{
-    echo "Enable usb storage device driver."
-    modules="usb251xb"
-    for module in ${modules}; do
-        if ! probe_module "${module}"; then
-            echo "Error, registering usb storage device."
-            return
-        fi
-    done
-}
-
 set_display_splash()
 {
     echo "Setting display image."
@@ -192,19 +180,6 @@ set_display_splash()
     else
         echo "Unable to output image: '${splash_img}' to: '${FB_DEVICE}'."
     fi    
-}
-
-enable_framebuffer_device()
-{
-    echo "Enable frame-buffer driver."
-
-    modules="sn65dsi84 imxdrm"
-    for module in ${modules}; do
-        if ! probe_module "${module}"; then
-            echo "Error, registering framebuffer device."
-            return
-        fi
-    done
 }
 
 isBootingRestoreImage()
@@ -420,9 +395,6 @@ busybox_setup
 toolcheck
 kernel_mount
 parse_cmdline
-enable_usb_storage_device
-# TODO re-enable when screen is attached
-#enable_framebuffer_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
