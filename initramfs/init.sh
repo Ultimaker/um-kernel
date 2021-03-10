@@ -28,12 +28,8 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 #uc3 : UltiController 3 (S5,S5r2,S3)
 DISPLAY_TYPE="uc3"
 UM_SPLASH="/SplashUM.fb"
-S3_SPLASH="/SplashS3.fb"
-S5_SPLASH="/SplashS5.fb"
 FB_DEVICE="/dev/fb0"
-S3_ARTNUM="0x00 0x03 0x41 0xea"
-S5_ARTNUM="0x00 0x03 0x45 0xcb"
-
+COLORADO_ARTNUM="0x00 0x03 0x78 0x34"
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -60,7 +56,6 @@ CMDS=" \
 WATCHDOG_DEV="/dev/watchdog"
 
 init="/sbin/init"
-root=""
 rootflags=""
 rootfstype="auto"
 rwmode=""
@@ -139,8 +134,8 @@ critical_error()
 
 boot_root()
 {
-    echo "Mounting ${root}."
-    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root}" "${ROOT_MOUNT}"
+    echo "Mounting ${nfs_root}."
+    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${nfs_root}" "${ROOT_MOUNT}"
     kernel_umount
 
     test_init="${init}"
@@ -153,7 +148,7 @@ boot_root()
         restart
     fi
 
-    echo "Starting linux on ${root} of type ${rootfstype} with init=${init}."
+    echo "Starting linux on ${nfs_root} of type ${rootfstype} with init=${init}."
     exec switch_root "${ROOT_MOUNT}" "${init}"
 }
 
@@ -166,52 +161,25 @@ probe_module()
     fi
 }
 
-enable_usb_storage_device()
-{
-    echo "Enable usb storage device driver."
-    modules="usbmisc_imx usb_otg_fsm ci_hdrc phy_mxs_usb ci_hdrc_imx"
-    for module in ${modules}; do
-        if ! probe_module "${module}"; then
-            echo "Error, registering usb storage device."
-            return
-        fi
-    done
-}
-
 set_display_splash()
 {
     echo "Setting display image."
 
     #Get the article number from EEPROM
-    art_num=$(i2ctransfer -y 3 w2@0x57 0x01 0x00 r4)
+    art_num=$(i2ctransfer -y 1 w2@0x57 0x01 0x00 r4)
     echo "---> Article number read from EEPROM: ${art_num}"
-    
+
     splash_img="${UM_SPLASH}"
-    
-    if [ "${art_num}" = "${S3_ARTNUM}" ]; then
-        splash_img="${S3_SPLASH}"
-    elif [ "${art_num}" = "${S5_ARTNUM}" ]; then
-        splash_img="${S5_SPLASH}"
+
+    if [ "${art_num}" = "${COLORADO_ARTNUM}" ]; then
+        splash_img="${COLORADO_SPLASH}"
     fi
-        
+
     if [ -f "${splash_img}" ] && [ -c "${FB_DEVICE}" ]; then
         cat "${splash_img}" > "${FB_DEVICE}" || true
     else
         echo "Unable to output image: '${splash_img}' to: '${FB_DEVICE}'."
     fi    
-}
-
-enable_framebuffer_device()
-{
-    echo "Enable frame-buffer driver."
-
-    modules="dw_hdmi dw_hdmi_imx imx_ipu_v3 etnaviv imxdrm"
-    for module in ${modules}; do
-        if ! probe_module "${module}"; then
-            echo "Error, registering framebuffer device."
-            return
-        fi
-    done
 }
 
 isBootingRestoreImage()
@@ -248,7 +216,7 @@ check_and_set_article_number()
         article_number="$(cat "${article_number_file}")"
         echo "Trying to write article nr: '${article_number}'."
         # shellcheck disable=SC2086
-        if ! i2ctransfer -y 3 w6@0x57 0x01 0x00 ${article_number}; then
+        if ! i2ctransfer -y 1 w6@0x57 0x01 0x00 ${article_number}; then
             umount "${dev}"
             echo "Failed to write article number to EEPROM, skipping."
             return 0
@@ -366,6 +334,9 @@ parse_cmdline()
     # Disabled because it is not possible in a while read loop
     for cmd in $(cat /proc/cmdline); do
         case "${cmd}" in
+        nfsroot=*)
+            nfs_root="${cmd#*=}"
+        ;;
         rescue)
             RESCUE_SHELL="yes"
         ;;
@@ -377,19 +348,6 @@ parse_cmdline()
         ;;
         rootdelay=*)
             sleep "${cmd#*=}"
-        ;;
-        root=*)
-            _root="${cmd#*=}"
-            _prefix="${_root%%=*}"
-
-            if [ "${_prefix}" = "UUID" ] || \
-               [ "${_prefix}" = "PARTUUID" ] || \
-               [ "${_prefix}" = "LABEL" ] || \
-               [ "${_prefix}" = "PARTLABEL" ]; then
-                root=$(findfs "${_root}")
-            else
-                root="${cmd#*=}"
-            fi
         ;;
         rootflags=*)
             rootflags="${cmd#*=}"
@@ -437,8 +395,6 @@ busybox_setup
 toolcheck
 kernel_mount
 parse_cmdline
-enable_usb_storage_device
-#enable_framebuffer_device
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
