@@ -38,7 +38,6 @@
     };
 };
 
-
 /* GPIO PAD setting */
 /* 0x1C0 -- pull-up,   HYST, no-OD, slow, X1 */
 /* 0x140 -- pull-up,   CMOS, no-OD, slow, X1 */
@@ -57,18 +56,18 @@
 &pinctrl_gpio4 {
 	fsl,pins = <
         MX8MM_IOMUXC_SAI3_RXC_GPIO4_IO29        0x140 /* GPIO4*/
-        MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1         0x140 /* GPIO7 */
+        MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1         0x100 /* GPIO7 / RESET_HUB*/
         MX8MM_IOMUXC_SAI3_RXFS_GPIO4_IO28       0x100 /* GPIO6 / TACHIN / SOM_BOOT */
         MX8MM_IOMUXC_SAI1_RXFS_GPIO4_IO0        0x140 /* GPIO8 */
         MX8MM_IOMUXC_SAI1_TXC_GPIO4_IO11        0x140 /* GPIO9 */
-        MX8MM_IOMUXC_SAI1_TXFS_GPIO4_IO10       0x140 /* GPIO10 */
+        MX8MM_IOMUXC_SAI1_TXFS_GPIO4_IO10       0x100 /* GPIO10 / U12 WRITE PROTECT */
         MX8MM_IOMUXC_SAI1_MCLK_GPIO4_IO20       0x140 /* GPIO11 */
         MX8MM_IOMUXC_SAI1_TXD3_GPIO4_IO15       0x140 /* PM_CHARGING# */
         MX8MM_IOMUXC_SAI1_TXD2_GPIO4_IO14       0x140 /* PM_CHARGER_PRSNT# */
         MX8MM_IOMUXC_SAI1_TXD4_GPIO4_IO16       0x140 /* BOOT_SEL0# */
         MX8MM_IOMUXC_SAI1_TXD5_GPIO4_IO17       0x140 /* BOOT_SEL1# */
         MX8MM_IOMUXC_SAI1_TXD6_GPIO4_IO18       0x140 /* BOOT_SEL2# */
-        MX8MM_IOMUXC_SAI1_RXD5_GPIO4_IO7        0x100 /* SAI1_RXD5 -> RESET_OUT# / SOM_RST*/
+        MX8MM_IOMUXC_SAI1_RXD5_GPIO4_IO7        0x100 /* SAI1_RXD5 -> RESET_OUT# / SOM_RST */
 	>;
 };
 
@@ -90,6 +89,24 @@
             >;
         };
     };
+};
+
+&i2c2 {
+    /* Carrier data EEPROM (U12) */
+    carrierdata@57 {
+        compatible = "atmel,24c32";
+        reg = <0x57>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_gpio4>;
+        pagesize = <32>;
+        wp-gpios = <&gpio4 10 0>;
+    };
+};
+
+/* Ultimainboard J8 debug console. We cannot use DMA, it uses proprietary firmware drivers.  */
+&uart4 { /* SER1 */
+    /delete-property/ dmas;
+    /delete-property/ dma-names;
 };
 
 / {

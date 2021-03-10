@@ -26,10 +26,11 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 
 #uc2 : UltiController 2 (UM3,UM3E) This UltiController is not considered here anymore
 #uc3 : UltiController 3 (S5,S5r2,S3)
-DISPLAY_TYPE="uc3"
+#uc4 : UltiController 4 (Colorado)
+DISPLAY_TYPE="uc4"
 UM_SPLASH="/SplashUM.fb"
 FB_DEVICE="/dev/fb0"
-COLORADO_ARTNUM="0x00 0x03 0x78 0x34"
+
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -56,6 +57,8 @@ CMDS=" \
 WATCHDOG_DEV="/dev/watchdog"
 
 init="/sbin/init"
+root=""
+nfs_root=""
 rootflags=""
 rootfstype="auto"
 rwmode=""
@@ -134,8 +137,13 @@ critical_error()
 
 boot_root()
 {
-    echo "Mounting ${nfs_root}."
-    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${nfs_root}" "${ROOT_MOUNT}"
+    root_device="${root}"
+    if [ "${rootfstype}" = "nfs" ]
+    then
+        root_device="${nfs_root}"
+    fi
+    echo "Mounting ${root_device}."
+    mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root_device}" "${ROOT_MOUNT}"
     kernel_umount
 
     test_init="${init}"
@@ -148,33 +156,16 @@ boot_root()
         restart
     fi
 
-    echo "Starting linux on ${nfs_root} of type ${rootfstype} with init=${init}."
+    echo "Starting linux on ${root_device} of type ${rootfstype} with init=${init}."
     exec switch_root "${ROOT_MOUNT}" "${init}"
-}
-
-probe_module()
-{
-    if ! modprobe -v "${1}"; then
-        echo "Failed to probe module: '${1}', removing."
-        rmmod "${1}.ko" || true
-        return
-    fi
 }
 
 set_display_splash()
 {
     echo "Setting display image."
 
-    #Get the article number from EEPROM
-    art_num=$(i2ctransfer -y 1 w2@0x57 0x01 0x00 r4)
-    echo "---> Article number read from EEPROM: ${art_num}"
-
     splash_img="${UM_SPLASH}"
-
-    if [ "${art_num}" = "${COLORADO_ARTNUM}" ]; then
-        splash_img="${COLORADO_SPLASH}"
-    fi
-
+ 
     if [ -f "${splash_img}" ] && [ -c "${FB_DEVICE}" ]; then
         cat "${splash_img}" > "${FB_DEVICE}" || true
     else
@@ -398,11 +389,9 @@ parse_cmdline
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
-
-#set_display_splash
+set_display_splash
 find_and_run_update
-#check_and_set_article_number
-#set_display_splash
+check_and_set_article_number
 boot_root
 
 critical_error
