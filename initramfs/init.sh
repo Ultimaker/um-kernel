@@ -31,6 +31,7 @@ DISPLAY_TYPE="uc4"
 UM_SPLASH="/SplashUM.fb"
 FB_DEVICE="/dev/fb0"
 
+
 BB_BIN="/bin/busybox"
 CMDS=" \
     [ \
@@ -338,19 +339,6 @@ parse_cmdline()
         ;;
         rootdelay=*)
             sleep "${cmd#*=}"
-        ;;
-        root=*)
-            _root="${cmd#*=}"
-            _prefix="${_root%%=*}"
-
-            if [ "${_prefix}" = "UUID" ] || \
-               [ "${_prefix}" = "PARTUUID" ] || \
-               [ "${_prefix}" = "LABEL" ] || \
-               [ "${_prefix}" = "PARTLABEL" ]; then
-                root=$(findfs "${_root}")
-            else
-                root="${cmd#*=}"
-            fi
         ;;
         rootflags=*)
             rootflags="${cmd#*=}"
