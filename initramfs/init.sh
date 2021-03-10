@@ -136,10 +136,10 @@ critical_error()
 
 boot_root()
 {
-    root_device=${root}
+    root_device="${root}"
     if [ "${rootfstype}" = "nfs" ]
     then
-        root_device=${nfs_root}
+        root_device="${nfs_root}"
     fi
     echo "Mounting ${root_device}."
     mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root_device}" "${ROOT_MOUNT}"
@@ -155,7 +155,7 @@ boot_root()
         restart
     fi
 
-    echo "Starting linux on ${nfs_root} of type ${rootfstype} with init=${init}."
+    echo "Starting linux on ${root_device} of type ${rootfstype} with init=${init}."
     exec switch_root "${ROOT_MOUNT}" "${init}"
 }
 

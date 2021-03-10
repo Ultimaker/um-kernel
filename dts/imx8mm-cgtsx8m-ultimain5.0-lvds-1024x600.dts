@@ -110,11 +110,6 @@
 };
 
 / {
-    chosen { /* Investigate how this works, because this is usefull */
-        bootargs = "console=ttymxc3,115200 earlycon=ec_imx6q,0x30a60000,115200";
-        stdout-path = &uart4;
-    };
-
     leds {
         compatible = "gpio-leds";
         pinctrl-names = "default";
