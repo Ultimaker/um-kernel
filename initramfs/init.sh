@@ -1,9 +1,8 @@
 #!/bin/sh
 #
 # Copyright (C) 2018 Ultimaker B.V.
-# Copyright (C) 2018 Olliver Schinagl <oliver@schinagl.nl>
+# Author: 2018 Olliver Schinagl <oliver@schinagl.nl>
 #
-# SPDX-License-Identifier: AGPL-3.0+
 
 set -eu
 
