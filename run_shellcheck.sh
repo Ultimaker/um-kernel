@@ -2,7 +2,6 @@
 #
 # Copyright (C) 2019 Ultimaker B.V.
 #
-# SPDX-License-Identifier: LGPL-3.0+
 
 set -eu
 

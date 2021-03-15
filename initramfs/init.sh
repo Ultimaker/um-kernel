@@ -1,10 +1,9 @@
 #!/bin/sh
 #
 # Copyright (C) 2018 Ultimaker B.V.
-# Copyright (C) 2018 Olliver Schinagl <oliver@schinagl.nl>
-# Copyright (C) 2019 Raymond Siudak <raysiudak@gmail.com>
+# Author: 2018 Olliver Schinagl <oliver@schinagl.nl>
+# Author: 2019 Raymond Siudak <raysiudak@gmail.com>
 #
-# SPDX-License-Identifier: AGPL-3.0+
 
 set -eu
 
@@ -185,20 +184,20 @@ set_display_splash()
     #Get the article number from EEPROM
     art_num=$(i2ctransfer -y 3 w2@0x57 0x01 0x00 r4)
     echo "---> Article number read from EEPROM: ${art_num}"
-    
+
     splash_img="${UM_SPLASH}"
-    
+
     if [ "${art_num}" = "${S3_ARTNUM}" ]; then
         splash_img="${S3_SPLASH}"
     elif [ "${art_num}" = "${S5_ARTNUM}" ]; then
         splash_img="${S5_SPLASH}"
     fi
-        
+
     if [ -f "${splash_img}" ] && [ -c "${FB_DEVICE}" ]; then
         cat "${splash_img}" > "${FB_DEVICE}" || true
     else
         echo "Unable to output image: '${splash_img}' to: '${FB_DEVICE}'."
-    fi    
+    fi
 }
 
 enable_framebuffer_device()
