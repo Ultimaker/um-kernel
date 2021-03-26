@@ -68,7 +68,6 @@ env_check()
 
 run_build()
 {
-    git submodule update --init --recursive --depth 1
     run_in_docker "./build.sh" "${@}"
 }
 

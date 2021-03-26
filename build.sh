@@ -44,7 +44,7 @@ PACKAGE_NAME="${PACKAGE_NAME:-um-kernel}"
 RELEASE_VERSION="${RELEASE_VERSION:-999.999.999}"
 
 # Which kernel to build
-LINUX_SRC_DIR=${SRC_DIR}/linux
+LINUX_SRC_DIR=/linux
 
 # Which kernel config to build.
 BUILDCONFIG="msc-sm2-imx6dl-ultimain4.2"

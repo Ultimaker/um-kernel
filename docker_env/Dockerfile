@@ -23,8 +23,13 @@ RUN apt-get update && \
         u-boot-tools \
         wget \
         xz-utils \
+        git \
     && \
     apt-get clean && \
     rm -rf /var/cache/apt/*
 
 COPY buildenv_check.sh buildenv_check.sh
+
+COPY clone_linux.sh clone_linux.sh
+
+RUN ./clone_linux.sh
