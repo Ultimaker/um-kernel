@@ -48,7 +48,7 @@ BUILDCONFIG="sx8m"
 
 # Setup internal variables
 KCONFIG="${SRC_DIR}/configs/${BUILDCONFIG}_config"
-KERNEL_BUILD_DIR="${SRC_DIR}/_build_armhf/${BUILDCONFIG}-linux"
+KERNEL_BUILD_DIR="${SRC_DIR}/_build/${BUILDCONFIG}-linux"
 KERNEL_IMAGE="uImage-${BUILDCONFIG}"
 DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
