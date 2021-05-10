@@ -381,7 +381,7 @@ create_debian_package()
     fi
 
     if ! ls "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"*".bin" 1> /dev/null 2>&1; then
-        echo "Error, linux-firmware proptietary directory not found for DMA drivers."
+        echo "Error, linux-firmware proprietary directory not found for DMA drivers."
         exit 1
     fi
 
