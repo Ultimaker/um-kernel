@@ -41,7 +41,7 @@ PACKAGE_NAME="${PACKAGE_NAME:-um-kernel}"
 RELEASE_VERSION="${RELEASE_VERSION:-999.999.999}"
 
 # Which kernel to build
-LINUX_SRC_DIR=${SRC_DIR}/linux
+LINUX_SRC_DIR="${SRC_DIR}/linux"
 
 # Which kernel config to build.
 BUILDCONFIG="sx8m"
@@ -52,6 +52,10 @@ KERNEL_BUILD_DIR="${SRC_DIR}/_build/${BUILDCONFIG}-linux"
 KERNEL_IMAGE="uImage-${BUILDCONFIG}"
 DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
+
+# We need freescale proprietary DMA drivers for the UART they are binary blobs in the Linux mainline
+PROPRIETARY_FIRMWARE_DIR="${SRC_DIR}/linux-firmware"
+PROPRIETARY_FIRMWARE_OUTPUT_DIR="${DEBIAN_DIR}/lib/firmware"
 
 INITRAMFS_MODULES_REQUIRED="loop.ko"
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
@@ -336,6 +340,22 @@ dtb_build()
     echo "Finished building Device-trees."
 }
 
+copy_dma_firmware()
+{
+    if [ -d "${PROPRIETARY_FIRMWARE_DIR}" ]; then
+        rm -rf "${PROPRIETARY_FIRMWARE_DIR}"
+    fi
+
+    git clone git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
+
+    if [ ! -d "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma" ]; then
+        mkdir -p "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma"
+    fi
+
+    cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx7d.bin" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"
+    cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx6q.bin" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"
+}
+
 create_debian_package()
 {
     echo "Building Debian package."
@@ -357,6 +377,11 @@ create_debian_package()
 
     if ! ls "${BOOT_FILE_OUTPUT_DIR}/"*".dtb" 1> /dev/null 2>&1; then
         echo "Error, no Kernel device-tree files installed, run 'dtbs' build first."
+        exit 1
+    fi
+
+    if ! ls "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"*".bin" 1> /dev/null 2>&1; then
+        echo "Error, linux-firmware proprietary directory not found for DMA drivers."
         exit 1
     fi
 
@@ -437,6 +462,7 @@ fi
 if [ "${#}" -eq 0 ]; then
     kernel_build
     dtb_build
+    copy_dma_firmware
     create_debian_package
     exit 0
 fi
@@ -451,6 +477,7 @@ case "${1-}" in
     deb)
         kernel_build
         dtb_build
+        copy_dma_firmware
         create_debian_package
         ;;
     menuconfig)

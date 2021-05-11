@@ -11,6 +11,7 @@ RUN apt-get update && \
         device-tree-compiler \
         gcc \
         gcc-aarch64-linux-gnu \
+        git \
         gettext \
         fakeroot \
         kmod \
