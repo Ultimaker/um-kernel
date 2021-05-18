@@ -340,6 +340,10 @@ dtb_build()
     echo "Finished building Device-trees."
 }
 
+# This function will checkout the linux-firmware repository where proprietary
+# device firmware is stored. We need this because the imx8m uart uses this.
+# We can choose not to use it and configure it differently in the device-tree.
+#
 copy_dma_firmware()
 {
     if [ -d "${PROPRIETARY_FIRMWARE_DIR}" ]; then
@@ -354,6 +358,25 @@ copy_dma_firmware()
 
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx7d.bin" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx6q.bin" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"
+}
+
+
+bootscript_build()
+{
+    echo "Building boot scripts."
+    if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
+        mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
+    fi
+
+    # Create the boot-scripts for different firmware versions
+    cp scripts/boot.cmd "${BOOT_FILE_OUTPUT_DIR}/boot.cmd"
+
+    # Convert the boot-scripts into proper U-Boot script images
+    for CMD_FILE in "${BOOT_FILE_OUTPUT_DIR}/"*".cmd"; do
+        SCR_FILE="$(basename "${CMD_FILE%.*}.scr")"
+        mkimage -A arm -O linux -T script -C none -a 0x43100000 -n "Boot script" -d "${CMD_FILE}" "${BOOT_FILE_OUTPUT_DIR}/${SCR_FILE}"
+    done
+    echo "Finished building boot scripts."
 }
 
 create_debian_package()
@@ -382,6 +405,11 @@ create_debian_package()
 
     if ! ls "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"*".bin" 1> /dev/null 2>&1; then
         echo "Error, linux-firmware proprietary directory not found for DMA drivers."
+        exit 1
+    fi
+
+    if ! ls "${BOOT_FILE_OUTPUT_DIR}/"*".scr" 1> /dev/null 2>&1; then
+        echo "Error, no bootscript files found, run 'bootscript' build first."
         exit 1
     fi
 
@@ -463,22 +491,27 @@ if [ "${#}" -eq 0 ]; then
     kernel_build
     dtb_build
     copy_dma_firmware
+    bootscript_build
     create_debian_package
     exit 0
 fi
 
 case "${1-}" in
-    kernel)
-        kernel_build
-        ;;
-    dtbs)
-        dtb_build
+    bootscript)
+        bootscript_build
         ;;
     deb)
         kernel_build
         dtb_build
         copy_dma_firmware
+        bootscript_build
         create_debian_package
+        ;;
+    dtbs)
+        dtb_build
+        ;;        
+    kernel)
+        kernel_build
         ;;
     menuconfig)
         kernel_build_command menuconfig
