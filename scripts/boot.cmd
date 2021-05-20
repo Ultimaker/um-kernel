@@ -29,4 +29,7 @@ setenv mmcboot 'echo Booting from mmc ...; run mmcargs; run loadfdt; booti ${loa
 setenv mmc_boot 'mmc dev ${mmcdev}; mmc rescan; run loadimage; run mmcboot;'
 setenv bootcmd 'for btype in ${boot_devs}; do echo Attempting ${btype} boot...; if run ${btype}_boot; then; exit; fi; done; run netboot'
 
+saveenv
+reset
+
 # Important note: the virgin SOM has the loadbootscript command set to use fatload.
