@@ -360,25 +360,6 @@ copy_dma_firmware()
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx6q.bin" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"
 }
 
-
-bootscript_build()
-{
-    echo "Building boot scripts."
-    if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
-        mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
-    fi
-
-    # Create the boot-scripts for different firmware versions
-    cp scripts/boot.cmd "${BOOT_FILE_OUTPUT_DIR}/boot.cmd"
-
-    # Convert the boot-scripts into proper U-Boot script images
-    for CMD_FILE in "${BOOT_FILE_OUTPUT_DIR}/"*".cmd"; do
-        SCR_FILE="$(basename "${CMD_FILE%.*}.scr")"
-        mkimage -A arm -O linux -T script -C none -a 0x43100000 -n "Boot script" -d "${CMD_FILE}" "${BOOT_FILE_OUTPUT_DIR}/${SCR_FILE}"
-    done
-    echo "Finished building boot scripts."
-}
-
 create_debian_package()
 {
     echo "Building Debian package."
@@ -408,11 +389,6 @@ create_debian_package()
         exit 1
     fi
 
-    if ! ls "${BOOT_FILE_OUTPUT_DIR}/"*".scr" 1> /dev/null 2>&1; then
-        echo "Error, no bootscript files found, run 'bootscript' build first."
-        exit 1
-    fi
-
     mkdir -p "${DEBIAN_DIR}/DEBIAN"
     sed -e 's|@ARCH@|'"${ARCH}"'|g' \
         -e 's|@PACKAGE_NAME@|'"${PACKAGE_NAME}"'|g' \
@@ -433,7 +409,7 @@ usage()
     echo ""
     echo "This is the build script for Linux Kernel related build artifacts and configure the Kernel."
     echo ""
-    echo "  Usage: ${0} [kernel|dtbs|deb]"
+    echo "  Usage: ${0} [kernel|dtbs|menuconfig|deb]"
     echo "  For Kernel config modification use: ${0} menuconfig"
     echo ""
     echo "  -c Clean the build output directory '_build'."
@@ -491,20 +467,15 @@ if [ "${#}" -eq 0 ]; then
     kernel_build
     dtb_build
     copy_dma_firmware
-    bootscript_build
     create_debian_package
     exit 0
 fi
 
 case "${1-}" in
-    bootscript)
-        bootscript_build
-        ;;
     deb)
         kernel_build
         dtb_build
         copy_dma_firmware
-        bootscript_build
         create_debian_package
         ;;
     dtbs)
