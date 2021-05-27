@@ -340,6 +340,10 @@ dtb_build()
     echo "Finished building Device-trees."
 }
 
+# This function will checkout the linux-firmware repository where proprietary
+# device firmware is stored. We need this because the imx8m uart uses this.
+# We can choose not to use it and configure it differently in the device-tree.
+#
 copy_dma_firmware()
 {
     if [ -d "${PROPRIETARY_FIRMWARE_DIR}" ]; then
@@ -405,7 +409,7 @@ usage()
     echo ""
     echo "This is the build script for Linux Kernel related build artifacts and configure the Kernel."
     echo ""
-    echo "  Usage: ${0} [kernel|dtbs|deb]"
+    echo "  Usage: ${0} [kernel|dtbs|menuconfig|deb]"
     echo "  For Kernel config modification use: ${0} menuconfig"
     echo ""
     echo "  -c Clean the build output directory '_build'."
@@ -468,17 +472,17 @@ if [ "${#}" -eq 0 ]; then
 fi
 
 case "${1-}" in
-    kernel)
-        kernel_build
-        ;;
-    dtbs)
-        dtb_build
-        ;;
     deb)
         kernel_build
         dtb_build
         copy_dma_firmware
         create_debian_package
+        ;;
+    dtbs)
+        dtb_build
+        ;;        
+    kernel)
+        kernel_build
         ;;
     menuconfig)
         kernel_build_command menuconfig

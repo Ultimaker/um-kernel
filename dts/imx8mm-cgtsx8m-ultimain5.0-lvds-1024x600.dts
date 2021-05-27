@@ -136,5 +136,9 @@
             default-state = "keep";
 		};
 	};
+
+	gpio-keys {
+	   status = "disabled";
+	};
 };
 
