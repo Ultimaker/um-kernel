@@ -1,8 +1,6 @@
 #!/bin/bash
 # Copyright (C) 2019 Ultimaker B.V.
-# Copyright (C) 2019 Raymond Siudak <raysiudak@gmail.com>
-#
-# SPDX-License-Identifier: LGPL-3.0+
+# Author 2019 Raymond Siudak <raysiudak@gmail.com>
 
 set -eu
 set -o pipefail
