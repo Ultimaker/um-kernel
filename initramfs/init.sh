@@ -161,7 +161,7 @@ enable_framebuffer_device()
 
     modules="drm rc_core cec fb_sys_fops cfbfillrect syscopyarea cfbimgblt sysfillrect \
              sysimgblt cfbcopyarea drm_kms_helper sun4i_drm_hdmi sun4i-drm-hdmi sun4i-hdmi-i2c \
-             sun4i-tcon sun4i-backend sun4i-drm"
+             sun4i-tcon sun4i-backend sun4i-drm ssd1307fb"
     for module in ${modules}; do
         if ! probe_module "${module}"; then
             echo "Error, registering framebuffer device."
