@@ -21,7 +21,7 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 
 #uc2 : UltiController 2 (UM3,UM3E) This UltiController is not considered here anymore
 #uc3 : UltiController 3 (S5,S5r2,S3)
-DISPLAY_TYPE="uc3"
+DISPLAY_TYPE="uc2"
 UMSPLASH="/umsplash_png.fb"
 FB_DEVICE="/dev/fb0"
 
