@@ -31,7 +31,7 @@ fi
 set -eu
 
 ARCH="armhf"
-UM_ARCH="sun7i" # Empty string, or sun7i for R1, or imx6dl for R2
+UM_ARCH="sun7i-UM3" # Empty string, or sun7i for R1, or imx6dl for R2
 
 # common directory variablesS
 SYSCONFDIR="${SYSCONFDIR:-/etc}"
