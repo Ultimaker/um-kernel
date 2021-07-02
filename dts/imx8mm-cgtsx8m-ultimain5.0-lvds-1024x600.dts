@@ -38,14 +38,7 @@
     };
 };
 
-/* GPIO PAD setting */
-/* 0x1C0 -- pull-up,   HYST, no-OD, slow, X1 */
-/* 0x140 -- pull-up,   CMOS, no-OD, slow, X1 */
-/* 0x100 -- pull-down, CMOS, no-OD, slow, X1 */
-/* 0x080 -- pull-off,  HYST, no-OD, slow, X1 */
-/* 0x000 -- pull-off,  CMOS, no-OD, slow, X1 */
-
-/* Redefine pinctrl settings for GPIOs to be re-purposed. */
+/* Remove pins used in Ultiboard 5 from generic GPIOs pinctrl settings of imx8mm. */
 &pinctrl_gpio1 {
     fsl,pins = <
         MX8MM_IOMUXC_GPIO1_IO07_GPIO1_IO7       0x140 /* GPIO0 / CSI0 PWR */
@@ -57,8 +50,7 @@
 	fsl,pins = <
         MX8MM_IOMUXC_SAI3_RXC_GPIO4_IO29        0x140 /* GPIO4*/
         MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1         0x100 /* GPIO7 / RESET_HUB*/
-        MX8MM_IOMUXC_SAI3_RXFS_GPIO4_IO28       0x100 /* GPIO6 / TACHIN / SOM_BOOT */
-        MX8MM_IOMUXC_SAI1_RXFS_GPIO4_IO0        0x140 /* GPIO8 */
+        MX8MM_IOMUXC_SAI3_RXFS_GPIO4_IO28       0x080 /* GPIO6 / IMXRT BootMode Enable*/       
         MX8MM_IOMUXC_SAI1_TXC_GPIO4_IO11        0x140 /* GPIO9 */
         MX8MM_IOMUXC_SAI1_TXFS_GPIO4_IO10       0x100 /* GPIO10 / U12 WRITE PROTECT */
         MX8MM_IOMUXC_SAI1_MCLK_GPIO4_IO20       0x140 /* GPIO11 */
@@ -67,25 +59,38 @@
         MX8MM_IOMUXC_SAI1_TXD4_GPIO4_IO16       0x140 /* BOOT_SEL0# */
         MX8MM_IOMUXC_SAI1_TXD5_GPIO4_IO17       0x140 /* BOOT_SEL1# */
         MX8MM_IOMUXC_SAI1_TXD6_GPIO4_IO18       0x140 /* BOOT_SEL2# */
-        MX8MM_IOMUXC_SAI1_RXD5_GPIO4_IO7        0x100 /* SAI1_RXD5 -> RESET_OUT# / SOM_RST */
+        MX8MM_IOMUXC_SAI1_RXD5_GPIO4_IO7        0x080 /* SAI1_RXD5 -> RESET_OUT# / IMXRT nReset */
 	>;
 };
 
-/* Redefine pinctrl settings for GPIOs to be re-purposed. */
 &pinctrl_gpio5 {
     fsl,pins = <
         MX8MM_IOMUXC_SPDIF_RX_GPIO5_IO4         0x140 /* GPIO5 / PWMOUT */
     >;
 };
 
-/* Re-purpose, used for led driver. */
+/* Add GPIOs pinctrl for Ultboard 5. */
+
+/* GPIO PAD setting */
+/* 0x1C0 -- pull-up,   HYST, no-OD, slow, X1 */
+/* 0x140 -- pull-up,   CMOS, no-OD, slow, X1 */
+/* 0x100 -- pull-down, CMOS, no-OD, slow, X1 */
+/* 0x080 -- pull-off,  HYST, no-OD, slow, X1 */
+/* 0x000 -- pull-off,  CMOS, no-OD, slow, X1 */
+
 &iomuxc {
-    led {
+    Ultiboard50 {
         pinctrl_leds_1: ledsgrp-1 {
             fsl,pins = <
                 MX8MM_IOMUXC_SPDIF_TX_GPIO5_IO3         0x100 /* GPIO1 / CSI1 PWR */
                 MX8MM_IOMUXC_SPDIF_EXT_CLK_GPIO5_IO5    0x100 /* GPIO3 / CSI1 RST */
                 MX8MM_IOMUXC_GPIO1_IO06_GPIO1_IO6       0x100 /* GPIO2 / CSI0 RST */
+            >;
+        };
+        
+        pinctrl_i2c3_tca6416: i2c3_tca6416 {
+            fsl,pins = <
+                MX8MM_IOMUXC_SAI1_RXFS_GPIO4_IO0        0x080 /* GPIO8 / U35 - TCA6416 INT */  
             >;
         };
     };
@@ -102,6 +107,30 @@
         wp-gpios = <&gpio4 10 0>;
     };
 };
+
+&i2c3 {
+    tca6416@20 {
+        compatible = "ti,tca6416";
+        reg = <0x20>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_i2c3_tca6416>;
+        gpio-controller;
+        #gpio-cells = <2>;
+        gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_BUS_ENABLE", "VCC5_BUS_OK", 
+                          "HDMI_PWR_EN", "HDMI_PWR_OK", "VCC5_PH_EN", "VCC5_PH_OK", 
+                          "VCC24_HP_PG", "VCC24_HP_nEN_SOM", "LVDS_PWR_EN", "LVDS_PWR_OK", 
+                          "P1_4", "NFC_ID", "P1_6", "P1_7";
+    };
+};
+
+/* Set pin names for IMXRT control lines */
+&gpio4 {
+    gpio-line-names = "", "", "", "", "", "", "", "IMXRT_nReset", 
+                      "", "", "", "", "", "", "", "", 
+                      "", "", "", "", "", "", "", "", 
+                      "", "", "", "", "IMXRT_BootMode_En", "", "", "";
+};
+
 
 /* Ultimainboard J8 debug console. We cannot use DMA, it uses proprietary firmware drivers.  */
 &uart4 { /* SER1 */
