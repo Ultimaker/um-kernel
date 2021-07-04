@@ -54,7 +54,8 @@ DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 
 # We need freescale proprietary DMA drivers for the UART they are binary blobs in the Linux mainline
-PROPRIETARY_FIRMWARE_DIR="${SRC_DIR}/linux-firmware"
+# They can be found in git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
+PROPRIETARY_FIRMWARE_DIR="${SRC_DIR}/proprietary_firmware"
 PROPRIETARY_FIRMWARE_OUTPUT_DIR="${DEBIAN_DIR}/lib/firmware"
 
 INITRAMFS_MODULES_REQUIRED="loop.ko"
@@ -340,22 +341,14 @@ dtb_build()
     echo "Finished building Device-trees."
 }
 
-# This function will checkout the linux-firmware repository where proprietary
-# device firmware is stored. We need this because the imx8m uart uses this.
+# We need this because the imx8m uart uses this.
 # We can choose not to use it and configure it differently in the device-tree.
-#
 copy_dma_firmware()
 {
-    if [ -d "${PROPRIETARY_FIRMWARE_DIR}" ]; then
-        rm -rf "${PROPRIETARY_FIRMWARE_DIR}"
-    fi
-
-    git clone git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
-
     if [ ! -d "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma" ]; then
         mkdir -p "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma"
     fi
-
+    
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx7d.bin" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx6q.bin" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"
 }
@@ -394,6 +387,8 @@ create_debian_package()
         -e 's|@PACKAGE_NAME@|'"${PACKAGE_NAME}"'|g' \
         -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}"'|g' \
         "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
+        
+    cp "${SRC_DIR}/debian/preinst" "${DEBIAN_DIR}/DEBIAN/"
 
     DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}-${UM_ARCH}_${ARCH}.deb"
 
