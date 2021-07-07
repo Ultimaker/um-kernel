@@ -60,7 +60,7 @@ INITRAMFS_MODULES_REQUIRED="sunxi_wdt.ko ssd1307fb.ko drm.ko sun4i-backend.ko su
 
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 
-BB_VERSION="1.31.0"
+BB_VERSION="1.33.1"
 BB_URL="https://busybox.net/downloads/busybox-${BB_VERSION}.tar.bz2"
 BB_BIN="busybox"
 BB_PKG="busybox-${BB_VERSION}.tar.bz2"
