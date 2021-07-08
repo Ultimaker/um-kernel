@@ -1,0 +1,29 @@
+commit 55edf5202154de59ee1c6a5b6b6ba6fa54571515
+Author: Robin Gong <yibin.gong@nxp.com>
+Date:   Thu May 30 09:02:30 2019 +0800
+
+    imx: sdma: update firmware to v3.5/v4.5
+    
+    Update sdma firmware to v3.5/v4.5:
+      -- add uart rom script address in header of sdma firmware to support
+         the uart driver of latest kernel working well while old firmware
+         assume ram script used for uart driver as NXP internal legacy
+         kernel.
+      -- add multi-fifo SAI/PDM scripts.
+    
+    Signed-off-by: Robin Gong <yibin.gong@nxp.com>
+    Signed-off-by: Josh Boyer <jwboyer@kernel.org>
+
+commit 3123d78e09d2f815de4d94aa35c07b3c0469c80e
+Author: Nitin Garg <nitin.garg@nxp.com>
+Date:   Fri Jun 9 08:56:05 2017 -0300
+
+    imx: Add SDMA firmware for Freescale i.MX6/7 SoCs.
+    
+    Add the firmwares for the i.MX SDMA driver that runs on i.MX6
+    and i.MX7.
+    
+    Signed-off-by: Robin Gong <yibin.gong@nxp.com>
+    Signed-off-by: Nitin Garg <nitin.garg@nxp.com>
+    Signed-off-by: Fabio Estevam <fabio.estevam@nxp.com>
+    Signed-off-by: Kyle McMartin <kyle@kernel.org>
