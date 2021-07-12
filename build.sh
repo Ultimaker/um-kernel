@@ -404,10 +404,9 @@ usage()
     echo ""
     echo "This is the build script for Linux Kernel related build artifacts and configure the Kernel."
     echo ""
-    echo "  Usage: ${0} [kernel|dtbs|menuconfig|deb]"
+    echo "  Usage: ${0} [kernel|dtbs|menuconfig|oldconfig|deb|clean]"
     echo "  For Kernel config modification use: ${0} menuconfig"
     echo ""
-    echo "  -c Clean the build output directory '_build'."
     echo "  -h Print this help text and exit"
     echo ""
     echo "  By default the script can be executed with 'no' arguments, all required artifacts"
@@ -418,23 +417,8 @@ usage()
     echo "  The package release version can be passed by passing 'RELEASE_VERSION' through the run environment."
 }
 
-while getopts ":ch" options; do
+while getopts ":h" options; do
     case "${options}" in
-    c)
-        if [ -d "${BUILD_DIR}" ] && [ -z "${BUILD_DIR##*_build*}" ]; then
-            rm -rf "${BUILD_DIR}"
-        fi
-        echo "Cleaned up '${BUILD_DIR}'."
-        if [ -d "${BB_DIR}" ] && [ -z "${BB_DIR##*busybox-*}" ]; then
-            rm -rf "${BB_DIR}"
-        fi
-        echo "Cleaned up '${BB_DIR}'."
-        if [ -f "${BB_PKG}" ]; then
-            unlink "${BB_PKG}"
-        fi
-        echo "Removed '${BB_PKG}'."
-        exit 0
-        ;;
     h)
         usage
         exit 0
@@ -481,6 +465,24 @@ case "${1-}" in
         ;;
     menuconfig)
         kernel_build_command menuconfig
+        ;;
+    oldconfig)
+        kernel_build_command oldconfig
+        ;;
+    clean)
+        if [ -d "${BUILD_DIR}" ] && [ -z "${BUILD_DIR##*_build*}" ]; then
+            rm -rf "${BUILD_DIR}"
+        fi
+        echo "Cleaned up '${BUILD_DIR}'."
+        if [ -d "${BB_DIR}" ] && [ -z "${BB_DIR##*busybox-*}" ]; then
+            rm -rf "${BB_DIR}"
+        fi
+        echo "Cleaned up '${BB_DIR}'."
+        if [ -f "${BB_PKG}" ]; then
+            unlink "${BB_PKG}"
+        fi
+        echo "Removed '${BB_PKG}'."
+        exit 0
         ;;
     *)
         echo "Error, unknown build option given"
