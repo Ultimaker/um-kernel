@@ -5,6 +5,6 @@ Version: @RELEASE_VERSION@
 Architecture: @ARCH@
 Maintainer: Ultimaker <info@ultimaker.com>
 Section: kernel
-Priority: optional
+Priority: required
 Homepage: http://www.kernel.org/
 Description: Linux kernel, kernel modules, binary device trees and boot scripts. All in a single package.
