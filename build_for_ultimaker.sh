@@ -77,7 +77,7 @@ run_build()
 
 deliver_pkg()
 {
-    cp "${BUILD_DIR}/"*".deb" "./"
+    cp "${BUILD_DIR}/"*".deb" "./" 2> /dev/null
 }
 
 run_tests()
@@ -103,8 +103,7 @@ run_shellcheck()
 usage()
 {
     echo "Usage: ${0} [OPTIONS]"
-    echo "  -c   Clean the workspace"
-    echo "  -C   Skip run of build environment checks"
+    echo "  -c   Skip run of build environment checks"
     echo "  -h   Print usage"
     echo "  -l   Skip code linting"
     echo "  -t   Skip tests"
@@ -113,13 +112,9 @@ usage()
     echo "Run './build.sh -h' for more information."
 }
 
-while getopts ":cChlt" options; do
+while getopts ":chlt" options; do
     case "${options}" in
     c)
-        run_build "${@}"
-        exit 0
-        ;;
-    C)
         run_env_check="no"
         ;;
     h)

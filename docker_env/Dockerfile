@@ -6,9 +6,11 @@ LABEL Maintainer="software-embedded-platform@ultimaker.com" \
 RUN apt-get update && \
     apt-get install -y \
         bc \
+	bison \
         bzip2 \
         curl \
         device-tree-compiler \
+        flex \
         gcc \
         gcc-aarch64-linux-gnu \
         git \
