@@ -1,0 +1,275 @@
+From 2de989593c1c27dcc2a8bb6b55575996aa4589eb Mon Sep 17 00:00:00 2001
+From: Raymond Siudak <r.siudak@ultimaker.com>
+Date: Fri, 18 Dec 2020 12:17:42 +0100
+Subject: [PATCH 3/4] Add support for DDC EDID LVDS configuration
+
+Use the i2c-edid the parameter to attach a i2c compatible EEPROM device.
+
+Update the documentation.
+
+Signed-off-by: Raymond Siudak <r.siudak@ultimaker.com>
+---
+ .../bindings/display/bridge/ti,sn65dsi84      | 183 ++++++++++++++++++
+ drivers/gpu/drm/bridge/sn65dsi84/sn65dsi84.c  |  41 +++-
+ 2 files changed, 220 insertions(+), 4 deletions(-)
+ create mode 100644 Documentation/devicetree/bindings/display/bridge/ti,sn65dsi84
+
+diff --git a/Documentation/devicetree/bindings/display/bridge/ti,sn65dsi84 b/Documentation/devicetree/bindings/display/bridge/ti,sn65dsi84
+new file mode 100644
+index 000000000000..ca541c224e4b
+--- /dev/null
++++ b/Documentation/devicetree/bindings/display/bridge/ti,sn65dsi84
+@@ -0,0 +1,183 @@
++SN65DSI84 DSI Bridge To FLATLINK LVDS
++--------------------------------
++
++This is the binding for Texas Instruments SN65DSI84 bridge.
++http://www.ti.com/general/docs/lit/getliterature.tsp?genericPartNumber=sn65dsi84&fileType=pdf
++
++Required properties:
++
++- compatible: Must be "ti,sn65dsi84"
++- reg: i2c address of the chip, 0x2c as per datasheet
++- pd: Power enable
++- bckl: backlight on pin
++- adi,dsi-lanes
++- adi,dsi-clock
++
++Optional properties:
++
++- adi,disable-timing-generator
++
++
++The chip driver can be configured in three ways:
++
++1) Using predefined vide mode settings activated by providing a mode string.
++
++Required properties:
++
++- lvds,edid = "SN65DSI84_EDID_1280x1024"
++
++  Supported predefined modes:
++
++  - SN65DSI84_EDID_800x600
++  - SN65DSI84_EDID_1024x768
++  - SN65DSI84_EDID_1440x900
++  - SN65DSI84_EDID_1280x1024
++  - SN65DSI84_EDID_1680x1050
++  - SN65DSI84_EDID_1600x1200
++  - SN65DSI84_EDID_1920x1080
++
++2) Using explicit LVDS timing properties.
++
++Required properties: 
++    
++- lvds,pixelclock
++- lvds,hactive
++- lvds,vactive
++- lvds,hfront_porch
++- lvds,hback_porch
++- lvds,hsync_len
++- lvds,vfront_porch
++- lvds,vback_porch
++- lvds,vsync_len 
++- lvds,color_depth
++- lvds,hsync_pol
++- lvds,vsync_pol
++- lvds,datamap
++
++Optional properties:
++
++- lvds,test-mode
++- lvds,dual-channel
++- lvds,channel-reverse
++- lvds,channel-swap
++- lvds,interlaced
++
++3) Using a predefined i2c DDC EDID eeprom.
++
++Required properties:
++
++- i2c-edid: The i2c EDID EEPROM device
++
++Required nodes:
++
++This device one video port. Their connections are modelled using the
++OF graph bindings specified in Documentation/devicetree/bindings/graph.txt.
++
++- port: Video port for DSI input
++
++
++Example using modestring with predefined modes.
++-------
++
++lvdsbridge: sn65dsi84@2c {
++    reg = <0x2c>;
++    status = "okay";
++    compatible = "ti,sn65dsi84";
++    pd = <&gpio1 8 GPIO_ACTIVE_HIGH>;
++    bckl = <&gpio1 1 GPIO_ACTIVE_HIGH>;
++    
++    /* DSI parameters */
++    adi,dsi-lanes = <4>;
++    adi,dsi-clock = <594000000>;
++
++    lvds,edid = "SN65DSI84_EDID_800x600";
++    
++    port {
++        lvds_bridge_from_dsim: endpoint {
++            remote-endpoint = <&dsim_to_lvds_bridge>;
++        };
++    };
++};
++
++Example using devicetree LVDS properties
++-------
++
++lvdsbridge: sn65dsi84@2c {
++    reg = <0x2c>;
++    status = "okay";
++    compatible = "ti,sn65dsi84";
++    pd = <&gpio1 8 GPIO_ACTIVE_HIGH>;
++    bckl = <&gpio1 1 GPIO_ACTIVE_HIGH>;
++    
++    /* DSI parameters */
++    adi,dsi-lanes = <4>;
++    adi,dsi-clock = <594000000>;
++
++    /delete-property/ lvds,use-uboot-settings; // will get replaced by dp props
++    status = "okay";
++
++    lvds,pixelclock = <51206400>;
++    lvds,hactive = <1024>;
++    lvds,vactive = <600>;
++    lvds,hfront_porch = <160>;
++    lvds,hback_porch = <160>;
++    lvds,hsync_len = <10>; // Must be more then 1, number does not matter
++    lvds,vfront_porch = <12>;
++    lvds,vback_porch = <23>;
++    lvds,vsync_len = <10>; // Must be more then 1, number does not matter
++    lvds,color_depth = "rgb24";
++    lvds,hsync_pol = <0>;
++    lvds,vsync_pol = <0>;
++    lvds,datamap = "spwg";
++    
++    port {
++        lvds_bridge_from_dsim: endpoint {
++            remote-endpoint = <&dsim_to_lvds_bridge>;
++        };
++    };
++};
++
++
++Example using EDID EEPROM
++-------
++lvdsbridge: sn65dsi84@2c {
++    reg = <0x2c>;
++    status = "okay";
++    compatible = "ti,sn65dsi84";
++    pd = <&gpio1 8 GPIO_ACTIVE_HIGH>;
++    bckl = <&gpio1 1 GPIO_ACTIVE_HIGH>;
++    
++    /* DSI parameters */
++    adi,dsi-lanes = <4>;
++    adi,dsi-clock = <594000000>;
++
++    /delete-property/ lvds,use-uboot-settings; // will get replaced by dp props
++    status = "okay";
++
++    i2c-edid = <&edid_eeprom>; // This will load the configuration from the EEPROM.
++
++    /*
++       LVDS 1024x600@60Hz pixclock 51.2MHz
++       These settings will be ignored because 'i2c-edid' is defined, leaving them in for documentation
++    */
++    lvds,pixelclock = <51206400>;
++    lvds,hactive = <1024>;
++    lvds,vactive = <600>;
++    lvds,hfront_porch = <160>;
++    lvds,hback_porch = <160>;
++    lvds,hsync_len = <10>; // Must be more then 1, number does not matter
++    lvds,vfront_porch = <12>;
++    lvds,vback_porch = <23>;
++    lvds,vsync_len = <10>; // Must be more then 1, number does not matter
++    lvds,color_depth = "rgb24";
++    lvds,hsync_pol = <0>;
++    lvds,vsync_pol = <0>;
++    lvds,datamap = "spwg";
++    
++    port {
++        lvds_bridge_from_dsim: endpoint {
++            remote-endpoint = <&dsim_to_lvds_bridge>;
++        };
++    };
++};
++
+diff --git a/drivers/gpu/drm/bridge/sn65dsi84/sn65dsi84.c b/drivers/gpu/drm/bridge/sn65dsi84/sn65dsi84.c
+index 86f98d80b399..7a176bb532a5 100644
+--- a/drivers/gpu/drm/bridge/sn65dsi84/sn65dsi84.c
++++ b/drivers/gpu/drm/bridge/sn65dsi84/sn65dsi84.c
+@@ -7,6 +7,7 @@
+  *
+  * Licensed under the GPL-2.
+  */
++#define DEBUG
+ 
+ #include <linux/device.h>
+ #include <linux/gpio/consumer.h>
+@@ -351,6 +352,23 @@ static int sn65dsi84_get_modes(struct sn65dsi84 *sn65dsi84,
+ 	drm_mode_connector_update_edid_property(connector, (sn65dsi84->edid));
+ 	count = drm_add_edid_modes(connector, (sn65dsi84->edid));
+ 
++    if (sn65dsi84->i2c_edid) {
++        DRM_DEBUG("sn65: get_modes(): i2c EDID configured, downloading EDID data\n");
++
++        sn65dsi84->edid = drm_get_edid(connector, sn65dsi84->i2c_edid->adapter);
++
++        if (sn65dsi84->edid) {
++            DRM_INFO("sn65: get_modes(): downloaded i2c EDID data\n");
++            goto init_drm;
++        }
++
++        DRM_DEBUG("sn65: get_modes(): i2c EDID data download failed, trying other configuration modes\n");
++    }
++
++
++init_drm:
++
++
+ #ifdef SN65DSI84_DBGPRN
+ 	pr_info("DSI-sn65: get_modes() check pixel clock: %d\n", connector->display_info.pixel_clock);
+ #endif
+@@ -1582,11 +1600,26 @@ static bool sn65dsi84_videomode_parse_dt(struct device_node *np, struct sn65dsi8
+ static int sn65dsi84_parse_dt(struct device_node *np, struct sn65dsi84 *adv)
+ {
+     struct device_node *endpoint;
+-	int ret;
++    struct device_node *i2c_edid_np;
++    int ret;
++
++    DRM_INFO("Try to setup screen using ddc edid.\n");
++    i2c_edid_np = of_parse_phandle(np, "i2c-edid", 0);
++    if (i2c_edid_np) {
++        adv->i2c_edid = of_find_i2c_device_by_node(i2c_edid_np);
++        if (!adv->i2c_edid) {
++            of_node_put(i2c_edid_np);
++            DRM_WARN("Failed to get edid-i2c device\n");
++            return -ENODEV;
++        }
++    }
+ 
+-	if(!sn65dsi84_videomode_parse_dt(np, adv)) {
+-			return -ENODEV;
+-	}
++    if(!sn65dsi84_videomode_parse_dt(np, adv)) {
++        if (!i2c_edid_np)
++            return -ENODEV;
++    }
++
++    of_node_put(i2c_edid_np);
+ 
+     adv->gpio_pd = of_get_named_gpio(np, "pd", 0);
+     if (!gpio_is_valid(adv->gpio_pd))
+-- 
+2.25.1
+

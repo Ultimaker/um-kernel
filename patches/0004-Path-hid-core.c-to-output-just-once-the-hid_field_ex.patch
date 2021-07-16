@@ -1,0 +1,39 @@
+From 9fd29f8cbe829bf9eafeaef02a6b32525716d63a Mon Sep 17 00:00:00 2001
+From: Alex Borro <alexborro@gmail.com>
+Date: Fri, 16 Jul 2021 13:49:30 +0200
+Subject: [PATCH 4/4] Path hid-core.c to output just once the hid_field_extract
+ warn message
+
+---
+ drivers/hid/hid-core.c | 2 +-
+ include/linux/hid.h    | 3 +++
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/hid/hid-core.c b/drivers/hid/hid-core.c
+index a306493e2e97..3761e3f094ce 100644
+--- a/drivers/hid/hid-core.c
++++ b/drivers/hid/hid-core.c
+@@ -1128,7 +1128,7 @@ u32 hid_field_extract(const struct hid_device *hid, u8 *report,
+ 			unsigned offset, unsigned n)
+ {
+ 	if (n > 32) {
+-		hid_warn(hid, "hid_field_extract() called with n (%d) > 32! (%s)\n",
++		hid_warn_once(hid, "hid_field_extract() called with n (%d) > 32! (%s)\n",
+ 			 n, current->comm);
+ 		n = 32;
+ 	}
+diff --git a/include/linux/hid.h b/include/linux/hid.h
+index 06e6e04e6c11..c92134aadbe4 100644
+--- a/include/linux/hid.h
++++ b/include/linux/hid.h
+@@ -1138,4 +1138,7 @@ do {									\
+ #define hid_dbg(hid, fmt, arg...)			\
+ 	dev_dbg(&(hid)->dev, fmt, ##arg)
+ 
++#define hid_warn_once(hid, fmt, arg...)        \
++    dev_warn_once(&(hid)->dev, fmt, ##arg)
++
+ #endif
+-- 
+2.25.1
+
