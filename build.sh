@@ -78,14 +78,12 @@ if [ ! -x "${DEPMOD}" ]; then
     fi
 fi
 
-
 # Add the UM_ARCH to release version keeping a possible -dev on the most right side
 if [[ ${RELEASE_VERSION} == *'-dev' ]]; then
     RELEASE_VERSION="${RELEASE_VERSION/-dev/-${UM_ARCH}-dev}"
 else
     RELEASE_VERSION="${RELEASE_VERSION}-${UM_ARCH}"
 fi;
-
 
 ##
 # busybox_get() - Download and build the Busybox package
