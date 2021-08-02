@@ -11,7 +11,7 @@ if [ "${CROSS_COMPILE}" == "" ]; then
         CROSS_COMPILE="aarch64-linux-gnu-"
 #    fi
     if [ "${CROSS_COMPILE}" == "" ]; then
-        echo "No suitable cross-compilerRELEASE_VERSION found."
+        echo "No suitable cross-compiler found."
         echo "One can be set explicitly via the environment variable CROSS_COMPILE='arm-linux-gnueabihf-' for example."
         exit 1
     fi
