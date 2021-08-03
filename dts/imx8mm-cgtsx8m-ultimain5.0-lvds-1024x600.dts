@@ -116,7 +116,7 @@
         pinctrl-0 = <&pinctrl_i2c3_tca6416>;
         gpio-controller;
         #gpio-cells = <2>;
-        gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_BUS_ENABLE", "VCC5_BUS_OK", 
+        gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_BUS_EN", "VCC5_BUS_OK", 
                           "HDMI_PWR_EN", "HDMI_PWR_OK", "VCC5_PH_EN", "VCC5_PH_OK", 
                           "VCC24_HP_PG", "VCC24_HP_nEN_SOM", "LVDS_PWR_EN", "LVDS_PWR_OK", 
                           "P1_4", "NFC_ID", "P1_6", "P1_7";

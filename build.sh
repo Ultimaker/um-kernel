@@ -78,8 +78,12 @@ if [ ! -x "${DEPMOD}" ]; then
     fi
 fi
 
-# Set the release version if it's not passed to the script
-RELEASE_VERSION="${RELEASE_VERSION:-9999.99.99}"
+# Add the UM_ARCH to release version keeping a possible -dev on the most right side
+if [[ ${RELEASE_VERSION} == *'-dev' ]]; then
+    RELEASE_VERSION="${RELEASE_VERSION/-dev/-${UM_ARCH}-dev}"
+else
+    RELEASE_VERSION="${RELEASE_VERSION}-${UM_ARCH}"
+fi;
 
 ##
 # busybox_get() - Download and build the Busybox package
@@ -385,12 +389,12 @@ create_debian_package()
     mkdir -p "${DEBIAN_DIR}/DEBIAN"
     sed -e 's|@ARCH@|'"${ARCH}"'|g' \
         -e 's|@PACKAGE_NAME@|'"${PACKAGE_NAME}"'|g' \
-        -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}-${UM_ARCH}"'|g' \
+        -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}"'|g' \
         "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
         
     cp "${SRC_DIR}/debian/preinst" "${DEBIAN_DIR}/DEBIAN/"
 
-    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}-${UM_ARCH}_${ARCH}.deb"
+    DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}_${ARCH}.deb"
 
     # Build the Debian package
     fakeroot dpkg-deb --build "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
