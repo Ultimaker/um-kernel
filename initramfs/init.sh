@@ -269,11 +269,11 @@ find_and_run_update()
         echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
         if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "${DISPLAY_TYPE}" "${SOFTWARE_INSTALL_MODE}"; then
             echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} ${DISPLAY_TYPE} ${SOFTWARE_INSTALL_MODE}'."
-            echo "Trying old interface firmwares <= 5.2.x."
+            echo "Trying old interface firmwares <= 5.2.16."
             # Old interface depended on U-Boot for passing the article number and it did not have support for te restore image.
-            # Passing article number 9051 will show Ulticontroller 3 update images"
-            if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "9051"; then
-                echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} 9051'."
+            # Passing article number 9066 will show Ulticontroller 2 update images"
+            if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${base_dev}" "9066"; then
+                echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${base_dev} 9066'."
                 critical_error
                 break
             fi
