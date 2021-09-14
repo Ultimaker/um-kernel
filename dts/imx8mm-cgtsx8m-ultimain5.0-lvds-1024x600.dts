@@ -101,10 +101,7 @@
     carrierdata@57 {
         compatible = "atmel,24c32";
         reg = <0x57>;
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_gpio4>;
         pagesize = <32>;
-        wp-gpios = <&gpio4 10 0>;
     };
 };
 
