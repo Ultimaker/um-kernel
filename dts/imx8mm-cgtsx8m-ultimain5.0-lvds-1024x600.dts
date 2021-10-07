@@ -66,6 +66,7 @@
 &pinctrl_gpio5 {
     fsl,pins = <
         MX8MM_IOMUXC_SPDIF_RX_GPIO5_IO4         0x140 /* GPIO5 / PWMOUT */
+        MX8MM_IOMUXC_UART3_TXD_GPIO5_IO27       0x140 
     >;
 };
 
@@ -128,6 +129,13 @@
                       "", "", "", "", "IMXRT_BootMode_En", "", "", "";
 };
 
+/* Set pin names for IMXRT control lines */
+&gpio5 {
+    gpio-line-names = "", "", "", "", "", "", "", "", 
+                      "", "", "", "", "", "", "", "", 
+                      "", "", "", "", "", "", "", "", 
+                      "", "", "", "OnOff_Button", "", "", "", "";
+};
 
 /* Ultimainboard J8 debug console. We cannot use DMA, it uses proprietary firmware drivers.  */
 &uart4 { /* SER1 */
