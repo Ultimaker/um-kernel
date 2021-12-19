@@ -13,11 +13,12 @@
         reset-gpios = <&panel_gpio 0 GPIO_ACTIVE_LOW>;
     };
 
-    panel_gpio: pca9570@24 {
-        compatible = "nxp,pca9557";
+    panel_gpio: pca9536@41 {
+        compatible = "nxp,pca9536";
         gpio-controller;
         #gpio-cells = <2>;
-        reg = <0x24>;
+        reg = <0x41>;
+        gpio-line-names = "BUZZER_EN", "DOOR", "DISP_RST", "TOUCH_RST";
     };
 
     pca9632: pca9632 {
@@ -44,7 +45,7 @@
             linux,default-trigger = "none";
         };
         panel_backlight: backlight@3 {
-            label = "panel_backlight";
+            label = "backlight";
             reg = <3>;
             linux,default-trigger = "default-on";
         };
