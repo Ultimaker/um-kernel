@@ -15,8 +15,6 @@
         touchscreen-size-y = <600>;
         touchscreen-inverted-x;
         touchscreen-inverted-y;
-
-
     };
 
     panel_gpio: pca9536@41 {
