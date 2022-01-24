@@ -94,6 +94,8 @@ busybox_get()
         exit 1
     fi
 
+    wget "${BB_URL}"
+
     if [ ! -f "${BB_PKG}" ]; then
         if ! wget -q "${BB_URL}"; then
             echo "Unable to download the busybox package '${BB_URL}'. Update the download URL."
