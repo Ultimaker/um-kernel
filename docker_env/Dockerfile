@@ -1,4 +1,4 @@
-FROM registry.hub.docker.com/library/debian:buster-slim
+FROM registry.hub.docker.com/library/debian:stretch-slim
 
 LABEL Maintainer="software-embedded-platform@ultimaker.com" \
       Comment="Ultimaker kernel build environment"
