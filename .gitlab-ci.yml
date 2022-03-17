@@ -8,6 +8,11 @@ include:
     ref: master
     file: /gitlab_ci_templates/jedi-gitlab-ci-template.yml
 
+.retrieve_source:
+  before_script:
+    - git -c submodule.linux.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/linux" submodule update --init --recursive
+    - git -c submodule.linux.drivers.net.wireless.realtek.rtl8822ce.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/rtl8822ce" submodule update --init --recursive
+
 # Build stage
 # ===========
 build:
