@@ -25,31 +25,30 @@
         gpio-line-names = "BUZZER_EN", "DOOR", "DISP_RST", "TOUCH_RST";
     };
 
-    pca9632: pca9632 {
+    panel_lights: pca9632@60 {
         compatible = "nxp,pca9632";
         #address-cells = <1>;
         #size-cells = <0>;
         reg = <0x60>;
         nxp,totem-pole;
         nxp,hw-blink;
-
-        led0@0 {
-            label = "unused0";
+        red@0 {
+            label = "red:panel_indicator";
             reg = <0>;
             linux,default-trigger = "none";
         };
-        led1@1 {
-            label = "unused1";
+        green@1 {
+            label = "green:panel_indicator";
             reg = <1>;
             linux,default-trigger = "none";
         };
-        led2@2 {
-            label = "unused2";
+        blue@2 {
+            label = "blue:panel_indicator";
             reg = <2>;
             linux,default-trigger = "none";
         };
         panel_backlight: backlight@3 {
-            label = "backlight";
+            label = "white:panel_backlight";
             reg = <3>;
             linux,default-trigger = "default-on";
         };

@@ -47,7 +47,7 @@
 };
 
 &pinctrl_gpio4 {
-	fsl,pins = <
+    fsl,pins = <
         MX8MM_IOMUXC_SAI3_RXC_GPIO4_IO29        0x140 /* GPIO4*/
         MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1         0x100 /* GPIO7 / RESET_HUB*/
         MX8MM_IOMUXC_SAI3_RXFS_GPIO4_IO28       0x080 /* GPIO6 / IMXRT BootMode Enable*/       
@@ -60,7 +60,7 @@
         MX8MM_IOMUXC_SAI1_TXD5_GPIO4_IO17       0x140 /* BOOT_SEL1# */
         MX8MM_IOMUXC_SAI1_TXD6_GPIO4_IO18       0x140 /* BOOT_SEL2# */
         MX8MM_IOMUXC_SAI1_RXD5_GPIO4_IO7        0x080 /* SAI1_RXD5 -> RESET_OUT# / IMXRT nReset */
-	>;
+    >;
 };
 
 &pinctrl_gpio5 {
@@ -118,6 +118,36 @@
                           "VCC24_HP_PG", "VCC24_MOT_PG", "LVDS_PWR_EN", "LVDS_PWR_OK", 
                           "SAFETY_BTN_STATUS", "SAFETY_RESET", "VCC24_PH_EN", "VCC24_MOT_EN";
     };
+    
+    cabin_light: pca9632@61 {
+        compatible = "nxp,pca9632";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        reg = <0x61>;
+        nxp,totem-pole;
+        nxp,inverted-out;
+        nxp,hw-blink;
+        red@0 {
+            label = "red:cabin_light";
+            reg = <0>;
+            linux,default-trigger = "none";
+        };
+        green@1 {
+            label = "green:cabin_light";
+            reg = <1>;
+            linux,default-trigger = "none";
+        };
+        blue@2 {
+            label = "blue:cabin_light";
+            reg = <2>;
+            linux,default-trigger = "none";
+        };
+        white@3 {
+            label = "white:cabin_light";
+            reg = <3>;
+            linux,default-trigger = "default-on";
+        };
+    };
 };
 
 /* Set pin names for IMXRT control lines */
@@ -160,11 +190,11 @@
             gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
             linux,default-trigger = "mmc1";
             default-state = "keep";
-		};
-	};
+        };
+    };
 
-	gpio-keys {
-	   status = "disabled";
-	};
+    gpio-keys {
+       status = "disabled";
+    };
 };
 
