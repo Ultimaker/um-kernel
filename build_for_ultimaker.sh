@@ -48,17 +48,6 @@ run_in_docker()
         "${@}"
 }
 
-run_in_shell()
-{
-    ARCH="${ARCH}" \
-    PREFIX="${PREFIX}" \
-    RELEASE_VERSION="${RELEASE_VERSION}" \
-    CROSS_COMPILE="${CROSS_COMPILE}" \
-    INITRAMFS_SOURCE="${INITRAMFS_SOURCE}" \
-    DEPMOD="${DEPMOD}" \
-    eval "${@}"
-}
-
 env_check()
 {
     run_in_docker "./docker_env/buildenv_check.sh"
