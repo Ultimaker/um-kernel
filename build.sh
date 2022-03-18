@@ -166,7 +166,7 @@ initramfs_add_modules()
             for dependency in ${dependencies}; do
                 dep_module="$(basename "${dependency}")"
                 echo "Adding dependency: '${dep_module}' for module: '${module}'"
-                if [ -n "${INITRAMFS_MODULES##*${dep_module}*}" ]; then
+                if [ -n "${INITRAMFS_MODULES##*"${dep_module}"*}" ]; then
                     INITRAMFS_MODULES="${INITRAMFS_MODULES} ${dep_module}"
                 fi
             done
