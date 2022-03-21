@@ -156,7 +156,7 @@ Run the help of the ```build_for_ultimaker.sh``` script for usage information:
 RELEASE_VERSION=maj.min.patch ./build_for_ultimaker.sh
 ```
 #### Local build flow
-![build Flow Overview Diagram](docs/UM-KERNEL_build_flow_R2_SONIC.jpg)
+![build Flow Overview Diagram](docs/UM-KERNEL_build_flows_R1.jpg)
 
 ## Using GitLab CI to build the packages
 Using GitLab Ci to build the **R1** and **R2** um-kernel packages will allow us to track builds of this package:
