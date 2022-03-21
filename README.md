@@ -10,18 +10,22 @@ This repository contains the Ultimaker package build script for the kernel. Curr
     * **[Common directory variables](#common-directory-variables)** 
     * **[Build configuration](#build-configuration)**
     * **[Debian package information](#debian-package-information)**
+    * **[Which kernel to build](#which-kernel-to-build)**
+    * **[Internal variables](#internal-variables)**
+    * **[Busy box version](#busy-box-version)**
     * **[Artifact names](#artifact-names)**
 * **[Repository Structure](#repository-structure)**
-    * **[Repo root directory](#repo-root-directory)**
-    * **[Config directory](#config-directory)**
-    * **[Scripts directory](#scripts-directory)**
-* **[How to build](#how-to-build)**
-    * **[Prerequisites for the how to build section](#prerequisites-for-the-how-to-build-section)**
-    * **[Using GitLab CI to build the packages](#using-gitlab-ci-to-build-the-packages)**
-    * **[Important to note](#important-to-note)**
-* **[Runtime preparation](#runtime-preparation)**
-    * **[Preparing the kernel](#preparing-the-kernel)**
-    * **[Preparing the files](#preparing-the-files)**
+    * **[Config directory](#repo-root-directory)**
+    * **[dts](#dts)**
+    * **[scripts](#scripts)**
+    * **[linux](#linux)**
+    * **[Older branches](#older-branches)**
+* **[How to build locally](#how-to-build-locally)**
+* **[Using GitLab CI to build the packages](#using-gitlab-ci-to-build-the-packages)**
+* **[Important to note](#important-to-note)**
+* **[Installing a package on a printer](#installing-a-package-on-a-printer)**
+    * **[Installing on an R1 printer](#installing-on-an-r1-printer)**
+    * **[Installing on an R2 or Sonic printer](#installing-on-an-r2-or-sonic-printer)**
 ---
 ## Environment
 
@@ -35,7 +39,7 @@ ARCH="${ARCH:-armhf}"
 UM_ARCH="${UM_ARCH:-}" Can be sun7i or imx6dl
 ```
 - ```sun7i``` is for the **R1** machines
-- ```imx6dl``` is for the **R2** machines
+- ```imx6dl``` is for the **R2 & Sonic** machines
 
 #### Common directory variables
 ```
@@ -97,8 +101,8 @@ DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}-${UM_ARCH}_${ARCH}.deb"
 
 
 ## Repository Structure
-#### Repo root directory:
-The configs directory contains our kernel configuration. We currently have config files for teh R1 and R2 builds.
+#### Configs directory:
+The configs directory contains our kernel configuration. We currently have config files for the R1 and R2 builds.
 ```
 R1 config file = opinicus_config
 R2 config file = msc-sm2-imx6dl-ultimain4.2_config
@@ -124,7 +128,8 @@ upstream kernel. Currently we have a small amount of patches ontop of the
 stable linux kernel. The repository currently has a few branches.
 The branch for R1 builds is *master-som_sun7i*. The branch for R2 and Sonic builds is *master-som_imx6*.
 
-#### Older branches (not needed for builds but kept as documentation)
+#### Older branches
+(not needed for builds but kept as documentation)
 * archive/opinicus_v4.2.0-rc7_v2	Our old kernel tree with modifications
 * opinicus_v4.2.0-rc7			The unmodified kernel from above
 
@@ -139,7 +144,7 @@ The branch for R1 builds is *master-som_sun7i*. The branch for R2 and Sonic buil
 * **By default**, the build script runs an environment check, then builds the kernel image. The first can be disabled.
 
 Run the help of the ```build_for_ultimaker.sh``` script for usage information:
-```sh
+```
 > ./build_for_ultimaker.sh -h
     Usage: ./build_for_ultimaker.sh [OPTIONS]
         -c   Clean the workspace
@@ -150,6 +155,9 @@ Run the help of the ```build_for_ultimaker.sh``` script for usage information:
 ```
 RELEASE_VERSION=maj.min.patch ./build_for_ultimaker.sh
 ```
+#### Local build flow
+![build Flow Overview Diagram](docs/UM-KERNEL_build_flow_R2_SONIC.jpg)
+
 ## Using GitLab CI to build the packages
 Using GitLab Ci to build the **R1** and **R2** um-kernel packages will allow us to track builds of this package:
 
