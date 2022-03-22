@@ -17,6 +17,11 @@ default:
     - git clone --branch  ${CI_COMMIT_REF_NAME} ${CI_REPOSITORY_URL} --depth=1
     - echo "Initializing submodules"
     - ls /builds/ultimaker/embedded/platform/um-kernel/linux
+    - ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers
+    - ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net
+    - ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless
+    - ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek
+    - ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek/rtl8822ce
     # HACK hardcoded path creation:
     #- mkdir -p "/builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek/rtl8822ce"
     - git submodule update --init --recursive
