@@ -16,15 +16,15 @@ default:
   before_script:
     #- rm -rf /builds/ultimaker/embedded/platform/um-kernel/linux
     - git clone --branch  ${CI_COMMIT_REF_NAME} ${CI_REPOSITORY_URL} --depth=1
-    - echo "Initializing submodules"
+    - echo "Initializing submodules ${CI_COMMIT_REF_NAME} ${CI_REPOSITORY_URL}"
     - git -c submodule.drivers.net.wireless.realtek.rtl8822ce.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/rtl8822ce" submodule update --init --recursive --force
       # WORKS FOR LINUX not for realtek: - git submodule update --init --recursive
-    - ls /builds/ultimaker/embedded/platform/um-kernel/linux
-    - ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers
-    - ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net
-    - ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless
-    - ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek
-    - ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek/rtl8822ce
+    #- ls /builds/ultimaker/embedded/platform/um-kernel/linux
+    #- ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers
+    #- ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net
+    #- ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless
+    #- ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek
+    #- ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek/rtl8822ce
     #- ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek/rtl8822ce
     #- git -c submodule.drivers.net.wireless.realtek.rtl8822ce.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/rtl8822ce" submodule update --init --recursive
 
