@@ -13,8 +13,34 @@ include:
     - echo "Initializing submodules\n"
     # HACK hardcoded path creation:
     - mkdir -p "/builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek/rtl8822ce"
-    - git -c submodule.linux.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/linux" submodule update --init --recursive
+    #- git -c submodule.linux.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/linux" submodule update --init --recursive
     #- git -c submodule.drivers.net.wireless.realtek.rtl8822ce.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/rtl8822ce" submodule update --init --recursive
+
+# Overriding prime-jedi 'prepare_environment'.
+# Prevents execution of source retrieval steps which cannot handle submodules not in GitLab
+# The 'script' body is an exact match of prime-jedi's jedi-gitlab-ci-template.yml step.
+prepare_environment:
+  image: "registry.hub.docker.com/library/docker:stable-git"
+  extends:
+    - .jobs_common
+    - .retrieve_source
+  stage: prepare
+  script:
+    - |
+      if [ -f ./docker_env/make_docker.sh ]; then
+        ./docker_env/make_docker.sh "${BUILD_PIPELINE_IMAGE}"
+      else
+        docker build --rm -t "${BUILD_PIPELINE_IMAGE}" ./docker_env/
+
+        if ! docker run --rm --privileged -e "ARM_EMU_BIN=${ARM_EMU_BIN}" -v "${ARM_EMU_BIN}:${ARM_EMU_BIN}:ro" "${BUILD_PIPELINE_IMAGE}" "./buildenv_check.sh"; then
+          echo "Something is wrong with the build environment, please check your Dockerfile."
+          exit 1
+        fi
+      fi
+
+      docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+      docker push "${BUILD_PIPELINE_IMAGE}"
+
 
 # Build stage
 # ===========
