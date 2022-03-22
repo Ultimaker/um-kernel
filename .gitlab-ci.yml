@@ -14,14 +14,12 @@ default:
 
 # WORKS FOR LINUX not for realtek: - git submodule update --init --recursive
 #- ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek/rtl8822ce
+#- rm -rf /builds/ultimaker/embedded/platform/um-kernel/linux
 .retrieve_source:
   before_script:
-    #- rm -rf /builds/ultimaker/embedded/platform/um-kernel/linux
     - git clone --branch ${CI_COMMIT_REF_NAME} ${CI_REPOSITORY_URL} --depth=1
-    - echo "CI commit ref name: '${CI_COMMIT_REF_NAME}'"
-    - echo "CI PIPELINE source: '${CI_PIPELINE_SOURCE}'"
-    - echo "Initializing submodules"
-    - git -c submodule.drivers.net.wireless.realtek.rtl8822ce.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/rtl8822ce" submodule update --init --recursive --force
+    - echo "CI: '${CI_COMMIT_REF_NAME}'/'${CI_PIPELINE_SOURCE}'"
+    - git submodule update --init --recursive
 
 # Overriding prime-jedi 'prepare_environment'.
 # Prevents execution of source retrieval steps which cannot handle submodules not in GitLab
