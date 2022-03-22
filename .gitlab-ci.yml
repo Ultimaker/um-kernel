@@ -14,9 +14,10 @@ default:
 
 .retrieve_source:
   before_script:
-    - echo "Initializing submodules\n"
+    - git clone --branch  ${CI_COMMIT_REF_NAME} ${CI_REPOSITORY_URL} --depth=1
+    - echo "Initializing submodules"
     # HACK hardcoded path creation:
-    - mkdir -p "/builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek/rtl8822ce"
+    #- mkdir -p "/builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek/rtl8822ce"
     - git submodule update --init --recursive
     - ls /builds/ultimaker/embedded/platform/um-kernel/linux/drivers/net/wireless/realtek/rtl8822ce
     #- git -c submodule.drivers.net.wireless.realtek.rtl8822ce.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/rtl8822ce" submodule update --init --recursive
