@@ -15,8 +15,6 @@ variables:
 # ===========
 build:
   timeout: 2h
-  extends:
-    - .retrieve_source
   script:
     - ci/add_private_key.sh
     - ./build.sh
