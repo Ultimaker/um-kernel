@@ -78,8 +78,22 @@ restart()
     shutdown
 }
 
+led()
+{
+    # Blink LED (if exists) for the given action
+    ACTION="${1}"
+
+    LED_FILE_TRIGGER="/sys/class/leds/a20-olinuxino-lime2:green:usr/trigger"
+    if [ -f "${LED_FILE_TRIGGER}" ]; then
+      echo "${ACTION}" > "${LED_FILE_TRIGGER}"
+    fi
+}
+
 restore_complete_loop()
 {
+    # Blink LED (if exists) to show we are ready
+    led "heartbeat"
+
     while true; do
     	echo "Restore complete, remove the recovery SD card and powercycle the printer."
     	sleep 30s
@@ -189,6 +203,9 @@ find_and_run_update()
     if isBootingRestoreImage; then
         SOFTWARE_INSTALL_MODE="restore"
     fi
+
+    # Blink LED for internal FLASH memory access
+    led "mmc1"
 
     echo "Checking for updates ..."
     for dev in ${UPDATE_DEVICES}; do
