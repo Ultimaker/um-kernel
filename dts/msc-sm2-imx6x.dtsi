@@ -1117,17 +1117,22 @@
 			label = "SPL";
 			reg = <0x0 0x20000>;
 		};
-		partition@20000 {
-			label = "env";
+        
+		partition@1 {
+			label = "user";
 			reg = <0x20000 0x20000>;
 		};
-		partition@40000 {
+		partition@2 {
 			label = "uboot";
 			reg = <0x40000 0x80000>;
 		};
-		partition@c0000 {
-			label = "user";
-			reg = <0xc0000 0x0>;
+		partition@3 {
+			label = "env";
+			reg = <0xc0000 0x8000>;
+		};
+		partition@4 {
+			label = "user2";
+			reg = <0xc8000 0x0>;
 		};
 	};
 };
