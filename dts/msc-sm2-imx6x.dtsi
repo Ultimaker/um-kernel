@@ -1113,27 +1113,28 @@
 		spi-max-frequency = <50000000>;
 		reg = <0>;
 
+/*
+    The SPI Flash partitions were removed since we are handling the write
+    address in the jedi-system-update.
+    This scheme was left here just a reference for any future need.
+    
 		partition@0 {
 			label = "SPL";
 			reg = <0x0 0x20000>;
 		};
-        
-		partition@1 {
-			label = "user";
+		partition@20000 {
+			label = "env";
 			reg = <0x20000 0x20000>;
 		};
-		partition@2 {
+		partition@40000 {
 			label = "uboot";
 			reg = <0x40000 0x80000>;
 		};
-		partition@3 {
-			label = "env";
-			reg = <0xc0000 0x8000>;
+		partition@c0000 {
+			label = "user";
+			reg = <0xc0000 0x0>;
 		};
-		partition@4 {
-			label = "user2";
-			reg = <0xc8000 0x0>;
-		};
+*/
 	};
 };
 
