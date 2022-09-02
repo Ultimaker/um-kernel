@@ -20,6 +20,7 @@ EXEC_PREFIX="${PREFIX}"
 SBINDIR="${EXEC_PREFIX}/sbin"
 
 EMMC_DEV="/dev/mmcblk2"
+BOOT_PARTITION="${EMMC_DEV}p1"
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
@@ -27,13 +28,8 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 #uc2 : UltiController 2 (UM3,UM3E) This UltiController is not considered here anymore
 #uc3 : UltiController 3 (S5,S5r2,S3)
 DISPLAY_TYPE="uc3"
-UM_SPLASH="/SplashUM.fb"
-S3_SPLASH="/SplashS3.fb"
-S5_SPLASH="/SplashS5.fb"
 FB_DEVICE="/dev/fb0"
-S3_ARTNUM="0x00 0x03 0x41 0xea"
-S5_ARTNUM="0x00 0x03 0x45 0xcb"
-
+UM_SPLASH="umsplash-800x320.fb"
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -180,25 +176,26 @@ enable_usb_storage_device()
 
 set_display_splash()
 {
-    echo "Setting display image."
+    echo "Setting Splash Screen picture..."
+    echo "- Mounting boot partition..."
+    
+    mkdir /boot
+    if ! mount -o ro "${BOOT_PARTITION}" /boot; then
+        echo "- Error mounting boot partition ${BOOT_PARTITION} at /boot"
+        rmdir /boot
+        return 0
+    fi;
 
-    #Get the article number from EEPROM
-    art_num=$(i2ctransfer -y 3 w2@0x57 0x01 0x00 r4)
-    echo "---> Article number read from EEPROM: ${art_num}"
-    
-    splash_img="${UM_SPLASH}"
-    
-    if [ "${art_num}" = "${S3_ARTNUM}" ]; then
-        splash_img="${S3_SPLASH}"
-    elif [ "${art_num}" = "${S5_ARTNUM}" ]; then
-        splash_img="${S5_SPLASH}"
-    fi
-        
-    if [ -f "${splash_img}" ] && [ -c "${FB_DEVICE}" ]; then
-        cat "${splash_img}" > "${FB_DEVICE}" || true
+    echo "- Sending picture to framebuffer..."
+    if [ -f "/boot/${UM_SPLASH}" ] && [ -c "${FB_DEVICE}" ]; then
+        cat "/boot/${UM_SPLASH}" > "${FB_DEVICE}" || true
     else
-        echo "Unable to output image: '${splash_img}' to: '${FB_DEVICE}'."
+        echo "-  Unable to output image: '/boot/${UM_SPLASH}' to: '${FB_DEVICE}'."
     fi    
+    
+    echo "- Unmounting boot partition..."    
+    umount /boot
+    rmdir /boot
 }
 
 enable_framebuffer_device()
@@ -225,6 +222,11 @@ check_and_set_article_number()
 {
     dev="/dev/sda1"
     article_number_file="${ARTICLENR_USB_MOUNT}/article_number"
+
+    #Get the article number from EEPROM
+    art_num=$(i2ctransfer -y 3 w2@0x57 0x01 0x00 r4)
+    echo "---> Article number read from EEPROM: >${art_num}<"
+
 
     retries=5
     while [ "${retries}" -gt 0 ]; do
@@ -434,6 +436,15 @@ busybox_setup()
 trap critical_error EXIT
 
 busybox_setup
+
+# Wait 500ms before starting so the kernel can flush the last logging messages
+# otherwise those messages will mix with init.sh echoes.
+sleep 0.5
+
+echo
+echo "INITRAMFS: Starting init.sh"
+echo
+
 toolcheck
 kernel_mount
 parse_cmdline
@@ -447,6 +458,9 @@ set_display_splash
 find_and_run_update
 check_and_set_article_number
 set_display_splash
+
+echo
+echo "INITRAMFS: Handing over to the main system:"
 boot_root
 
 critical_error
