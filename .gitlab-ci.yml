@@ -9,7 +9,7 @@ include:
     file: /gitlab_ci_templates/jedi-gitlab-ci-template.yml
       
 .retrieve_source:
-  before_script
+  before_script:
     - echo "Cloning main repo without submodules:"
     - git clone --branch  ${CI_COMMIT_REF_NAME} ${CI_REPOSITORY_URL} --depth=1
     - echo "Cloning Linux repo by http instead of ssh:"
