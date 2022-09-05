@@ -23,12 +23,12 @@ default:
     - git -c submodule.drivers/net/wireless/realtek/rtl8822ce.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/rtl8822ce" submodule update --init --depth 1   
     - cd ..
 
-.build_test_common:
-  image: "${BUILD_PIPELINE_IMAGE}"
-  variables:
-      GIT_STRATEGY: clone
-      GIT_SUBMODULE_STRATEGY: none
-      GIT_DEPTH: 1
+#.build_test_common:
+#  image: "${BUILD_PIPELINE_IMAGE}"
+#  variables:
+#      GIT_STRATEGY: clone
+#      GIT_SUBMODULE_STRATEGY: none
+#      GIT_DEPTH: 1
       
 # Overriding prime-jedi 'prepare_environment'.
 # Prevents execution of source retrieval steps which cannot handle submodules not in GitLab
@@ -38,44 +38,34 @@ prepare_environment:
   extends:
     - .jobs_common
     - .retrieve_source
-  stage: prepare
-  script:
-    - |
-      if [ -f ./make_docker.sh ]; then
-        ./make_docker.sh "${BUILD_PIPELINE_IMAGE}"
-      else
-        docker build --rm -t "${BUILD_PIPELINE_IMAGE}" ./docker_env/
+#  stage: prepare
+#  script:
+#    - |
+#      if [ -f ./make_docker.sh ]; then
+#        ./make_docker.sh "${BUILD_PIPELINE_IMAGE}"
+#      else
+#        docker build --rm -t "${BUILD_PIPELINE_IMAGE}" ./docker_env/
+#      
+#        if ! docker run --rm --privileged -e "ARM_EMU_BIN=${ARM_EMU_BIN}" -v "${ARM_EMU_BIN}:${ARM_EMU_BIN}:ro" "${BUILD_PIPELINE_IMAGE}" "./buildenv_check.sh"; then
+#          echo "Something is wrong with the build environment, please check your Dockerfile."
+#          exit 1
+#        fi
+#      fi
       
-        if ! docker run --rm --privileged -e "ARM_EMU_BIN=${ARM_EMU_BIN}" -v "${ARM_EMU_BIN}:${ARM_EMU_BIN}:ro" "${BUILD_PIPELINE_IMAGE}" "./buildenv_check.sh"; then
-          echo "Something is wrong with the build environment, please check your Dockerfile."
-          exit 1
-        fi
-      fi
-      
-      docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-      docker push "${BUILD_PIPELINE_IMAGE}"
+#      docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+#      docker push "${BUILD_PIPELINE_IMAGE}"
     
 # Build stage
 # ===========
-#build:
-#  timeout: 2h
-#  extends:
-#    - .jobs_common
-#    - .retrieve_source
-#  script:
-#    - ci/add_private_key.sh
-#    - ./build.sh
-#    - cp -v ./_build*/*.deb "./"
 build:
   extends:
     - .jobs_common
     - .retrieve_source
+  after_script:
+    - ls -lh
 
 test:
-  extends:
-    - .jobs_common
-    - .build_test_common
-    - .retrieve_source
+  image: "${BUILD_PIPELINE_IMAGE}"
   stage: test
   script:
     - echo "Tests not implemented!"
