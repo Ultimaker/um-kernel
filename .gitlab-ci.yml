@@ -8,67 +8,34 @@ include:
     ref: master
     file: /gitlab_ci_templates/jedi-gitlab-ci-template.yml
 
-default:
-  # Only the prepare/cleanup_enviroment steps don't use the image containing the Docker
-  image: "${BUILD_PIPELINE_IMAGE}"
-        
 .retrieve_source:
   before_script:
-    - echo "Cloning main repo without submodules:"
     - git clone --branch  ${CI_COMMIT_REF_NAME} ${CI_REPOSITORY_URL} --depth=1
-    - echo "Cloning Linux repo by http instead of ssh:"
     - git -c submodule.linux.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/linux" submodule update --init --depth 1
     - cd linux
-    - echo "Cloning RTL8822ce driver repo by http instead of ssh:"
     - git -c submodule.drivers/net/wireless/realtek/rtl8822ce.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/rtl8822ce" submodule update --init --depth 1   
     - cd ..
 
-#.build_test_common:
-#  image: "${BUILD_PIPELINE_IMAGE}"
-#  variables:
-#      GIT_STRATEGY: clone
-#      GIT_SUBMODULE_STRATEGY: none
-#      GIT_DEPTH: 1
-      
 # Overriding prime-jedi 'prepare_environment'.
 # Prevents execution of source retrieval steps which cannot handle submodules not in GitLab
-# The 'script' body is an exact match of prime-jedi's jedi-gitlab-ci-template.yml step.
 prepare_environment:
   image: "registry.hub.docker.com/library/docker:stable-git"
   extends:
     - .jobs_common
     - .retrieve_source
-#  stage: prepare
-#  script:
-#    - |
-#      if [ -f ./make_docker.sh ]; then
-#        ./make_docker.sh "${BUILD_PIPELINE_IMAGE}"
-#      else
-#        docker build --rm -t "${BUILD_PIPELINE_IMAGE}" ./docker_env/
-#      
-#        if ! docker run --rm --privileged -e "ARM_EMU_BIN=${ARM_EMU_BIN}" -v "${ARM_EMU_BIN}:${ARM_EMU_BIN}:ro" "${BUILD_PIPELINE_IMAGE}" "./buildenv_check.sh"; then
-#          echo "Something is wrong with the build environment, please check your Dockerfile."
-#          exit 1
-#        fi
-#      fi
-      
-#      docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-#      docker push "${BUILD_PIPELINE_IMAGE}"
     
 # Build stage
 # ===========
 build:
+  image: "${BUILD_PIPELINE_IMAGE}"
   extends:
     - .jobs_common
     - .retrieve_source
-  after_script:
-    - ls -lh
 
 test:
   image: "${BUILD_PIPELINE_IMAGE}"
   extends: 
     - .jobs_common  
-  stage: test
   script:
     - echo "Tests not implemented!"
     
