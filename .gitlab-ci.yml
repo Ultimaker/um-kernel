@@ -44,12 +44,17 @@ prepare_environment:
     
 # Build stage
 # ===========
+#build:
+#  timeout: 2h
+#  extends:
+#    - .jobs_common
+#    - .retrieve_source
+#  script:
+#    - ci/add_private_key.sh
+#    - ./build.sh
+#    - cp -v ./_build*/*.deb "./"
 build:
-  timeout: 2h
   extends:
     - .jobs_common
     - .retrieve_source
-  script:
-    - ci/add_private_key.sh
-    - ./build.sh
-    - cp -v ./_build*/*.deb "./"
+    
