@@ -7,7 +7,11 @@ include:
   - project: ultimaker/embedded/prime-jedi
     ref: master
     file: /gitlab_ci_templates/jedi-gitlab-ci-template.yml
-      
+
+default:
+  # Only the prepare/cleanup_enviroment steps don't use the image containing the Docker
+  image: "${BUILD_PIPELINE_IMAGE}"
+        
 .retrieve_source:
   before_script:
     - echo "Cloning main repo without submodules:"
