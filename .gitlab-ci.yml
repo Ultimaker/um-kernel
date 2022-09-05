@@ -66,6 +66,8 @@ build:
 
 test:
   image: "${BUILD_PIPELINE_IMAGE}"
+  extends: 
+    - .jobs_common  
   stage: test
   script:
     - echo "Tests not implemented!"
