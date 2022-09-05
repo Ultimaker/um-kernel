@@ -23,6 +23,13 @@ default:
     - git -c submodule.drivers/net/wireless/realtek/rtl8822ce.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/rtl8822ce" submodule update --init --depth 1   
     - cd ..
 
+.build_test_common:
+  image: "${BUILD_PIPELINE_IMAGE}"
+  variables:
+      GIT_STRATEGY: clone
+      GIT_SUBMODULE_STRATEGY: none
+      GIT_DEPTH: 1
+      
 # Overriding prime-jedi 'prepare_environment'.
 # Prevents execution of source retrieval steps which cannot handle submodules not in GitLab
 # The 'script' body is an exact match of prime-jedi's jedi-gitlab-ci-template.yml step.
@@ -63,4 +70,17 @@ build:
   extends:
     - .jobs_common
     - .retrieve_source
+
+test:
+  extends:
+    - .jobs_common
+    - .build_test_common
+    - .retrieve_source
+  stage: test
+  script:
+    - echo "Tests not implemented!"
     
+cleanup_environment:
+  image: "registry.hub.docker.com/library/docker:stable-git"
+  extends:
+    - .jobs_common
