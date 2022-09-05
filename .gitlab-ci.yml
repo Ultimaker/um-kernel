@@ -18,8 +18,10 @@ default:
     - git clone --branch  ${CI_COMMIT_REF_NAME} ${CI_REPOSITORY_URL} --depth=1
     - echo "Cloning Linux repo by http instead of ssh:"
     - git -c submodule.linux.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/linux" submodule update --init --depth 1
+    - cd linux
     - echo "Cloning RTL8822ce driver repo by http instead of ssh:"
     - git -c submodule.drivers/net/wireless/realtek/rtl8822ce.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/rtl8822ce" submodule update --init --depth 1   
+    - cd ..
 
 # Overriding prime-jedi 'prepare_environment'.
 # Prevents execution of source retrieval steps which cannot handle submodules not in GitLab
