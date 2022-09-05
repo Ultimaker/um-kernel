@@ -12,6 +12,7 @@ RUN apt-get update && \
         gcc \
         gcc-arm-linux-gnueabihf \
         gettext \
+        git \
         fakeroot \
         kmod \
         libssl-dev \
