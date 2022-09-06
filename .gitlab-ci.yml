@@ -10,16 +10,36 @@ include:
 
 .retrieve_source:
   before_script:
-    - git -c submodule.linux.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/linux" submodule update --init --recursive
-    - git -c submodule.drivers.net.wireless.realtek.rtl8822ce.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/rtl8822ce" submodule update --init --recursive
+    - git clone --branch  ${CI_COMMIT_REF_NAME} ${CI_REPOSITORY_URL} --depth=1
+    - git -c submodule.linux.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/linux" submodule update --init --depth 1
+    - cd linux
+    - git -c submodule.drivers/net/wireless/realtek/rtl8822ce.url="https://ultimaker-ci:${CI_PERSONAL_ACCESS_TOKEN}@github.com/Ultimaker/rtl8822ce" submodule update --init --depth 1   
+    - cd ..
 
+# Overriding prime-jedi 'prepare_environment'.
+# Prevents execution of source retrieval steps which cannot handle submodules not in GitLab
+prepare_environment:
+  image: "registry.hub.docker.com/library/docker:stable-git"
+  extends:
+    - .jobs_common
+    - .retrieve_source
+    
 # Build stage
 # ===========
 build:
-  timeout: 2h
+  image: "${BUILD_PIPELINE_IMAGE}"
   extends:
+    - .jobs_common
     - .retrieve_source
+
+test:
+  image: "${BUILD_PIPELINE_IMAGE}"
+  extends: 
+    - .jobs_common  
   script:
-    - ci/add_private_key.sh
-    - ./build.sh
-    - cp -v ./_build*/*.deb "./"
+    - echo "Tests not implemented!"
+    
+cleanup_environment:
+  image: "registry.hub.docker.com/library/docker:stable-git"
+  extends:
+    - .jobs_common
