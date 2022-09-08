@@ -32,6 +32,7 @@ set -eu
 
 ARCH="armhf"
 UM_ARCH="imx6dl" # Empty string, or sun7i for R1, or imx6dl for R2
+BOARD_REVISION="03E"
 
 # common directory variablesS
 SYSCONFDIR="${SYSCONFDIR:-/etc}"
@@ -82,9 +83,9 @@ RELEASE_VERSION="${RELEASE_VERSION:-9999.99.99}"
 
 # Add the UM_ARCH to release version keeping a possible -dev on the most right side
 if [[ ${RELEASE_VERSION} == *'-dev' ]]; then
-    RELEASE_VERSION="${RELEASE_VERSION/-dev/-${UM_ARCH}-dev}"
+    RELEASE_VERSION="${RELEASE_VERSION/-dev/-${UM_ARCH}-${BOARD_REVISION}-dev}"
 else
-    RELEASE_VERSION="${RELEASE_VERSION}-${UM_ARCH}"
+    RELEASE_VERSION="${RELEASE_VERSION}-${UM_ARCH}-${BOARD_REVISION}"
 fi;
 
 ##
