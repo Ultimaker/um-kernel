@@ -6,12 +6,3 @@ include:
   - project: ultimaker/embedded/prime-jedi
     ref: master
     file: /gitlab_ci_templates/jedi-gitlab-ci-template.yml
-
-# Build stage
-# ===========
-build:
-  timeout: 2h
-  script:
-    - ci/add_private_key.sh
-    - ./build.sh
-    - cp -v ./_build*/*.deb "./"
