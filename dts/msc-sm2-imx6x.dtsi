@@ -913,8 +913,9 @@
 		bpro {
 			regulator-name = "bpro";
 			regulator-always-on = <1>;
-			regulator-min-microvolt = <1200000>;
-			regulator-max-microvolt = <1200000>;
+			regulator-min-microvolt = <1320000>;
+			regulator-max-microvolt = <1320000>;
+            regulator-initial-mode= <DA9063_BUCK_MODE_SYNC>;
 		};
 
 		bmem {
