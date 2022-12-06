@@ -1095,8 +1095,29 @@
 &fec {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_sm2_enet_1>;
-	phy-mode = "rgmii";
+	phy = <&phy0>;
+	phy-mode = "rgmii-id";
+	clocks = <&clks IMX6QDL_CLK_ENET>,
+		 <&clks IMX6QDL_CLK_ENET>,
+		 <&clks IMX6QDL_CLK_ENET>;
 	status = "okay";
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		phy0: ethernet-phy@0 {
+		status = "okay";
+		reg = <0>;
+		compatible = "ethernet-phy-ieee802.3-c22";
+		tx-fifo-depth = <0x1>;
+		rx-fifo-depth = <0x1>;
+		ti,max-output-impedance;
+		ti,clk-output-sel = <0>;
+		ti,rx-internal-delay = <0x8>;
+		ti,tx-internal-delay = <0x9>;
+		ti,fifo-depth = <0x01>;
+		};
+	};
 };
 
 &ecspi1 {
