@@ -30,3 +30,21 @@
     };
 };
 
+/*
+    This is the Reset_Out# pin from the SOM and it is used to let the carrier board knows when the system is out of 
+    reset. So, if needed, it can be used to also reset other onboard devices. In Ultimainboard 4.2 we use this line 
+    to reset the GPIO's expanders and the Atmega2560. 
+    Formerly this pin was controlled in UBoot (set high before booting the linux kernel) but it was removed by MSC. 
+    Then we moved this set to the device tree as a hog pin, so the gpio driver will take control of it during the boot
+    setting it to the level we want (in this case, high, since it is active low pin). Although the config below says
+    "output-low", this means the logical state of the pin. So an Active_Low pin in the state low (inactive) means a
+    pin at high voltage level.
+*/
+&gpio7 {
+    reset_out-hog {
+        gpio-hog;
+        gpios = <13 GPIO_ACTIVE_LOW>;
+        output-low;         //  "Output"-low in an Active_Low pin means high voltage level
+        line-name = "Reset_Out";
+    };
+};
