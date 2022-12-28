@@ -100,6 +100,7 @@ check_library_installation()
     done
 }
 
+# shellcheck disable=SC2317
 cleanup()
 {
        if [ "$(dirname "${TEST_DIR}")" != "/tmp" ]; then
