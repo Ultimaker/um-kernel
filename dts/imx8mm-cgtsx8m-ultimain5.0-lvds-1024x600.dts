@@ -48,7 +48,7 @@
 
 &pinctrl_gpio4 {
     fsl,pins = <
-        MX8MM_IOMUXC_SAI3_RXC_GPIO4_IO29        0x140 /* GPIO4*/
+        MX8MM_IOMUXC_SAI3_RXC_GPIO4_IO29        0x080 /* GPIO4 / SAFETY_ENABLED (input) */
         MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1         0x100 /* GPIO7 / RESET_HUB*/
         MX8MM_IOMUXC_SAI3_RXFS_GPIO4_IO28       0x080 /* GPIO6 / IMXRT BootMode Enable*/       
         MX8MM_IOMUXC_SAI1_TXC_GPIO4_IO11        0x140 /* GPIO9 */
@@ -111,6 +111,8 @@
         reg = <0x20>;
         pinctrl-names = "default";
         pinctrl-0 = <&pinctrl_i2c3_tca6416>;
+        interrupt-parent = <&gpio4>;
+        interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
         gpio-controller;
         #gpio-cells = <2>;
         gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_FAN_EN", "VCC5_FAN_OK", 
@@ -152,10 +154,10 @@
 
 /* Set pin names for IMXRT control lines */
 &gpio4 {
-    gpio-line-names = "", "", "", "", "", "", "", "IMXRT_nReset", 
+    gpio-line-names = "TCA6416A_nINT", "", "", "", "", "", "", "IMXRT_nReset", 
                       "", "", "", "", "", "", "", "", 
                       "", "", "", "", "", "", "", "", 
-                      "", "", "", "", "IMXRT_BootMode_En", "", "", "";
+                      "", "", "", "", "IMXRT_BootMode_En", "SAFETY_ENABLED", "", "";
 };
 
 
