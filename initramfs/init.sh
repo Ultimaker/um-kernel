@@ -11,7 +11,7 @@ ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
 UPDATE_IMG_MOUNT="/mnt/update_img"
 UPDATE_SRC_MOUNT="/mnt/update"
-ARTICLENR_USB_MOUNT="/mnt/usb"
+PROVISIONING_USB_MOUNT="/mnt/usb"
 RESCUE_SHELL="no"
 FORCE_RESTORE_MODE="no"
 
@@ -180,10 +180,19 @@ isBootingRestoreImage()
     findfs LABEL=recovery_data 
 }
 
-check_and_set_article_number()
+check_and_set_eeprom_data()
 {
     dev="/dev/sda1"
-    article_number_file="${ARTICLENR_USB_MOUNT}/article_number"
+    article_number_file="${PROVISIONING_USB_MOUNT}/article_number"
+    country_code_lock_file="${PROVISIONING_USB_MOUNT}/country_code_lock"
+
+    # Get the article number from EEPROM
+    art_num=$(i2ctransfer -y 3 w2@0x57 0x01 0x00 r4)
+    echo "---> Article number read from EEPROM: >${art_num}<"
+
+    # Get the country code lock from EEPROM
+    country_code_lock=$(i2ctransfer -y 3 w2@0x57 0x01 0x18 r2)
+    echo "--> Country code lock read from EEPROM: >${country_code_lock}<"
 
     retries=5
     while [ "${retries}" -gt 0 ]; do
@@ -194,23 +203,36 @@ check_and_set_article_number()
         fi
 
         echo "Attempting to mount '${dev}'."
-        if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${ARTICLENR_USB_MOUNT}"; then
+        if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${PROVISIONING_USB_MOUNT}"; then
             return 0
         fi
 
-        if [ ! -r "${article_number_file}" ]; then
+        if [ ! -r "${article_number_file}" ] && [ ! -r "${country_code_lock_file}" ]; then
             umount "${dev}"
-            echo "No article number file found on '${dev}', skipping."
+            echo "No article number file or country code lock file found on '${dev}', skipping."
             return 0
         fi
 
-        article_number="$(cat "${article_number_file}")"
-        echo "Trying to write article nr: '${article_number}'."
-        # shellcheck disable=SC2086
-        if ! i2ctransfer -y 1 w6@0x57 0x01 0x00 ${article_number}; then
-            umount "${dev}"
-            echo "Failed to write article number to EEPROM, skipping."
-            return 0
+        if [ -r "${article_number_file}" ]; then
+            article_number="$(cat "${article_number_file}")"
+            echo "Trying to write article nr: '${article_number}'."
+            # shellcheck disable=SC2086
+            if ! i2ctransfer -y 3 w6@0x57 0x01 0x00 ${article_number}; then
+                umount "${dev}"
+                echo "Failed to write article number to EEPROM, skipping."
+                return 0
+            fi
+        fi
+
+        if [ -r "${country_code_lock_file}" ]; then
+            country_code="$(cat "${country_code_lock_file}")"
+            echo "Trying to write country code lock: '${country_code}'."
+            # shellcheck disable=SC2086
+            if ! i2ctransfer -y 3 w4@0x57 0x01 0x18 ${country_code}; then
+                umount "${dev}"
+                echo "Failed to write country code lock to EEPROM, skipping."
+                return 0
+            fi
         fi
 
         umount "${dev}"
@@ -407,7 +429,10 @@ if [ "${RESCUE_SHELL}" = "yes" ]; then
 fi
 set_display_splash
 find_and_run_update
-check_and_set_article_number
+check_and_set_eeprom_data
+
+echo
+echo "INITRAMFS: Handing over to the main system:"
 boot_root
 
 critical_error
