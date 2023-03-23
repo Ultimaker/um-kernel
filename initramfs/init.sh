@@ -220,6 +220,30 @@ isBootingRestoreImage()
 
 check_and_set_eeprom_data()
 {
+    # The printer's mainboard EEPROM can be "provisioned" by inserting a USB drive during boot.
+    # The USB drive must contain a single ext4 partition, containing one or more of the following
+    # files:
+    #
+    # - article_number
+    #   A single-line text file, containing the printer's BOM number in hex notation, exactly 4 bytes.
+    #   For instance, for an S5R2 printer, the file should contain the following line:
+    #       0x00 0x03 0x45 0xCB
+    #   (this is equivalent to decimal 214475).
+    #
+    # - country_code_lock
+    #   A single line text file, containing the printer's locked country code, in hex notation,
+    #   exactly 2 bytes.
+    #   For instance, to lock the printer to the AU country code, the file should contain the line:
+    #     0x41 0x55
+    #   To clear the lock, the file should contain:
+    #     0xFF 0xFF
+    #
+    # If either of these files is missing, no data is written to that part of the EEPROM.
+    #
+    # Relevant EEPROM layout here:
+    #   0x0100 - 0x0104     BOM number / article number
+    #   0x0118 - 0x0120     Locked country code
+
     dev="/dev/sda1"
     article_number_file="${ARTICLENR_USB_MOUNT}/article_number"
     country_code_lock_file="${ARTICLENR_USB_MOUNT}/country_code_lock"
