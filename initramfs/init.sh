@@ -88,8 +88,8 @@ restart()
 restore_complete_loop()
 {
     while true; do
-    	echo "Restore complete, remove the recovery SD card and powercycle the printer."
-    	sleep 30s
+        echo "Restore complete, remove the recovery SD card and powercycle the printer."
+        sleep 30s
     done 
 }
 
@@ -270,21 +270,15 @@ check_and_set_eeprom_data()
             return 0
         fi
 
-        if [ ! -r "${article_number_file}" ] && [ ! -r "${country_code_lock_file}" ]; then
-            umount "${dev}"
-            echo "No article number file or country code lock file found on '${dev}', skipping."
-            return 0
-        fi
-
         if [ -r "${article_number_file}" ]; then
             article_number="$(cat "${article_number_file}")"
             echo "Trying to write article nr: '${article_number}'."
             # shellcheck disable=SC2086
             if ! i2ctransfer -y 3 w6@0x57 0x01 0x00 ${article_number}; then
-                umount "${dev}"
                 echo "Failed to write article number to EEPROM, skipping."
-                return 0
             fi
+        else
+            echo "No article number file found on '${dev}', skipping."
         fi
 
         if [ -r "${country_code_lock_file}" ]; then
@@ -292,10 +286,10 @@ check_and_set_eeprom_data()
             echo "Trying to write country code lock: '${country_code}'."
             # shellcheck disable=SC2086
             if ! i2ctransfer -y 3 w4@0x57 0x01 0x18 ${country_code}; then
-                umount "${dev}"
                 echo "Failed to write country code lock to EEPROM, skipping."
-                return 0
             fi
+        else
+            echo "No country code lock file found on '${dev}', skipping."
         fi
 
         umount "${dev}"
@@ -385,9 +379,9 @@ find_and_run_update()
             break
         fi
 
-    	# After restore do not remove the file and loop endlessly
-    	if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ]; then
-    	   restore_complete_loop
+        # After restore do not remove the file and loop endlessly
+        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ]; then
+           restore_complete_loop
         fi
 
         if ! rm "${update_tmpfs_mount}/${UPDATE_IMAGE:?}"; then
