@@ -220,50 +220,41 @@ check_and_set_eeprom_data()
     country_code_lock=$(i2ctransfer -y 3 w2@0x57 0x01 0x18 r2)
     echo "--> Country code lock read from EEPROM: >${country_code_lock}<"
 
+    # Wait for the USB drive to become visible; max 5 seconds.
     retries=5
-    while [ "${retries}" -gt 0 ]; do
-        if [ ! -b "${dev}" ]; then
-            retries="$((retries - 1))"
-            sleep 1
-            continue
-        fi
-
-        echo "Attempting to mount '${dev}'."
-        if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${PROVISIONING_USB_MOUNT}"; then
-            return 0
-        fi
-
-        if [ ! -r "${article_number_file}" ] && [ ! -r "${country_code_lock_file}" ]; then
-            umount "${dev}"
-            echo "No article number file or country code lock file found on '${dev}', skipping."
-            return 0
-        fi
-
-        if [ -r "${article_number_file}" ]; then
-            article_number="$(cat "${article_number_file}")"
-            echo "Trying to write article nr: '${article_number}'."
-            # shellcheck disable=SC2086
-            if ! i2ctransfer -y 3 w6@0x57 0x01 0x00 ${article_number}; then
-                umount "${dev}"
-                echo "Failed to write article number to EEPROM, skipping."
-                return 0
-            fi
-        fi
-
-        if [ -r "${country_code_lock_file}" ]; then
-            country_code="$(cat "${country_code_lock_file}")"
-            echo "Trying to write country code lock: '${country_code}'."
-            # shellcheck disable=SC2086
-            if ! i2ctransfer -y 3 w4@0x57 0x01 0x18 ${country_code}; then
-                umount "${dev}"
-                echo "Failed to write country code lock to EEPROM, skipping."
-                return 0
-            fi
-        fi
-
-        umount "${dev}"
-        retries=0
+    while [ ! -b "${dev}" ] && [ "${retries}" -gt 0 ]; do
+        retries="$((retries - 1))"
+        sleep 1
     done
+
+    echo "Attempting to mount '${dev}'."
+    if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${PROVISIONING_USB_MOUNT}"; then
+        return 0
+    fi
+
+    if [ -r "${article_number_file}" ]; then
+        article_number="$(cat "${article_number_file}")"
+        echo "Trying to write article nr: '${article_number}'."
+        # shellcheck disable=SC2086
+        if ! i2ctransfer -y 3 w6@0x57 0x01 0x00 ${article_number}; then
+            echo "Failed to write article number to EEPROM, skipping."
+        fi
+    else
+        echo "No article number file ${article_number_file} found, skipping."
+    fi
+
+    if [ -r "${country_code_lock_file}" ]; then
+        country_code="$(cat "${country_code_lock_file}")"
+        echo "Trying to write country code lock: '${country_code}'."
+        # shellcheck disable=SC2086
+        if ! i2ctransfer -y 3 w4@0x57 0x01 0x18 ${country_code}; then
+            echo "Failed to write country code lock to EEPROM, skipping."
+        fi
+    else
+        echo "No country code lock file ${country_code_lock_file} found, skipping."
+    fi
+
+    umount "${dev}"
 }
 
 find_and_run_update()
