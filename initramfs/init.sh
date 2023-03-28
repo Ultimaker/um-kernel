@@ -12,7 +12,7 @@ ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
 UPDATE_IMG_MOUNT="/mnt/update_img"
 UPDATE_SRC_MOUNT="/mnt/update"
-ARTICLENR_USB_MOUNT="/mnt/usb"
+PROVISIONING_USB_MOUNT="/mnt/usb"
 RESCUE_SHELL="no"
 
 PREFIX="${PREFIX:-/usr/}"
@@ -218,47 +218,81 @@ isBootingRestoreImage()
     findfs LABEL=recovery_data 
 }
 
-check_and_set_article_number()
+check_and_set_eeprom_data()
 {
-    dev="/dev/sda1"
-    article_number_file="${ARTICLENR_USB_MOUNT}/article_number"
+    # The printer's mainboard EEPROM can be "provisioned" by inserting a USB drive during boot.
+    # The USB drive must contain a single ext4 partition, containing one or more of the following
+    # files:
+    #
+    # - article_number
+    #   A single-line text file, containing the printer's BOM number in hex notation, exactly 4 bytes.
+    #   For instance, for an S5R2 printer, the file should contain the following line:
+    #       0x00 0x03 0x45 0xCB
+    #   (this is equivalent to decimal 214475).
+    #
+    # - country_code_lock
+    #   A single line text file, containing the printer's locked country code, in hex notation,
+    #   exactly 2 bytes.
+    #   For instance, to lock the printer to the AU country code, the file should contain the line:
+    #     0x41 0x55
+    #   To clear the lock, the file should contain:
+    #     0xFF 0xFF
+    #
+    # If either of these files is missing, no data is written to that part of the EEPROM.
+    #
+    # Relevant EEPROM layout here:
+    # (See opinicus for full details on EEPROM layout)
+    #   0x0100 - 0x0104     BOM number / article number
+    #   ...
+    #   0x0118 - 0x0120     Locked country code
 
-    #Get the article number from EEPROM
+    dev="/dev/sda1"
+    article_number_file="${PROVISIONING_USB_MOUNT}/article_number"
+    country_code_lock_file="${PROVISIONING_USB_MOUNT}/country_code_lock"
+
+    # Get the article number from EEPROM
     art_num=$(i2ctransfer -y 3 w2@0x57 0x01 0x00 r4)
     echo "---> Article number read from EEPROM: >${art_num}<"
 
+    # Get the country code lock from EEPROM
+    country_code_lock=$(i2ctransfer -y 3 w2@0x57 0x01 0x18 r2)
+    echo "--> Country code lock read from EEPROM: >${country_code_lock}<"
 
+    # Wait for the USB drive to become visible; max 5 seconds.
     retries=5
-    while [ "${retries}" -gt 0 ]; do
-        if [ ! -b "${dev}" ]; then
-            retries="$((retries - 1))"
-            sleep 1
-            continue
-        fi
+    while [ ! -b "${dev}" ] && [ "${retries}" -gt 0 ]; do
+        retries="$((retries - 1))"
+        sleep 1
+    done
 
-        echo "Attempting to mount '${dev}'."
-        if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${ARTICLENR_USB_MOUNT}"; then
-            return 0
-        fi
+    echo "Attempting to mount '${dev}'."
+    if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${PROVISIONING_USB_MOUNT}"; then
+        return 0
+    fi
 
-        if [ ! -r "${article_number_file}" ]; then
-            umount "${dev}"
-            echo "No article number file found on '${dev}', skipping."
-            return 0
-        fi
-
+    if [ -r "${article_number_file}" ]; then
         article_number="$(cat "${article_number_file}")"
         echo "Trying to write article nr: '${article_number}'."
         # shellcheck disable=SC2086
         if ! i2ctransfer -y 3 w6@0x57 0x01 0x00 ${article_number}; then
-            umount "${dev}"
             echo "Failed to write article number to EEPROM, skipping."
-            return 0
         fi
+    else
+        echo "No article number file ${article_number_file} found, skipping."
+    fi
 
-        umount "${dev}"
-        retries=0
-    done
+    if [ -r "${country_code_lock_file}" ]; then
+        country_code="$(cat "${country_code_lock_file}")"
+        echo "Trying to write country code lock: '${country_code}'."
+        # shellcheck disable=SC2086
+        if ! i2ctransfer -y 3 w4@0x57 0x01 0x18 ${country_code}; then
+            echo "Failed to write country code lock to EEPROM, skipping."
+        fi
+    else
+        echo "No country code lock file ${country_code_lock_file} found, skipping."
+    fi
+
+    umount "${dev}"
 }
 
 find_and_run_update()
@@ -456,7 +490,7 @@ fi
 
 set_display_splash
 find_and_run_update
-check_and_set_article_number
+check_and_set_eeprom_data
 set_display_splash
 
 echo
