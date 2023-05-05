@@ -154,9 +154,9 @@
 
 /* Set pin names for IMXRT control lines */
 &gpio4 {
-    gpio-line-names = "TCA6416A_nINT", "", "", "", "", "", "", "IMXRT_nReset", 
+    gpio-line-names = "TCA6416A_nINT", "", "", "", "", "", "", "", 
                       "", "", "", "", "", "", "", "", 
-                      "", "", "", "", "", "", "", "", 
+                      "", "", "", "", "IMXRT_nReset", "", "", "", 
                       "", "", "", "", "IMXRT_BootMode_En", "SAFETY_ENABLED", "", "";
 };
 
