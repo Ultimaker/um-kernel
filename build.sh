@@ -386,6 +386,18 @@ bootscript_build()
     echo "Finished building boot scripts."
 }
 
+insert_gpio_pin_definitions_scripts()
+{
+
+    mkdir -p "${DEBIAN_DIR}/usr/bin/"
+    cp "${SRC_DIR}/scripts/avr-gpio-start" "${DEBIAN_DIR}/usr/bin/"
+
+    mkdir -p "${DEBIAN_DIR}/etc/systemd/system/"
+    cp "${SRC_DIR}/scripts/rc.gpio.service" "${DEBIAN_DIR}/etc/systemd/system/"
+
+    cp -a "${SRC_DIR}/scripts/postinst" "${DEBIAN_DIR}/DEBIAN/"
+}
+
 create_debian_package()
 {
     echo "Building Debian package."
@@ -493,6 +505,7 @@ if [ "${#}" -eq 0 ]; then
     kernel_build
     dtb_build
     bootscript_build
+    insert_gpio_pin_definitions_scripts
     create_debian_package
     exit 0
 fi
@@ -511,6 +524,7 @@ case "${1-}" in
         kernel_build
         dtb_build
         bootscript_build
+        insert_gpio_pin_definitions_scripts
         create_debian_package
         ;;
     menuconfig)

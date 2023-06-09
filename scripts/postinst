@@ -1,5 +1,4 @@
-#!/bin/sh
-
+#!/bin/bash
 systemctl daemon-reload
 systemctl enable rc.gpio || true
 systemctl start rc.gpio
