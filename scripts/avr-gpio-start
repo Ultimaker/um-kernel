@@ -1,0 +1,20 @@
+#!/bin/sh
+
+export_output() {
+        echo $1 > /sys/class/gpio/export
+        echo "out" > /sys/class/gpio/gpio$1/direction
+        ln -s /sys/class/gpio/gpio$1/value /dev/gpio/$2
+        chmod 666 /sys/class/gpio/gpio$1/value
+}
+export_input() {
+        echo $1 > /sys/class/gpio/export
+        echo "in" > /sys/class/gpio/gpio$1/direction
+        ln -s /sys/class/gpio/gpio$1/value /dev/gpio/$2
+}
+
+mkdir /dev/gpio 2> /dev/null
+
+export_output 87 avr_reset
+export_output 84 avr_sck
+export_output 85 avr_mosi
+export_input 86 avr_miso        
