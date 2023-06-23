@@ -395,6 +395,7 @@ insert_gpio_pin_definitions_scripts()
     mkdir -p "${DEBIAN_DIR}/etc/systemd/system/"
     cp "${SRC_DIR}/scripts/rc.gpio.service" "${DEBIAN_DIR}/etc/systemd/system/"
 
+    mkdir -p "${DEBIAN_DIR}/DEBIAN/"
     cp -a "${SRC_DIR}/scripts/postinst" "${DEBIAN_DIR}/DEBIAN/"
 }
 
