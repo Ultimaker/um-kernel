@@ -89,7 +89,7 @@ fi;
 
 ##
 # busybox_get() - Download and build the Busybox package
-# param1:	Writable path where to store the Busybox binary
+# param1:   Writable path where to store the Busybox binary
 #
 # Busybox is downloaded from the global variable ${BB_PKG}.
 busybox_get()
@@ -356,8 +356,16 @@ insert_gpio_pin_definitions_scripts()
     mkdir -p "${DEBIAN_DIR}/etc/systemd/system/"
     cp "${SRC_DIR}/scripts/rc.gpio.service" "${DEBIAN_DIR}/etc/systemd/system/"
 
+
+    echo "##### Listing original dir: ${SRC_DIR}/scripts/ ######"
+    ls -lha "${SRC_DIR}/scripts/"
+    
     mkdir -p "${DEBIAN_DIR}/DEBIAN/"
     cp -a "${SRC_DIR}/scripts/postinst" "${DEBIAN_DIR}/DEBIAN/"
+
+    echo "##### Listing dest dir: ${DEBIAN_DIR}/DEBIAN/ ######"
+    ls -lha "${DEBIAN_DIR}/DEBIAN/"
+    
 }
 
 create_debian_package()
