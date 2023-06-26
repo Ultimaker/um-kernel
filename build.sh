@@ -363,10 +363,10 @@ insert_gpio_pin_definitions_scripts()
     mkdir -p "${DEBIAN_DIR}/DEBIAN/"
     cp "${SRC_DIR}/scripts/postinst" "${DEBIAN_DIR}/DEBIAN/"
 
+    chmod 755 "${DEBIAN_DIR}/DEBIAN/postinst"
+
     echo "##### Listing dest dir: ${DEBIAN_DIR}/DEBIAN/ ######"
     ls -lha "${DEBIAN_DIR}/DEBIAN/"
-
-    mount
 }
 
 create_debian_package()
