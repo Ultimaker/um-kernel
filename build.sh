@@ -361,11 +361,12 @@ insert_gpio_pin_definitions_scripts()
     ls -lha "${SRC_DIR}/scripts/"
     
     mkdir -p "${DEBIAN_DIR}/DEBIAN/"
-    cp -a "${SRC_DIR}/scripts/postinst" "${DEBIAN_DIR}/DEBIAN/"
+    cp "${SRC_DIR}/scripts/postinst" "${DEBIAN_DIR}/DEBIAN/"
 
     echo "##### Listing dest dir: ${DEBIAN_DIR}/DEBIAN/ ######"
     ls -lha "${DEBIAN_DIR}/DEBIAN/"
-    
+
+    mount
 }
 
 create_debian_package()
@@ -401,7 +402,7 @@ create_debian_package()
     DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}_${ARCH}.deb"
 
     # Build the Debian package
-    fakeroot dpkg-deb --build "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
+    dpkg-deb --build "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
 
     echo "Finished building Debian package."
     echo "To check the contents of the Debian package run 'dpkg-deb -c um-kernel*.deb'"
