@@ -402,7 +402,7 @@ create_debian_package()
     DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}_${ARCH}.deb"
 
     # Build the Debian package
-    dpkg-deb --build "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
+    fakeroot dpkg-deb --build "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
 
     echo "Finished building Debian package."
     echo "To check the contents of the Debian package run 'dpkg-deb -c um-kernel*.deb'"
