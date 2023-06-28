@@ -358,6 +358,7 @@ insert_gpio_pin_definitions_scripts()
 
     mkdir -p "${DEBIAN_DIR}/DEBIAN/"
     cp -a "${SRC_DIR}/scripts/postinst" "${DEBIAN_DIR}/DEBIAN/"
+    chmod 755 "${DEBIAN_DIR}/DEBIAN/postinst"
 }
 
 create_debian_package()
