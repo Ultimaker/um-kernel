@@ -347,6 +347,20 @@ dtb_build()
     echo "Finished building Device-trees."
 }
 
+insert_gpio_pin_definitions_scripts()
+{
+
+    mkdir -p "${DEBIAN_DIR}/usr/bin/"
+    cp "${SRC_DIR}/scripts/avr-gpio-start" "${DEBIAN_DIR}/usr/bin/"
+
+    mkdir -p "${DEBIAN_DIR}/etc/systemd/system/"
+    cp "${SRC_DIR}/scripts/rc.gpio.service" "${DEBIAN_DIR}/etc/systemd/system/"
+
+    mkdir -p "${DEBIAN_DIR}/DEBIAN/"
+    cp -a "${SRC_DIR}/scripts/postinst" "${DEBIAN_DIR}/DEBIAN/"
+    chmod 755 "${DEBIAN_DIR}/DEBIAN/postinst"
+}
+
 create_debian_package()
 {
     echo "Building Debian package."
@@ -448,6 +462,7 @@ fi
 if [ "${#}" -eq 0 ]; then
     kernel_build
     dtb_build
+    insert_gpio_pin_definitions_scripts
     create_debian_package
     exit 0
 fi
@@ -462,6 +477,7 @@ case "${1-}" in
     deb)
         kernel_build
         dtb_build
+        insert_gpio_pin_definitions_scripts
         create_debian_package
         ;;
     menuconfig)
