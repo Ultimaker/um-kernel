@@ -53,7 +53,7 @@
         MX8MM_IOMUXC_SAI3_RXFS_GPIO4_IO28       0x080 /* GPIO6 / IMXRT BootMode Enable*/       
         MX8MM_IOMUXC_SAI1_TXC_GPIO4_IO11        0x140 /* GPIO9 */
         MX8MM_IOMUXC_SAI1_TXFS_GPIO4_IO10       0x100 /* GPIO10 / U12 WRITE PROTECT */
-        MX8MM_IOMUXC_SAI1_MCLK_GPIO4_IO20       0x140 /* GPIO11 */
+        MX8MM_IOMUXC_SAI1_MCLK_GPIO4_IO20       0x080 /* GPIO11 */
         MX8MM_IOMUXC_SAI1_TXD3_GPIO4_IO15       0x140 /* PM_CHARGING# */
         MX8MM_IOMUXC_SAI1_TXD2_GPIO4_IO14       0x140 /* PM_CHARGER_PRSNT# */
         MX8MM_IOMUXC_SAI1_TXD4_GPIO4_IO16       0x140 /* BOOT_SEL0# */
@@ -154,9 +154,9 @@
 
 /* Set pin names for IMXRT control lines */
 &gpio4 {
-    gpio-line-names = "TCA6416A_nINT", "", "", "", "", "", "", "IMXRT_nReset", 
+    gpio-line-names = "TCA6416A_nINT", "", "", "", "", "", "", "RESET_OUT", 
                       "", "", "", "", "", "", "", "", 
-                      "", "", "", "", "", "", "", "", 
+                      "", "", "", "", "IMXRT_nReset", "", "", "", 
                       "", "", "", "", "IMXRT_BootMode_En", "SAFETY_ENABLED", "", "";
 };
 
