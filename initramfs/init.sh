@@ -13,6 +13,7 @@ UPDATE_IMG_MOUNT="/mnt/update_img"
 UPDATE_SRC_MOUNT="/mnt/update"
 ARTICLENR_USB_MOUNT="/mnt/usb"
 RESCUE_SHELL="no"
+FORCE_RESTORE_MODE="no"
 
 PREFIX="${PREFIX:-/usr/}"
 EXEC_PREFIX="${PREFIX}"
@@ -89,8 +90,8 @@ restart()
 restore_complete_loop()
 {
     while true; do
-    	echo "Restore complete, remove the recovery SD card and powercycle the printer."
-    	sleep 30s
+        echo "Restore complete, remove the recovery SD card and powercycle the printer."
+        sleep 30s
     done 
 }
 
@@ -220,7 +221,7 @@ check_and_set_article_number()
 find_and_run_update()
 {
     SOFTWARE_INSTALL_MODE="update"
-    if isBootingRestoreImage; then
+    if isBootingRestoreImage || [ "${FORCE_RESTORE_MODE}" = "yes" ]; then
         SOFTWARE_INSTALL_MODE="restore"
     fi
 
@@ -299,9 +300,9 @@ find_and_run_update()
             break
         fi
 
-    	# After restore do not remove the file and loop endlessly
-    	if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ]; then
-    	   restore_complete_loop
+        # After restore do not remove the file and loop endlessly
+        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ]; then
+           restore_complete_loop
         fi
 
         if ! rm "${update_tmpfs_mount}/${UPDATE_IMAGE:?}"; then
@@ -329,6 +330,9 @@ parse_cmdline()
         ;;
         rescue)
             RESCUE_SHELL="yes"
+        ;;
+        restore)
+            FORCE_RESTORE_MODE="yes"
         ;;
         ro)
             rwmode="ro"
