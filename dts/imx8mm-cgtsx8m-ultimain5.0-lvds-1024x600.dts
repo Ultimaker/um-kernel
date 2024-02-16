@@ -129,22 +129,22 @@
         nxp,totem-pole;
         nxp,inverted-out;
         nxp,hw-blink;
-        red@0 {
-            label = "red:cabin_light";
+        white4 {
+            label = "white4:cabin_light";
             reg = <0>;
-            linux,default-trigger = "none";
+            linux,default-trigger = "default-on";
         };
-        green@1 {
-            label = "green:cabin_light";
+        white3 {
+            label = "white3:cabin_light";
             reg = <1>;
-            linux,default-trigger = "none";
+            linux,default-trigger = "default-on";
         };
-        blue@2 {
-            label = "blue:cabin_light";
+        white2 {
+            label = "white2:cabin_light";
             reg = <2>;
-            linux,default-trigger = "none";
+            linux,default-trigger = "default-on";
         };
-        white@3 {
+        white {
             label = "white:cabin_light";
             reg = <3>;
             linux,default-trigger = "default-on";
