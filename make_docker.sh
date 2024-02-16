@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2021 Ultimaker B.V.
 
-set -eu
+set -eux
 
 # When releasing a new docker image, update the version below to match the one uploaded to cloudsmith
 DOCKER_IMAGE_RELEASED="v1"
@@ -40,9 +40,15 @@ run_in_docker()
 {
     set_docker_image_name_version
     echo "Running '${*}' in docker."
+    terminal_arg="-i";
+    if tty; then
+        terminal_arg="-it"        
+    fi;
+    echo "Terminal_arg: ->${terminal_arg}<-"
     docker run \
         --rm \
         --privileged \
+        "${terminal_arg}" \
         -u "$(id -u):$(id -g)" \
         -v "$(pwd):${DOCKER_WORK_DIR}" \
         -v /etc/localtime:/etc/localtime:ro \

@@ -126,7 +126,7 @@ case "${action}" in
         exit 0
         ;;
     build)
-        run_build "${FIRMWARE_TARGET}"
+        run_build
         exit 0
         ;;
     docker_build)
