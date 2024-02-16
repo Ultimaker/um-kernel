@@ -6,7 +6,7 @@ LABEL Maintainer="software-embedded-platform@ultimaker.com" \
 RUN apt-get update && \
     apt-get install -y \
         bc \
-	bison \
+    bison \
         bzip2 \
         curl \
         device-tree-compiler \
@@ -30,4 +30,4 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/cache/apt/*
 
-COPY buildenv_check.sh buildenv_check.sh
+COPY docker_env/buildenv_check.sh buildenv_check.sh

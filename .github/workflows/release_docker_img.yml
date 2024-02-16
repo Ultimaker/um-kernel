@@ -1,0 +1,56 @@
+name: Release a new docker image upon tagging
+
+on:
+  push:
+    tags:
+      - 'docker_img-v[0-9]+'
+      
+env:
+  DOCKER_IMAGE_NAME: "ghcr.io/ultimaker/um-kernel"
+  DOCKER_TAG_PREFIX: "docker_img-"
+  
+jobs:
+  Build:
+    name: 'Build and Release Docker Image'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.ULTIMAKER_CI_PAT }}
+          submodules: recursive
+         
+      - name: Build Docker Image
+        id: build
+        run: |
+          # Remove the tag prefix to make the version
+          export DOCKER_IMAGE_VERSION="${GITHUB_REF_NAME##${DOCKER_TAG_PREFIX}}"
+          export DOCKER_IMAGE_NAME
+          echo "DOCKER_IMAGE_NAME: ${DOCKER_IMAGE_NAME}"
+          echo "DOCKER_IMAGE_VERSION: ${DOCKER_IMAGE_VERSION}"
+          
+          # Just generate a new docker image, so pass action = none          
+          ./build_for_ultimaker.sh -a docker_build
+          docker images
+
+      - name: Login in GitHub Container Registry
+        id: ghcr_login
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+
+      - name: Release Docker Image to Github Packages
+        id: release
+        run: |
+          export DOCKER_IMAGE_VERSION="${GITHUB_REF_NAME##${DOCKER_TAG_PREFIX}}"
+          export DOCKER_IMAGE_NAME
+          echo "DOCKER_IMAGE_NAME: ${DOCKER_IMAGE_NAME}"
+          echo "DOCKER_IMAGE_VERSION: ${DOCKER_IMAGE_VERSION}"
+          docker push "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}"
+
+      - name: Dump GitHub context
+        if: ${{ always() }}
+        run: |
+          echo "${{ toJson(github) }}"
+          echo "${{ toJson(steps) }}"
+          echo "${{ toJson(runner) }}"
+

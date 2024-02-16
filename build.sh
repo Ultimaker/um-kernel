@@ -18,14 +18,11 @@ if [ "${CROSS_COMPILE}" == "" ]; then
 fi
 export CROSS_COMPILE="${CROSS_COMPILE}"
 
-if [ "${MAKEFLAGS}" == "" ]; then
-    echo -e -n "\e[1m"
-    echo "Makeflags not set, hint, to speed up compilation time, increase the number of jobs. For example:"
-    echo "MAKEFLAGS='-j 4' ${0}"
-    echo -e "\e[0m"
-fi
-
 set -eu
+
+cpu_cnt="$(nproc)"
+export MAKEFLAGS="-j ${cpu_cnt}"
+echo "Compiling with ${cpu_cnt} CPUs..."
 
 ARCH="${ARCH:-arm64}"
 UM_ARCH="imx8mm" # Empty string, or sun7i for R1, or imx6dl for R2, or imx8mm for Colorado
@@ -398,6 +395,8 @@ create_debian_package()
 
     # Build the Debian package
     fakeroot dpkg-deb --build "${DEBIAN_DIR}" "${BUILD_DIR}/${DEB_PACKAGE}"
+
+    cp "${BUILD_DIR}/${DEB_PACKAGE}" "${SRC_DIR}"
 
     echo "Finished building Debian package."
     echo "To check the contents of the Debian package run 'dpkg-deb -c um-kernel*.deb'"
