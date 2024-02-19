@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2021 Ultimaker B.V.
 
-set -eux
+set -eu
 
 # When releasing a new docker image, update the version below to match the one uploaded to cloudsmith
 DOCKER_IMAGE_RELEASED="v1"
@@ -40,11 +40,13 @@ run_in_docker()
 {
     set_docker_image_name_version
     echo "Running '${*}' in docker."
+    # In order to run local kernel config tools, like menuconfig, we need to attach a tty to the docker,
+    # but that will fail in CI. So we first check if we have a tty and then add the "-t" argument. The
+    # standart input attach ("-i") is safe to keep there, even in CI.
     terminal_arg="-i";
     if tty; then
         terminal_arg="-it"        
     fi;
-    echo "Terminal_arg: ->${terminal_arg}<-"
     docker run \
         --rm \
         --privileged \
