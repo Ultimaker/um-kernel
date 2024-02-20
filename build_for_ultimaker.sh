@@ -1,56 +1,29 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (C) 2020 Ultimaker B.V.
 #
 
 set -eu
 
-LOCAL_REGISTRY_IMAGE="um_kernel"
-
 ARCH="${ARCH:-arm64}"
-SRC_DIR="$(pwd)"
 PREFIX="/usr"
 RELEASE_VERSION="${RELEASE_VERSION:-999.999.999}"
 DOCKER_WORK_DIR="/build"
-BUILD_DIR_TEMPLATE="_build"
-BUILD_DIR="${BUILD_DIR_TEMPLATE}"
 
 INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 DEPMOD="${DEPMOD:-/sbin/depmod}"
 
+rebuild_docker="no"
 run_env_check="yes"
+run_shellcheck="yes"
 run_linters="yes"
 run_tests="yes"
-
-update_docker_image()
-{
-    echo "Building local Docker build environment."
-    docker build ./docker_env -t "${LOCAL_REGISTRY_IMAGE}"
-}
-
-run_in_docker()
-{
-    docker run \
-        --privileged \
-        --rm \
-        -it \
-        -u "$(id -u)" \
-        -e "BUILD_DIR=${DOCKER_WORK_DIR}/${BUILD_DIR}" \
-        -e "ARCH=${ARCH}" \
-        -e "PREFIX=${PREFIX}" \
-        -e "RELEASE_VERSION=${RELEASE_VERSION}" \
-        -e "INITRAMFS_SOURCE=${INITRAMFS_SOURCE}" \
-        -e "DEPMOD=${DEPMOD}" \
-        -e "MAKEFLAGS=-j$(($(getconf _NPROCESSORS_ONLN) - 1))" \
-        -v "${SRC_DIR}:${DOCKER_WORK_DIR}" \
-        -w "${DOCKER_WORK_DIR}" \
-        "${LOCAL_REGISTRY_IMAGE}" \
-        "${@}"
-}
+action="none"
 
 env_check()
 {
     run_in_docker "./docker_env/buildenv_check.sh"
+    return
 }
 
 run_build()
@@ -62,11 +35,6 @@ run_build()
     }
 
     run_in_docker "./build.sh" "${@}"
-}
-
-deliver_pkg()
-{
-    cp "${BUILD_DIR}/"*".deb" "./" 2> /dev/null
 }
 
 run_tests()
@@ -101,10 +69,16 @@ usage()
     echo "Run './build.sh -h' for more information."
 }
 
-while getopts ":chlt" options; do
+while getopts ":cdhlsta:" options; do
     case "${options}" in
+    a)
+        action="${OPTARG}"
+        ;;
     c)
         run_env_check="no"
+        ;;
+    d)
+        rebuild_docker="yes"
         ;;
     h)
         usage
@@ -112,6 +86,11 @@ while getopts ":chlt" options; do
         ;;
     l)
         run_linters="no"
+        ;;
+    s)
+        run_env_check="no"
+        run_linters="no"
+        run_tests="no"
         ;;
     t)
         run_tests="no"
@@ -128,27 +107,55 @@ while getopts ":chlt" options; do
 done
 shift "$((OPTIND - 1))"
 
-if ! command -V docker; then
+if ! command -V docker > /dev/null; then
     echo "Docker not found, docker-less builds are not supported."
     exit 1
 fi
 
-update_docker_image
+source ./make_docker.sh um-kernel
+
+if [[ "${rebuild_docker}" == "yes" || "${action}" == "docker_build" ]]; then
+    DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-um-kernel}"
+    DOCKER_IMAGE_VERSION="${DOCKER_IMAGE_VERSION:-latest}"
+    build_docker
+fi;
+
+case "${action}" in
+    shellcheck)
+        run_shellcheck
+        exit 0
+        ;;
+    build)
+        run_build
+        exit 0
+        ;;
+    docker_build)
+        exit 0
+        ;;
+    none)
+        ;;
+    ?)
+        echo "Invalid action: -${OPTARG}"
+        exit 1
+        ;;
+esac
 
 if [ "${run_env_check}" = "yes" ]; then
     env_check
 fi
 
+if [ "${run_shellcheck}" = "yes" ]; then
+    run_shellcheck
+fi
+    
 if [ "${run_linters}" = "yes" ]; then
     run_linters
 fi
-
-run_build "${@}"
 
 if [ "${run_tests}" = "yes" ]; then
     run_tests
 fi
 
-deliver_pkg
+run_build "${@}"
 
 exit 0

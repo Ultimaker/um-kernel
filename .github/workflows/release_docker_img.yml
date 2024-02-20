@@ -1,0 +1,16 @@
+name: Release a new docker image upon tagging
+
+on:
+  push:
+    tags:
+      - 'docker_img-v[0-9a-zA-Z]+'
+      
+ 
+jobs:
+  Release:
+    name: 'Release'
+    uses: Ultimaker/embedded-workflows/.github/workflows/release_docker_img.yml@main
+    with:
+      DOCKER_IMAGE_NAME: 'um-kernel'
+      DOCKER_TAG_PREFIX: 'docker_img-'
+    secrets: inherit
