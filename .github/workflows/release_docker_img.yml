@@ -3,7 +3,7 @@ name: Release a new docker image upon tagging
 on:
   push:
     tags:
-      - 'docker_img-v[0-9]+'
+      - 'docker_img-v[0-9a-zA-Z]+'
       
  
 jobs:
