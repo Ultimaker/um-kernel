@@ -150,6 +150,36 @@
             linux,default-trigger = "default-on";
         };
     };
+
+    cabin_light_2: pca9633@62 {
+        compatible = "nxp,pca9633";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        reg = <0x62>;
+        nxp,totem-pole;
+        nxp,inverted-out;
+        nxp,hw-blink;
+        white4 {
+            label = "white4:cabin_light";
+            reg = <0>;
+            linux,default-trigger = "default-on";
+        };
+        white3 {
+            label = "white3:cabin_light";
+            reg = <1>;
+            linux,default-trigger = "default-on";
+        };
+        white2 {
+            label = "white2:cabin_light";
+            reg = <2>;
+            linux,default-trigger = "default-on";
+        };
+        white {
+            label = "white:cabin_light";
+            reg = <3>;
+            linux,default-trigger = "default-on";
+        };
+    };
 };
 
 /* Set pin names for IMXRT control lines */
