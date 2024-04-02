@@ -207,17 +207,19 @@ check_and_set_eeprom_data()
     #   0x0100 - 0x0104     BOM number / article number
     #   ...
     #   0x0118 - 0x0120     Locked country code
+    #
+    # The primary location to record and use the addresses is the opinucus/libEeprom/mainBoard.py file.
 
     dev="/dev/sda1"
     article_number_file="${PROVISIONING_USB_MOUNT}/article_number"
     country_code_lock_file="${PROVISIONING_USB_MOUNT}/country_code_lock"
 
     # Get the article number from EEPROM
-    art_num=$(i2ctransfer -y 3 w2@0x57 0x01 0x00 r4)
+    art_num=$(i2ctransfer -y 1 w2@0x57 0x01 0x00 r4)
     echo "---> Article number read from EEPROM: >${art_num}<"
 
     # Get the country code lock from EEPROM
-    country_code_lock=$(i2ctransfer -y 3 w2@0x57 0x01 0x18 r2)
+    country_code_lock=$(i2ctransfer -y 1 w2@0x57 0x01 0x18 r2)
     echo "--> Country code lock read from EEPROM: >${country_code_lock}<"
 
     # Wait for the USB drive to become visible; max 5 seconds.
@@ -228,7 +230,7 @@ check_and_set_eeprom_data()
     done
 
     echo "Attempting to mount '${dev}'."
-    if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${PROVISIONING_USB_MOUNT}"; then
+    if ! mount -t f2fs,ext4,vfat,auto -o ro,exec,noatime "${dev}" "${PROVISIONING_USB_MOUNT}"; then
         return 0
     fi
 
@@ -236,7 +238,7 @@ check_and_set_eeprom_data()
         article_number="$(cat "${article_number_file}")"
         echo "Trying to write article nr: '${article_number}'."
         # shellcheck disable=SC2086
-        if ! i2ctransfer -y 3 w6@0x57 0x01 0x00 ${article_number}; then
+        if ! i2ctransfer -y 1 w6@0x57 0x01 0x00 ${article_number}; then
             echo "Failed to write article number to EEPROM, skipping."
         fi
     else
@@ -247,7 +249,7 @@ check_and_set_eeprom_data()
         country_code="$(cat "${country_code_lock_file}")"
         echo "Trying to write country code lock: '${country_code}'."
         # shellcheck disable=SC2086
-        if ! i2ctransfer -y 3 w4@0x57 0x01 0x18 ${country_code}; then
+        if ! i2ctransfer -y 1 w4@0x57 0x01 0x18 ${country_code}; then
             echo "Failed to write country code lock to EEPROM, skipping."
         fi
     else
