@@ -10,6 +10,9 @@ set -eu
 DOCKER_IMAGE_RELEASED="v1"
 DOCKER_IMAGE_CACHE="ghcr.io/ultimaker/um-kernel"
 
+# Creates a new docker driver named "ultimaker" if it doesnt exist yet.
+docker buildx create --name ultimaker --driver=docker-container 2> /dev/null || true
+
 set_docker_image_name_version()
 {
     DOCKER_IMAGE_NAME="${DOCKER_IMAGE_NAME:-${DOCKER_IMAGE_CACHE}}"
@@ -21,9 +24,11 @@ build_docker()
     set_docker_image_name_version
 
     echo "Building image ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}"
-    docker build --cache-from "${DOCKER_IMAGE_CACHE}" \
-                 --build-arg BUILDKIT_INLINE_CACHE=1 \
-                 -f docker_env/Dockerfile -t "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}" .
+    docker buildx build --builder ultimaker --load \
+            --cache-from "${DOCKER_IMAGE_CACHE}" \
+            --cache-to "${DOCKER_IMAGE_CACHE}" \
+            -f docker_env/Dockerfile \
+            -t "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}" .
 
     if ! docker run --rm --privileged "${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}" "./buildenv_check.sh"; then
         echo "Something is wrong with the build environment, please check your Dockerfile."
