@@ -18,7 +18,7 @@ To help with deciding if this PR is RFR, use this checklist.
 The author confirms that:
 - [ ] the author has **self-reviewed** this work and is highly confident about the quality
 - [ ] this work satisfies all **acceptance criteria** that are stated in the linked ticket
-- [ ] this work has been **tested** on all product families and the process and results are documented in the above section
+- [ ] this work has been **tested** on ALL product families, ALL potentially affected features and the process and results are documented in the above section
 - [ ] The **description** above is concise yet complete
 - [ ] the reviewer has been offered a **walkthrough** (if needed)
 - [ ] the code is **cleaned** from any rubbish (e.g. meaningless comments, log-spamming, etc...)
