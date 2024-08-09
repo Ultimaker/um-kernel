@@ -7,7 +7,7 @@
 &i2c2 {
     clock-frequency = <100000>;
     panel_touchscreen: ft5426@38 {
-        compatible = "edt,edt-ft5426;
+        compatible = "edt,edt-ft5426";
         reg = <0x38>;
         poll-interval = <10>;
         reset-gpios = <&panel_gpio 3 GPIO_ACTIVE_LOW>;
