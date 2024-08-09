@@ -7,14 +7,14 @@
 &i2c2 {
     clock-frequency = <100000>;
     panel_touchscreen: ft5426@38 {
-        compatible = "edt,edt-ft5406";
+        compatible = "edt,edt-ft5426";
         reg = <0x38>;
         poll-interval = <10>;
-        reset-gpios = <&panel_gpio 3 GPIO_ACTIVE_LOW>;
-        touchscreen-size-x = <1024>;
-        touchscreen-size-y = <600>;
-        touchscreen-inverted-x;
-        touchscreen-inverted-y;
+        reset-gpios = <&panel_gpio 0 GPIO_ACTIVE_LOW>;
+        touchscreen-min-size-x = <0>;
+        touchscreen-max-size-x = <800>;
+        touchscreen-min-size-y = <0>;
+        touchscreen-max-size-y = <320>;
     };
 
     panel_gpio: pca9536@41 {
