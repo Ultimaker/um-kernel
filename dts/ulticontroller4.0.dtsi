@@ -12,9 +12,9 @@
         poll-interval = <10>;
         reset-gpios = <&panel_gpio 3 GPIO_ACTIVE_LOW>;
         touchscreen-min-size-x = <0>;
-        touchscreen-size-x = <800>;
+        touchscreen-max-size-x = <800>;
         touchscreen-min-size-y = <0>;
-        touchscreen-size-y = <320>;
+        touchscreen-max-size-y = <320>;
     };
 
     panel_gpio: pca9536@41 {
