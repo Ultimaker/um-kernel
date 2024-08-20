@@ -16,17 +16,14 @@
         /delete-property/ lvds,use-uboot-settings; // will get replaced by dp props
         status = "okay";
 
-        i2c-edid = <&edid_eeprom>; // This will load the configuration from the EEPROM.
-
         /*
-           LVDS 1024x600@60Hz pixclock 51.2MHz
-           These settings will be ignored because 'i2c-edid' is defined, leaving them in for documentation
+           LVDS 800x320@60Hz pixclock 26.0MHz
         */
-        lvds,pixelclock = <51206400>;
-        lvds,hactive = <1024>;
-        lvds,vactive = <600>;
-        lvds,hfront_porch = <160>;
-        lvds,hback_porch = <160>;
+        lvds,pixelclock = <26000000>;
+        lvds,hactive = <800>;
+        lvds,vactive = <320>;
+        lvds,hfront_porch = <10>;
+        lvds,hback_porch = <10>;
         lvds,hsync_len = <10>; // Must be more then 1, number does not matter
         lvds,vfront_porch = <12>;
         lvds,vback_porch = <23>;
@@ -50,7 +47,7 @@
     fsl,pins = <
         MX8MM_IOMUXC_SAI3_RXC_GPIO4_IO29        0x080 /* GPIO4 / SAFETY_ENABLED (input) */
         MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1         0x100 /* GPIO7 / RESET_HUB*/
-        MX8MM_IOMUXC_SAI3_RXFS_GPIO4_IO28       0x080 /* GPIO6 / IMXRT BootMode Enable*/       
+        MX8MM_IOMUXC_SAI3_RXFS_GPIO4_IO28       0x080 /* GPIO6 / IMXRT BootMode Enable*/
         MX8MM_IOMUXC_SAI1_TXC_GPIO4_IO11        0x140 /* GPIO9 */
         MX8MM_IOMUXC_SAI1_TXFS_GPIO4_IO10       0x100 /* GPIO10 / U12 WRITE PROTECT */
         MX8MM_IOMUXC_SAI1_MCLK_GPIO4_IO20       0x080 /* GPIO11 */
@@ -87,10 +84,10 @@
                 MX8MM_IOMUXC_GPIO1_IO06_GPIO1_IO6       0x100 /* GPIO2 / CSI0 RST */
             >;
         };
-        
+
         pinctrl_i2c3_tca6416: i2c3_tca6416 {
             fsl,pins = <
-                MX8MM_IOMUXC_SAI1_RXFS_GPIO4_IO0        0x080 /* GPIO8 / U35 - TCA6416 INT */  
+                MX8MM_IOMUXC_SAI1_RXFS_GPIO4_IO0        0x080 /* GPIO8 / U35 - TCA6416 INT */
             >;
         };
     };
@@ -115,12 +112,12 @@
         interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
         gpio-controller;
         #gpio-cells = <2>;
-        gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_FAN_EN", "VCC5_FAN_OK", 
-                          "HDMI_PWR_EN", "HDMI_PWR_OK", "VCC5_PH_EN", "VCC5_PH_OK", 
-                          "VCC24_HP_PG", "VCC24_MOT_PG", "LVDS_PWR_EN", "LVDS_PWR_OK", 
+        gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_FAN_EN", "VCC5_FAN_OK",
+                          "HDMI_PWR_EN", "HDMI_PWR_OK", "VCC5_PH_EN", "VCC5_PH_OK",
+                          "VCC24_HP_PG", "VCC24_MOT_PG", "LVDS_PWR_EN", "LVDS_PWR_OK",
                           "SAFETY_BTN_STATUS", "SAFETY_RESET", "VCC24_PH_EN", "VCC24_MOT_EN";
     };
-    
+
     cabin_light: pca9632@61 {
         compatible = "nxp,pca9632";
         #address-cells = <1>;
@@ -184,9 +181,9 @@
 
 /* Set pin names for IMXRT control lines */
 &gpio4 {
-    gpio-line-names = "TCA6416A_nINT", "", "", "", "", "", "", "RESET_OUT", 
-                      "", "", "", "", "", "", "", "", 
-                      "", "", "", "", "IMXRT_nReset", "", "", "", 
+    gpio-line-names = "TCA6416A_nINT", "", "", "", "", "", "", "RESET_OUT",
+                      "", "", "", "", "", "", "", "",
+                      "", "", "", "", "IMXRT_nReset", "", "", "",
                       "", "", "", "", "IMXRT_BootMode_En", "SAFETY_ENABLED", "", "";
 };
 
@@ -229,4 +226,3 @@
        status = "disabled";
     };
 };
-
