@@ -30,21 +30,7 @@
         reg = <0x60>;
         nxp,totem-pole;
         nxp,hw-blink;
-        red@0 {
-            label = "red:panel_indicator";
-            reg = <0>;
-            linux,default-trigger = "none";
-        };
-        green@1 {
-            label = "green:panel_indicator";
-            reg = <1>;
-            linux,default-trigger = "none";
-        };
-        blue@2 {
-            label = "blue:panel_indicator";
-            reg = <2>;
-            linux,default-trigger = "none";
-        };
+
         panel_backlight: backlight@3 {
             label = "white:panel_backlight";
             reg = <3>;
@@ -57,4 +43,3 @@
         reg = <0x50>;
     };
 };
-
