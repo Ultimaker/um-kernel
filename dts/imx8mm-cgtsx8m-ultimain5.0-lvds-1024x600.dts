@@ -15,19 +15,23 @@
     lvdsbridge: sn65dsi84@2c {
         /delete-property/ lvds,use-uboot-settings; // will get replaced by dp props
         status = "okay";
-
         /*
            LVDS 800x320@60Hz pixclock 26.0MHz
         */
         lvds,pixelclock = <26000000>;
         lvds,hactive = <800>;
         lvds,vactive = <320>;
-        lvds,hfront_porch = <10>;
-        lvds,hback_porch = <10>;
-        lvds,hsync_len = <10>; // Must be more then 1, number does not matter
-        lvds,vfront_porch = <12>;
-        lvds,vback_porch = <23>;
-        lvds,vsync_len = <10>; // Must be more then 1, number does not matter
+
+        lvds,hfront_porch = <51>;
+        lvds,hback_porch = <0>;
+
+        lvds,hsync_len = <46>; // TODO: try 44
+
+        lvds,vfront_porch = <21>;
+        lvds,vback_porch = <178>;
+
+        lvds,vsync_len = <3>;
+
         lvds,color_depth = "rgb24";
         lvds,hsync_pol = <0>;
         lvds,vsync_pol = <0>;
