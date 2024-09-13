@@ -54,9 +54,11 @@
         };
     };
 
-    edid_eeprom: 24c02@50 { /* 24LC02B 2K Microchip EEPROM */
-        compatible = "microchip,24c02", "at24";
+    edid_eeprom: 24c32@50 {
+        // compatible = "24c32", "atmel,24c32";
+        compatible = "24c32";
         reg = <0x50>;
+        pagesize = <32>;
+        size = <4096>;  // 32Kb (4KB) EEPROM size
     };
 };
-

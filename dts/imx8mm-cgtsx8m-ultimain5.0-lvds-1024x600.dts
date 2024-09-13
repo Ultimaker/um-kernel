@@ -13,24 +13,20 @@
 &i2c4 {
     /* DSI-LVDS bridge */
     lvdsbridge: sn65dsi84@2c {
-        /delete-property/ lvds,use-uboot-settings; // will get replaced by dp props
+        /delete-property/ lvds,use-uboot-settings;
         status = "okay";
 
         i2c-edid = <&edid_eeprom>; // This will load the configuration from the EEPROM.
 
-        /*
-           LVDS 1024x600@60Hz pixclock 51.2MHz
-           These settings will be ignored because 'i2c-edid' is defined, leaving them in for documentation
-        */
         lvds,pixelclock = <51206400>;
         lvds,hactive = <1024>;
         lvds,vactive = <600>;
-        lvds,hfront_porch = <160>;
-        lvds,hback_porch = <160>;
-        lvds,hsync_len = <10>; // Must be more then 1, number does not matter
-        lvds,vfront_porch = <12>;
-        lvds,vback_porch = <23>;
-        lvds,vsync_len = <10>; // Must be more then 1, number does not matter
+        lvds,hfront_porch = <120>;
+        lvds,hback_porch = <120>;
+        lvds,hsync_len = <2>; // Must be more then 1, number does not matter
+        lvds,vfront_porch = <30>;
+        lvds,vback_porch = <180>;
+        lvds,vsync_len = <20>; // Must be more then 1, number does not matter
         lvds,color_depth = "rgb24";
         lvds,hsync_pol = <0>;
         lvds,vsync_pol = <0>;
@@ -229,4 +225,3 @@
        status = "disabled";
     };
 };
-
