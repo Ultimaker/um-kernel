@@ -335,7 +335,7 @@ dtb_build()
         cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
             -I "${LINUX_SRC_DIR}/include" -I "${LINUX_SRC_DIR}/arch/${ARCH}/boot/dts" \
             -o "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp" "dts/${dts}"
-        dtc -I dts -o "${BOOT_FILE_OUTPUT_DIR}/${dt}.dtb" -O dtb "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp"
+        dtc -@ -I dts -o "${BOOT_FILE_OUTPUT_DIR}/${dt}.dtb" -O dtb "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp"
     done
 
 
