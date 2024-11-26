@@ -44,7 +44,7 @@ LINUX_SRC_DIR="${SRC_DIR}/linux"
 BUILDCONFIG="sx8m"
 
 # Setup internal variables
-KCONFIG="${SRC_DIR}/configs/${BUILDCONFIG}_config"
+KCONFIG="${SRC_DIR}/configs/${BUILDCONFIG}_config_from_yocto"
 KERNEL_BUILD_DIR="${SRC_DIR}/_build/${BUILDCONFIG}-linux"
 KERNEL_IMAGE="uImage-${BUILDCONFIG}"
 DEBIAN_DIR="${BUILD_DIR}/debian"
