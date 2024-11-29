@@ -44,7 +44,7 @@ LINUX_SRC_DIR="${SRC_DIR}/linux"
 BUILDCONFIG="sx8m"
 
 # Setup internal variables
-KCONFIG="${SRC_DIR}/configs/${BUILDCONFIG}_config_from_yocto"
+KCONFIG="${SRC_DIR}/configs/${BUILDCONFIG}_config_from_yocto_with_extra_usb"
 KERNEL_BUILD_DIR="${SRC_DIR}/_build/${BUILDCONFIG}-linux"
 KERNEL_IMAGE="uImage-${BUILDCONFIG}"
 DEBIAN_DIR="${BUILD_DIR}/debian"
@@ -332,6 +332,7 @@ dtb_build()
         dts="$(basename "${dts}")"
         dt="${dts%.dts}"
         echo "Building devicetree blob '${dt}'"
+        echo "Using version of DTC: $(dtc --version)"
         cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
             -I "${LINUX_SRC_DIR}/include" -I "${LINUX_SRC_DIR}/arch/${ARCH}/boot/dts" \
             -o "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp" "dts/${dts}"
