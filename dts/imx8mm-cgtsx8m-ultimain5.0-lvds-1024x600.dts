@@ -5,14 +5,32 @@
 
 /dts-v1/;
 
-#include "congatec/imx8mm-cgtsx8m.dts"
+#include "congatec/imx8mm-cgtsx8m-lvds.dtsi"
+/*#include "congatec/imx8mm-cgtsx8m.dts"*/
 #include "ulticontroller4.0.dtsi"
+
+/ {
+        lvdspanel {
+
+                panel-timing {
+			clock-frequency = <51206400>;
+			hactive = <1024>;
+			vactive = <600>;
+			hsync-len = <2>;
+			hfront-porch = <120>;
+			hback-porch = <120>;
+			vsync-len = <20>;
+			vfront-porch = <30>;
+			vback-porch = <180>;
+                };
+        };
+};
 
 /* See Documentation/devicetree/bindings/video/display-timing.txt */
 /* HX8282-A11 1024x600@60Hz */
 &i2c4 {
     /* DSI-LVDS bridge */
-    lvdsbridge: sn65dsi84@2c {
+    lvds-bridge@2c {
         /delete-property/ lvds,use-uboot-settings; // will get replaced by dp props
         status = "okay";
 
@@ -25,12 +43,12 @@
         lvds,pixelclock = <51206400>;
         lvds,hactive = <1024>;
         lvds,vactive = <600>;
-        lvds,hfront_porch = <160>;
-        lvds,hback_porch = <160>;
-        lvds,hsync_len = <10>; // Must be more then 1, number does not matter
-        lvds,vfront_porch = <12>;
-        lvds,vback_porch = <23>;
-        lvds,vsync_len = <10>; // Must be more then 1, number does not matter
+        lvds,hfront_porch = <120>;
+        lvds,hback_porch = <120>;
+        lvds,hsync_len = <2>; // Must be more then 1, number does not matter
+        lvds,vfront_porch = <30>;
+        lvds,vback_porch = <180>;
+        lvds,vsync_len = <20>; // Must be more then 1, number does not matter
         lvds,color_depth = "rgb24";
         lvds,hsync_pol = <0>;
         lvds,vsync_pol = <0>;
