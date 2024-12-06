@@ -20,6 +20,7 @@ EXEC_PREFIX="${PREFIX}"
 SBINDIR="${EXEC_PREFIX}/sbin"
 
 EMMC_DEV="/dev/mmcblk2"
+BOOT_PARTITION="${EMMC_DEV}p1"
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
@@ -28,7 +29,7 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 #uc3 : UltiController 3 (S5,S5r2,S3)
 #uc4 : UltiController 4 (Colorado)
 DISPLAY_TYPE="uc4"
-UM_SPLASH="/SplashUM.fb"
+UM_SPLASH="umsplash.fb"
 FB_DEVICE="/dev/fb0"
 
 
@@ -92,7 +93,7 @@ restore_complete_loop()
     while true; do
         echo "Restore complete, remove the recovery SD card and powercycle the printer."
         sleep 30s
-    done 
+    done
 }
 
 rescue_shell()
@@ -164,20 +165,31 @@ set_display_splash()
 {
     echo "Setting display image."
 
-    splash_img="${UM_SPLASH}"
+    mkdir /boot
+    if ! mount -o ro "${BOOT_PARTITION}" /boot; then
+        echo "- Error mounting boot partition ${BOOT_PARTITION} at /boot"
+        rmdir /boot
+        return 0
+    fi;
+    echo "Mounted boot partition."
 
-    if [ -f "${splash_img}" ] && [ -c "${FB_DEVICE}" ]; then
-        cat "${splash_img}" > "${FB_DEVICE}" || true
+    echo "Sending picture to framebuffer..."
+    if [ -f "/boot/${UM_SPLASH}" ] && [ -c "${FB_DEVICE}" ]; then
+        cat "/boot/${UM_SPLASH}" > "${FB_DEVICE}" || true
     else
-        echo "Unable to output image: '${splash_img}' to: '${FB_DEVICE}'."
+        echo "Unable to output image: '/boot/${UM_SPLASH}' to: '${FB_DEVICE}'."
     fi
+
+    echo "Unmounting boot partition..."
+    umount /boot
+    rmdir /boot
 }
 
 isBootingRestoreImage()
 {
     # The partition label 'recovery_data' is an interface between, the recover image creator and executor,
     # i.e. jedi-build and um-kernel initrd.
-    findfs LABEL=recovery_data 
+    findfs LABEL=recovery_data
 }
 
 check_and_set_eeprom_data()
