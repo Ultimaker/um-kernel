@@ -259,8 +259,9 @@ kernel_build()
     # we can add the required Kernel modules to initramfs
     initramfs_add_modules
     # Build the uImage file for a bootable kernel
-    kernel_build_command LOADADDR=0x40480000 Image
 
+    kernel_build_command LOADADDR=0x40480000 Image
+    
     # Install Kernel image
 
     if [ -d "${BOOT_FILE_OUTPUT_DIR}" ] && [ -z "${BOOT_FILE_OUTPUT_DIR##*_build*}" ]; then
@@ -296,6 +297,7 @@ kernel_modules_install()
 
     if ! "${DEPMOD}" -ab "${DEBIAN_DIR}" "${KERNEL_RELEASE}"; then
         echo "Error, failed to generate module dependencies."
+        exit 1
     fi
 
     echo "Finished installing Kernel modules."
