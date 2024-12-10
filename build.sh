@@ -50,13 +50,20 @@ KERNEL_IMAGE="uImage-${BUILDCONFIG}"
 DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 
+# Init RAM FS definitions
+INITRAMFS_MODULES_REQUIRED="loop.ko"
+INITRAMFS_SRC_DIR="${SRC_DIR}/initramfs"
+INITRAMFS_DST_DIR="${KERNEL_BUILD_DIR}/initramfs"
+INITRAMFS_MODULES_DIR="${KERNEL_BUILD_DIR}/initramfs/lib/modules"
+INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
+INITRAMFS_DEST="${INITRAMFS_DST_DIR}/$(basename "${INITRAMFS_SOURCE}")"
+
 # We need freescale proprietary DMA drivers for the UART they are binary blobs in the Linux mainline
 # They can be found in git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
 PROPRIETARY_FIRMWARE_DIR="${SRC_DIR}/proprietary_firmware"
 PROPRIETARY_FIRMWARE_OUTPUT_DIR="${DEBIAN_DIR}/lib/firmware"
+PROPRIETARY_FIRMWARE_INITRAMFS_DIR="${INITRAMFS_DST_DIR}/lib/firmware"
 
-INITRAMFS_MODULES_REQUIRED="loop.ko"
-INITRAMFS_SOURCE="${INITRAMFS_SOURCE:-initramfs/initramfs.lst}"
 
 BB_VERSION="1.31.0"
 BB_URL="https://busybox.net/downloads/busybox-${BB_VERSION}.tar.bz2"
@@ -205,11 +212,6 @@ initramfs_prepare()
 {
     echo "Preparing initramfs."
 
-    INITRAMFS_SRC_DIR="${SRC_DIR}/initramfs"
-    INITRAMFS_DST_DIR="${KERNEL_BUILD_DIR}/initramfs"
-    INITRAMFS_MODULES_DIR="${KERNEL_BUILD_DIR}/initramfs/lib/modules"
-    INITRAMFS_DEST="${INITRAMFS_DST_DIR}/$(basename "${INITRAMFS_SOURCE}")"
-
     if [ -d "${INITRAMFS_DST_DIR}" ]; then
         rm -rf "${INITRAMFS_DST_DIR}"
     fi
@@ -251,6 +253,8 @@ kernel_build()
 
     # Prepare the initramfs 1st time
     initramfs_prepare
+    # Copy the proprietary dma firmware before building the kernel so it endup in the initramfs
+    copy_dma_firmware
     # Configure the kernel
     kernel_build_command
     # Build the Kernel modules and generate dependency list
@@ -258,8 +262,7 @@ kernel_build()
     # New that all modules have been build and the dependency file is properly generated,
     # we can add the required Kernel modules to initramfs
     initramfs_add_modules
-    # Build the uImage file for a bootable kernel
-
+    # Here we need to rebuild the kernel Image to include the updated initramfs with kernel modules
     kernel_build_command LOADADDR=0x40480000 Image
     
     # Install Kernel image
@@ -349,12 +352,14 @@ dtb_build()
 # We can choose not to use it and configure it differently in the device-tree.
 copy_dma_firmware()
 {
-    if [ ! -d "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma" ]; then
-        mkdir -p "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma"
-    fi
+    mkdir -p "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma"
+    mkdir -p "${PROPRIETARY_FIRMWARE_INITRAMFS_DIR}/imx/sdma"
     
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx7d.bin" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx6q.bin" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"
+
+    cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx7d.bin" "${INITRAMFS_DST_DIR}"
+    cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx6q.bin" "${INITRAMFS_DST_DIR}"
 }
 
 create_debian_package()
@@ -451,7 +456,6 @@ fi
 if [ "${#}" -eq 0 ]; then
     kernel_build
     dtb_build
-    copy_dma_firmware
     create_debian_package
     exit 0
 fi
@@ -460,7 +464,6 @@ case "${1-}" in
     deb)
         kernel_build
         dtb_build
-        copy_dma_firmware
         create_debian_package
         ;;
     dtbs)
