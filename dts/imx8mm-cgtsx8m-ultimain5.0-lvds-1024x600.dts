@@ -97,20 +97,18 @@
 /* 0x000 -- pull-off,  CMOS, no-OD, slow, X1 */
 
 &iomuxc {
-    Ultiboard50 {
-        pinctrl_leds_1: ledsgrp-1 {
-            fsl,pins = <
-                MX8MM_IOMUXC_SPDIF_TX_GPIO5_IO3         0x100 /* GPIO1 / CSI1 PWR */
-                MX8MM_IOMUXC_SPDIF_EXT_CLK_GPIO5_IO5    0x100 /* GPIO3 / CSI1 RST */
-                MX8MM_IOMUXC_GPIO1_IO06_GPIO1_IO6       0x100 /* GPIO2 / CSI0 RST */
-            >;
-        };
-        
-        pinctrl_i2c3_tca6416: i2c3_tca6416 {
-            fsl,pins = <
-                MX8MM_IOMUXC_SAI1_RXFS_GPIO4_IO0        0x080 /* GPIO8 / U35 - TCA6416 INT */  
-            >;
-        };
+    pinctrl_leds_1: ledsgrp-1 {
+        fsl,pins = <
+            MX8MM_IOMUXC_SPDIF_TX_GPIO5_IO3         0x100 /* GPIO1 / CSI1 PWR */
+            MX8MM_IOMUXC_SPDIF_EXT_CLK_GPIO5_IO5    0x100 /* GPIO3 / CSI1 RST */
+            MX8MM_IOMUXC_GPIO1_IO06_GPIO1_IO6       0x100 /* GPIO2 / CSI0 RST */
+        >;
+    };
+    
+    pinctrl_i2c3_tca6416: i2c3_tca6416 {
+        fsl,pins = <
+            MX8MM_IOMUXC_SAI1_RXFS_GPIO4_IO0        0x080 /* GPIO8 / U35 - TCA6416 INT */  
+        >;
     };
 };
 
