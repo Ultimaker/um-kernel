@@ -32,3 +32,10 @@ file    /init           initramfs/init.sh       0755 0 0
 
 # splash screen
 file    /SplashUM.fb    initramfs/SplashUM.fb   0755 0 0
+
+dir     /lib                                                              0755 0 0
+dir     /lib/firmware                                                     0755 0 0
+dir     /lib/firmware/imx                                                 0755 0 0
+dir     /lib/firmware/imx/sdma                                            0755 0 0
+file    /lib/firmware/imx/sdma/sdma-imx6q.bin   initramfs/sdma-imx6q.bin  0755 0 0
+file    /lib/firmware/imx/sdma/sdma-imx7d.bin   initramfs/sdma-imx7d.bin  0755 0 0
