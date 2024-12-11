@@ -7389,20 +7389,20 @@ CONFIG_INTERCONNECT_IMX8MQ=m
 #
 # MXC support drivers
 #
-CONFIG_MXC_SIM=y
+CONFIG_MXC_SIM=m
 # CONFIG_MXC_IPU is not set
 
 #
 # MXC Vivante GPU support
 #
-CONFIG_MXC_GPU_VIV=y
+CONFIG_MXC_GPU_VIV=m
 # end of MXC Vivante GPU support
 
 #
 # MXC SIM Support
 #
 # CONFIG_MXC_SIMv2 is not set
-CONFIG_MXC_EMVSIM=y
+CONFIG_MXC_EMVSIM=m
 # end of MXC SIM Support
 
 #
@@ -7424,44 +7424,44 @@ CONFIG_MXC_EMVSIM=y
 #
 # MXC HANTRO(Video Processing Unit) support
 #
-CONFIG_MXC_HANTRO=y
+CONFIG_MXC_HANTRO=m
 # end of MXC HANTRO(Video Processing Unit) support
 
 #
 # MXC HANTRO(Video Processing Unit) 845 support
 #
-CONFIG_MXC_HANTRO_845=y
+CONFIG_MXC_HANTRO_845=m
 # end of MXC HANTRO(Video Processing Unit) 845 support
 
 #
 # MXC HANTRO(Video Processing Unit) encoder support
 #
-CONFIG_MXC_HANTRO_845_H1=y
+CONFIG_MXC_HANTRO_845_H1=m
 # end of MXC HANTRO(Video Processing Unit) encoder support
 
 #
 # MXC HANTRO(Video Processing Unit) VC8000E encoder support
 #
-CONFIG_MXC_HANTRO_VC8000E=y
+CONFIG_MXC_HANTRO_VC8000E=m
 # end of MXC HANTRO(Video Processing Unit) VC8000E encoder support
 
 #
 # MXC HANTRO(Video Processing Unit) V4L2 support
 #
-CONFIG_MXC_HANTRO_V4L2=y
+CONFIG_MXC_HANTRO_V4L2=m
 # end of MXC HANTRO(Video Processing Unit) V4L2 support
 
 #
 # MXC VPU(Video Processing Unit) MALONE DECODER support
 #
-CONFIG_MXC_VPU_MALONE=y
+CONFIG_MXC_VPU_MALONE=m
 # CONFIG_MXC_VPU_MALONE_DEBUG is not set
 # end of MXC VPU(Video Processing Unit) MALONE DECODER support
 
 #
 # MXC VPU(Video Processing Unit) WINDSOR ENCODER support
 #
-CONFIG_MXC_VPU_WINDSOR=y
+CONFIG_MXC_VPU_WINDSOR=m
 # CONFIG_MXC_VPU_WINDSOR_DEBUG is not set
 # end of MXC VPU(Video Processing Unit) WINDSOR ENCODER support
 
