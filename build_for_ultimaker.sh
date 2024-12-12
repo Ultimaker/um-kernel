@@ -28,11 +28,24 @@ env_check()
 
 run_build()
 {
-    git submodule update --init --recursive || {
-        git submodule deinit --all -f
-        rm -rf .git/modules
-        git submodule update --init --recursive --depth 1
-    }
+    # If the submodules are not initialized, do it now. 
+
+    # List the path of non initialized submodules:
+    non_init_submodules=$(git submodule status | grep '^-' | awk '{print $2}')
+
+    # If the list is not empty, intialize them:
+    if [ -n "${non_init_submodules}" ]; then
+        for submodule in ${non_init_submodules}; do
+            git submodule update --init --recursive "${submodule}"
+        done
+    fi
+
+    # Warn about submodules in a different commit:
+    different_commit_submodules=$(git submodule status | grep '^+' | awk '{print $2}')
+    if [ -n "${different_commit_submodules}" ]; then
+        echo "#######  WARNING: The following submodules are checkedout in a different commit: #########"
+        echo "${different_commit_submodules}"
+    fi
 
     run_in_docker "./build.sh" "${@}"
 }
