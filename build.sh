@@ -352,14 +352,20 @@ dtb_build()
 # We can choose not to use it and configure it differently in the device-tree.
 copy_dma_firmware()
 {
-    mkdir -p "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma"
-    mkdir -p "${PROPRIETARY_FIRMWARE_INITRAMFS_DIR}/imx/sdma"
-    
-    cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx7d.bin" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"
-    cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx6q.bin" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"
+    echo "Copying proprietary firmware."
 
+    # Ensure the output directory exists
+    mkdir -p "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}"
+    mkdir -p "${PROPRIETARY_FIRMWARE_INITRAMFS_DIR}/imx/sdma"
+
+    # Copy all directories and files under proprietary_firmware to the output directory
+    rsync -av --exclude 'Readme.md' "${PROPRIETARY_FIRMWARE_DIR}/" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/"
+    
+    # Copy specific proprietary firmware to the initramfs dir too
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx7d.bin" "${INITRAMFS_DST_DIR}"
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx6q.bin" "${INITRAMFS_DST_DIR}"
+
+    echo "Finished copying proprietary firmware."
 }
 
 create_debian_package()
