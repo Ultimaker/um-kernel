@@ -23,6 +23,7 @@ RUN apt-get update && \
         ncurses-dev \
         openssh-client \
         perl \
+        rsync \
         u-boot-tools \
         wget \
         xz-utils \
