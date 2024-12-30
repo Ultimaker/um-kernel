@@ -25,10 +25,13 @@ BOOT_PARTITION="${EMMC_DEV}p1"
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 
+
 #uc2 : UltiController 2 (UM3,UM3E) This UltiController is not considered here anymore
 #uc3 : UltiController 3 (S5,S5r2,S3)
 #uc4 : UltiController 4 (Colorado)
-DISPLAY_TYPE="uc4"
+UC4_BOM_1="0x00 0x03 0x78 0x34"
+UC4_BOM_2="0x00 0x00 0x29 0x04"
+DISPLAY_TYPE="uc3"
 UM_SPLASH="umsplash.fb"
 FB_DEVICE="/dev/fb0"
 
@@ -346,7 +349,17 @@ find_and_run_update()
             echo "Warning: unable to unmount '${UPDATE_IMG_MOUNT}'."
         fi
 
-        echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute."
+
+        # Check which display type we need depended on the article number
+        art_num=$(i2ctransfer -y 1 w2@0x57 0x01 0x00 r4)
+        echo "---> Article number read from EEPROM: >${art_num}<"
+
+        # Check if the article number matches any of the UC_4 article numbers
+        if [ "$art_num" = "$UC4_BOM_1" ] || [ "$art_num" = "$UC4_BOM_2" ]; then
+            DISPLAY_TYPE="uc4"
+        fi
+
+        echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute, with DISPLAY_TYPE=${DISPLAY_TYPE}."
         if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${EMMC_DEV}" "${DISPLAY_TYPE}" "${SOFTWARE_INSTALL_MODE}"; then
             echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${EMMC_DEV} ${DISPLAY_TYPE} ${SOFTWARE_INSTALL_MODE}'."
             critical_error
