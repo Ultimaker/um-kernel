@@ -6,26 +6,11 @@
 /dts-v1/;
 
 #include "congatec/imx8mm-cgtsx8m-lvds.dtsi"
-/*#include "congatec/imx8mm-cgtsx8m.dts"*/
 #include "ulticontroller4.0.dtsi"
 
-/ {
-        lvdspanel {
-
-                panel-timing {
-			clock-frequency = <51206400>;
-			hactive = <1024>;
-			vactive = <600>;
-			hsync-len = <2>;
-			hfront-porch = <120>;
-			hback-porch = <120>;
-			vsync-len = <20>;
-			vfront-porch = <30>;
-			vback-porch = <180>;
-                };
-        };
-};
-
+/* We do not use the Video Processing Units, so let's disable them.
+   That prevents multiple enumeration of /dev/videoX devices for
+   the camera */
 &vpu_g1 {
 	status = "disabled";
 };
@@ -42,36 +27,6 @@
 	status = "disabled";
 };
 
-
-/* See Documentation/devicetree/bindings/video/display-timing.txt */
-/* HX8282-A11 1024x600@60Hz */
-&i2c4 {
-    /* DSI-LVDS bridge */
-    lvds-bridge@2c {
-        /delete-property/ lvds,use-uboot-settings; // will get replaced by dp props
-        status = "okay";
-
-        i2c-edid = <&edid_eeprom>; // This will load the configuration from the EEPROM.
-
-        /*
-           LVDS 1024x600@60Hz pixclock 51.2MHz
-           These settings will be ignored because 'i2c-edid' is defined, leaving them in for documentation
-        */
-        lvds,pixelclock = <51206400>;
-        lvds,hactive = <1024>;
-        lvds,vactive = <600>;
-        lvds,hfront_porch = <120>;
-        lvds,hback_porch = <120>;
-        lvds,hsync_len = <2>; // Must be more then 1, number does not matter
-        lvds,vfront_porch = <30>;
-        lvds,vback_porch = <180>;
-        lvds,vsync_len = <20>; // Must be more then 1, number does not matter
-        lvds,color_depth = "rgb24";
-        lvds,hsync_pol = <0>;
-        lvds,vsync_pol = <0>;
-        lvds,datamap = "spwg";
-    };
-};
 
 /* Remove pins used in Ultiboard 5 from generic GPIOs pinctrl settings of imx8mm. */
 &pinctrl_gpio1 {
@@ -162,22 +117,22 @@
         nxp,totem-pole;
         nxp,inverted-out;
         nxp,hw-blink;
-        white4 {
+        white4@0 {
             label = "white4:cabin_light";
             reg = <0>;
             linux,default-trigger = "default-on";
         };
-        white3 {
+        white3@1 {
             label = "white3:cabin_light";
             reg = <1>;
             linux,default-trigger = "default-on";
         };
-        white2 {
+        white2@2 {
             label = "white2:cabin_light";
             reg = <2>;
             linux,default-trigger = "default-on";
         };
-        white {
+        white@3 {
             label = "white:cabin_light";
             reg = <3>;
             linux,default-trigger = "default-on";
@@ -192,22 +147,22 @@
         nxp,totem-pole;
         nxp,inverted-out;
         nxp,hw-blink;
-        white4 {
+        white4@0 {
             label = "white4:cabin_light";
             reg = <0>;
             linux,default-trigger = "default-on";
         };
-        white3 {
+        white3@1 {
             label = "white3:cabin_light";
             reg = <1>;
             linux,default-trigger = "default-on";
         };
-        white2 {
+        white2@2 {
             label = "white2:cabin_light";
             reg = <2>;
             linux,default-trigger = "default-on";
         };
-        white {
+        white@3 {
             label = "white:cabin_light";
             reg = <3>;
             linux,default-trigger = "default-on";
