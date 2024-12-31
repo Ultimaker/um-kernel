@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# This script reads the article number file for the list of article numbers
+# and tries to match the *first* article number in the list below.
+# Then it creates a symbolic link for that article number to the
+# correspondent device tree file.
+
+ARTNUM_FILE="/etc/ultimaker_firmware"
+
+TARGET_DTS="cgtsx8m-ultimain5.dtb"
+UC32_DTS="ulticontroller3.2-lvds-800x320.dtb"
+UC4_DTS="ulticontroller4.0-lvds-1024x600.dtb"
+
+# During the bootstrap configuration stage, if the kernel is configured
+# before the mawk package, there will be no awk link pointing to the
+# mawk binary, so below we need to specify the correct binary.
+
+first_article_number=$(mawk '/^article_numbers:/ {print $2}' ${ARTNUM_FILE})
+
+echo "-> Recipe's first article number: ${first_article_number}"
+
+case "${first_article_number}" in
+    10600|10700)
+        echo "-> Setting Ulticontroller 3.2 LVDS device tree."
+        ln -sf "${UC32_DTS}" "/boot/${TARGET_DTS}"
+        ;;
+    227380|10500)
+        echo "-> Setting Ulticontroller 4.0 LVDS device tree."
+        ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
+        ;;
+# Fallback to the larger screen
+    *)
+        echo "-> Falling back to Ulticontroller 4.0 LVDS device tree."
+        ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
+        ;;
+esac
+
+
+

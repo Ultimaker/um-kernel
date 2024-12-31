@@ -3,6 +3,8 @@
  * Copyright (C) 2020 - Raymond Siudak <raysiudak@gmail.com>
 */
 
+#include "ultimainboard5-lvds.dtsi"
+
 / {
     lvdspanel {
         panel-timing {

@@ -6,7 +6,6 @@
 /dts-v1/;
 
 #include "congatec/imx8mm-cgtsx8m-lvds.dtsi"
-#include "ulticontroller4.0.dtsi"
 
 /* We do not use the Video Processing Units, so let's disable them.
    That prevents multiple enumeration of /dev/videoX devices for
