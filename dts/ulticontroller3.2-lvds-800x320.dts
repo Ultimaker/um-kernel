@@ -1,0 +1,65 @@
+/*
+ * Copyright (C) 2020 - Ultimaker B.V.
+ * Copyright (C) 2020 - Raymond Siudak <raysiudak@gmail.com>
+*/
+
+#include "ultimainboard5-lvds.dtsi"
+
+/ {
+    lvdspanel {
+        panel-timing {
+            clock-frequency = <25820000>;
+            hactive = <800>;
+            vactive = <320>;
+            hsync-len = <46>;
+            hfront-porch = <4>;
+            hback-porch = <47>;
+            vsync-len = <3>;
+            vfront-porch = <15>;
+            vback-porch = <184>;
+        };
+    };
+};
+
+&i2c2 {
+    clock-frequency = <100000>;
+    panel_touchscreen: ft5426@38 {
+        compatible = "edt,edt-ft5406";
+        reg = <0x38>;
+        poll-interval = <30>;
+        reset-gpios = <&panel_gpio 0 GPIO_ACTIVE_LOW>;
+        touchscreen-size-x = <800>;
+        touchscreen-size-y = <320>;
+    };
+
+    panel_gpio: pca9570@24 {
+        compatible = "nxp,pca9570";
+        gpio-controller;
+        #gpio-cells = <2>;
+        reg = <0x24>;
+        gpio-line-names = "TOUCH_RST", "TOUCH_INT", "PWR_DWN", "ENABLE";
+    };
+
+    panel_lights: pca9632@60 {
+        compatible = "nxp,pca9632";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        reg = <0x60>;
+        nxp,totem-pole;
+        nxp,hw-blink;
+        panel_backlight: backlight@3 {
+            label = "white:panel_backlight";
+            reg = <3>;
+            linux,default-trigger = "default-on";
+        };
+    };
+
+    edid_eeprom: 24c32@50 { /* 24LC02B 2K Microchip EEPROM */
+        // compatible = "24c32", "atmel,24c32";
+        compatible = "24c32";
+        reg = <0x50>;
+        pagesize = <32>;
+        size = <4096>;  // 32Kb (4KB) EEPROM size
+    };
+};
+

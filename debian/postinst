@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# This script reads the article number file for the list of article numbers
+# and tries to match the *first* article number in the list below.
+# Then it creates a symbolic link for that article number to the
+# correspondent device tree file.
+
+ARTNUM_FILE="/etc/ultimaker_firmware"
+
+TARGET_DTS="cgtsx8m-ultimain5.dtb"
+UC32_DTS="ulticontroller3.2-lvds-800x320.dtb"
+UC4_DTS="ulticontroller4.0-lvds-1024x600.dtb"
+
+# Get the first article number specified in the recipe and try a match
+# in the table below. Since this code also run during the bootstrap, we
+# don't have any other tool available besides the shell, so let's parse
+# the article number just using shell internal commands.
+
+#first_article_number=$(awk '/^article_numbers:/ {print $2}' ${ARTNUM_FILE})
+first_article_number=0
+
+# Reads the file line by line:
+while IFS= read -r line; do
+    # Checks if the line starts with "article_numbers: "
+    if [[ $line == article_numbers:* ]]; then
+        # Remove "article_numbers: " from the line
+        numbers="${line#article_numbers: }"
+        # Extract the first number
+        first_article_number="${numbers%% *}"
+        echo "First recipe article number: ${first_article_number}"
+        break
+    fi
+done < ${ARTNUM_FILE}
+
+case "${first_article_number}" in
+    10600|10700)
+        echo "Setting Ulticontroller 3.2 LVDS device tree."
+        ln -sf "${UC32_DTS}" "/boot/${TARGET_DTS}"
+        ;;
+    227380|10500)
+        echo "Setting Ulticontroller 4.0 LVDS device tree."
+        ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
+        ;;
+# Fallback to the larger screen
+    *)
+        echo "Falling back to Ulticontroller 4.0 LVDS device tree."
+        ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
+        ;;
+esac
+
+
+

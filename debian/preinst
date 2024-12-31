@@ -5,6 +5,21 @@
 # In that case, we should exit before try to mount.
 # This situation is realized by checking if the dropbear ssh service
 # is running - common situation when deploying new packages to the printer
+
+echo
+echo
+echo "#################################   /dev/    #########################################/n"
+echo
+ls -l /dev/
+echo
+echo
+echo "#################################   /proc/    #########################################/n"
+echo
+ls -l /proc
+echo
+echo
+
+
 if [ ! -r /run/sshd.pid ]; then
     exit 0
 fi;
