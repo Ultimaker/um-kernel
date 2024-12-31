@@ -336,7 +336,7 @@ dtb_build()
     for dts in "dts/"*".dts"; do
         dts="$(basename "${dts}")"
         dt="${dts%.dts}"
-        echo "Building devicetree blob '${dt}'"
+        echo -e "\nBuilding devicetree blob '${dt}'"
         echo "Using version of DTC: $(dtc --version)"
         cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
             -I "${LINUX_SRC_DIR}/include" -I "${LINUX_SRC_DIR}/arch/${ARCH}/boot/dts" \
@@ -345,7 +345,7 @@ dtb_build()
     done
 
 
-    echo "Finished building Device-trees."
+    echo -e "\nFinished building Device-trees.\n"
 }
 
 # We need this because the imx8m uart uses this.
@@ -404,6 +404,7 @@ create_debian_package()
         "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
         
     cp "${SRC_DIR}/debian/preinst" "${DEBIAN_DIR}/DEBIAN/"
+    cp "${SRC_DIR}/debian/postinst" "${DEBIAN_DIR}/DEBIAN/"
 
     DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}_${ARCH}.deb"
 
