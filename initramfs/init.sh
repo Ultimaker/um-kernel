@@ -27,7 +27,7 @@ UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 
 UM_SPLASH="umsplash.fb"
 FB_DEVICE="/dev/fb0"
-
+BOM_NUMBER="227380"
 
 BB_BIN="/bin/busybox"
 CMDS=" \
@@ -226,6 +226,15 @@ check_and_set_eeprom_data()
     art_num=$(i2ctransfer -y 1 w2@0x57 0x01 0x00 r4)
     echo "---> Article number read from EEPROM: >${art_num}<"
 
+    art_num_hex=""
+    for hex in $art_num; do
+        art_num_hex="${art_num_hex}${hex#0x}"  # Remove the "0x" prefix
+    done
+    BOM_NUMBER=$(printf "%d\n" "0x$art_num_hex")
+
+    echo "---> Article number in decimal: >${BOM_NUMBER}<"
+
+
     # Get the country code lock from EEPROM
     country_code_lock=$(i2ctransfer -y 1 w2@0x57 0x01 0x18 r2)
     echo "--> Country code lock read from EEPROM: >${country_code_lock}<"
@@ -342,24 +351,9 @@ find_and_run_update()
             echo "Warning: unable to unmount '${UPDATE_IMG_MOUNT}'."
         fi
 
-
-        # Read the article number from the I2C device
-        art_num=$(i2ctransfer -y 1 w2@0x57 0x01 0x00 r4)
-        echo "---> Article number read from EEPROM: >${art_num}<"
-
-        # Convert the hexadecimal article number to a single decimal number
-        # Assuming art_num is in the format "0x00 0x03 0x78 0x34"
-        art_num_hex=""
-        for hex in $art_num; do
-            art_num_hex="${art_num_hex}${hex#0x}"  # Remove the "0x" prefix
-        done
-        art_num_dec=$(printf "%d\n" "0x$art_num_hex")
-
-        echo "---> Article number in decimal: >${art_num_dec}<"
-
-        echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute, with art_num_dec=${art_num_dec}."
-        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${EMMC_DEV}" "${art_num_dec}" "${SOFTWARE_INSTALL_MODE}"; then
-            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${EMMC_DEV} ${art_num_dec} ${SOFTWARE_INSTALL_MODE}'."
+        echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute, with ${BOM_NUMBER}."
+        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${EMMC_DEV}" "${BOM_NUMBER}" "${SOFTWARE_INSTALL_MODE}"; then
+            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${EMMC_DEV} ${BOM_NUMBER} ${SOFTWARE_INSTALL_MODE}'."
             critical_error
             break
         fi
@@ -470,8 +464,8 @@ if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
 set_display_splash
-find_and_run_update
 check_and_set_eeprom_data
+find_and_run_update
 
 echo
 echo "INITRAMFS: Handing over to the main system:"
