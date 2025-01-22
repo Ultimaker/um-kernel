@@ -11,19 +11,19 @@
    That prevents multiple enumeration of /dev/videoX devices for
    the camera */
 &vpu_g1 {
-	status = "disabled";
+    status = "disabled";
 };
 
 &vpu_g2 {
-	status = "disabled";
+    status = "disabled";
 };
 
 &vpu_h1 {
-	status = "disabled";
+    status = "disabled";
 };
 
 &vpu_v4l2 {
-	status = "disabled";
+    status = "disabled";
 };
 
 
@@ -52,12 +52,33 @@
     >;
 };
 
+/* SEM-503: We need to connect the IMX8MM pad UART3_RXD and UART3_TXD to the GPIO5 controller,
+   removing them from the UART1 controller. So we need to re-define these pin control groups 
+   here, since it is not possible to delete a pin from a fsl,pin array */
+   
 &pinctrl_gpio5 {
     fsl,pins = <
         MX8MM_IOMUXC_SPDIF_RX_GPIO5_IO4         0x140 /* GPIO5 / PWMOUT */
+        MX8MM_IOMUXC_UART3_RXD_GPIO5_IO26       0x140 /* SER2_RTS# - Used for UMBus Drive Enable */
+        MX8MM_IOMUXC_UART3_TXD_GPIO5_IO27       0x140 /* SER2_CTS */
     >;
 };
 
+&pinctrl_uart1 {
+    fsl,pins = <
+        MX8MM_IOMUXC_UART1_RXD_UART1_DCE_RX	    0x140 /* Added by ticket SEM-503 */
+        MX8MM_IOMUXC_UART1_TXD_UART1_DCE_TX	    0x140 /* Added by ticket SEM-503 */
+    >;
+};
+
+&pinctrl_uart1_sleep {
+    fsl,pins = <
+        MX8MM_IOMUXC_UART1_RXD_GPIO5_IO22	    0x100 /* Added by ticket SEM-503 */
+        MX8MM_IOMUXC_UART1_TXD_GPIO5_IO23	    0x100 /* Added by ticket SEM-503 */
+    >;
+};
+
+    
 /* Add GPIOs pinctrl for Ultboard 5. */
 
 /* GPIO PAD setting */
@@ -177,6 +198,24 @@
                       "", "", "", "", "IMXRT_BootMode_En", "SAFETY_ENABLED", "", "";
 };
 
+&gpio5 {
+
+/* SEM-503: The IMX8MM UART3_RXD pad (SMARC P138) is connected to the UMBus Drive Enable pin. It should be connected to VCC5 in HW,
+   but up to now (2025-01-22) the current ultimainboard 5 still has it connected to wired to the SoM, without any specific
+   reason / purpose. So here we claim this pin as gpio-hog and set it to high level and then it cannot be changed in runtime */
+   
+    umbus_drive_enable_hog {
+        gpio-hog;
+        gpios = <26 GPIO_ACTIVE_HIGH>;
+        output-high;
+        line-name = "umbus_drive_en_hog";
+    };
+};
+
+&uart1 {
+/* SEM-503: Remove the rtscts property for the UART1 */
+    /delete-property/ fsl,uart-has-rtscts;
+};
 
 /* Ultimainboard J8 debug console. We cannot use DMA, it uses proprietary firmware drivers.  */
 &uart4 { /* SER1 */
