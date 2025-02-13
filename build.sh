@@ -40,13 +40,10 @@ RELEASE_VERSION="${RELEASE_VERSION:-999.999.999}"
 # Which kernel to build
 LINUX_SRC_DIR="${SRC_DIR}/linux"
 
-# Which kernel config to build.
-BUILDCONFIG="sx8m"
-
 # Setup internal variables
-KCONFIG="${SRC_DIR}/configs/${BUILDCONFIG}_config_from_yocto_with_extra_usb"
-KERNEL_BUILD_DIR="${SRC_DIR}/_build/${BUILDCONFIG}-linux"
-KERNEL_IMAGE="uImage-${BUILDCONFIG}"
+KCONFIG="${SRC_DIR}/configs/sx8m_revB_config"
+KERNEL_BUILD_DIR="${SRC_DIR}/_build/sx8m-linux"
+KERNEL_IMAGE="uImage-sx8m"
 DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 
