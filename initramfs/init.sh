@@ -20,7 +20,6 @@ EXEC_PREFIX="${PREFIX}"
 SBINDIR="${EXEC_PREFIX}/sbin"
 
 EMMC_DEV="/dev/mmcblk2"
-BOOT_PARTITION="${EMMC_DEV}p1"
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
