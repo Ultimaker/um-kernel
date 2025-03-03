@@ -25,7 +25,7 @@ BOOT_PARTITION="${EMMC_DEV}p1"
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
 
-UM_SPLASH="umsplash.fb"
+UM_SPLASH="/var/lib/splash_screen/umsplash.fb"
 FB_DEVICE="/dev/fb0"
 BOM_NUMBER="227380"
 
@@ -161,24 +161,12 @@ set_display_splash()
 {
     echo "Setting display image."
 
-    mkdir /boot
-    if ! mount -o ro "${BOOT_PARTITION}" /boot; then
-        echo "- Error mounting boot partition ${BOOT_PARTITION} at /boot"
-        rmdir /boot
-        return 0
-    fi;
-    echo "Mounted boot partition."
-
     echo "Sending picture to framebuffer..."
-    if [ -f "/boot/${UM_SPLASH}" ] && [ -c "${FB_DEVICE}" ]; then
-        cat "/boot/${UM_SPLASH}" > "${FB_DEVICE}" || true
+    if [ -f "${UM_SPLASH}" ] && [ -c "${FB_DEVICE}" ]; then
+        cat "${UM_SPLASH}" > "${FB_DEVICE}" || true
     else
-        echo "Unable to output image: '/boot/${UM_SPLASH}' to: '${FB_DEVICE}'."
+        echo "Unable to output image: '${UM_SPLASH}' to: '${FB_DEVICE}'."
     fi
-
-    echo "Unmounting boot partition..."
-    umount /boot
-    rmdir /boot
 }
 
 isBootingRestoreImage()
