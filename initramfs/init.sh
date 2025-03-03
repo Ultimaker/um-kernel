@@ -20,6 +20,7 @@ EXEC_PREFIX="${PREFIX}"
 SBINDIR="${EXEC_PREFIX}/sbin"
 
 EMMC_DEV="/dev/mmcblk2"
+SPLASH_SCREEN_PARTITION="${EMMC_DEV}p2"
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
@@ -156,16 +157,34 @@ boot_root()
     exec switch_root "${ROOT_MOUNT}" "${init}"
 }
 
+
 set_display_splash()
 {
     echo "Setting display image."
 
+    TMP_MOUNT="/splash"
+
+    # Mount the splash screen partition
+    if [ ! -d ${TMP_MOUNT} ]; then
+        mkdir -p "${TMP_MOUNT}"
+    fi
+
+    if ! mount -o ro "${SPLASH_SCREEN_PARTITION}" "${TMP_MOUNT}"; then
+        echo "- Error mounting splash screen partition ${SPLASH_SCREEN_PARTITION} at ${TMP_MOUNT}."
+        rmdir "${TMP_MOUNT}"
+        return 0
+    fi
+
     echo "Sending picture to framebuffer..."
-    if [ -f "${UM_SPLASH}" ] && [ -c "${FB_DEVICE}" ]; then
-        cat "${UM_SPLASH}" > "${FB_DEVICE}" || true
+    if [ -f "${TMP_MOUNT}/${UM_SPLASH}" ] && [ -c "${FB_DEVICE}" ]; then
+        cat "${TMP_MOUNT}/${UM_SPLASH}" > "${FB_DEVICE}" || true
     else
         echo "Unable to output image: '${UM_SPLASH}' to: '${FB_DEVICE}'."
     fi
+
+    # Unmount the splash screen partition
+    umount "${TMP_MOUNT}"
+    rmdir "${TMP_MOUNT}"
 }
 
 isBootingRestoreImage()
