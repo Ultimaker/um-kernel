@@ -9,6 +9,7 @@ set -eu
 
 ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
+RESTORE_TRIGGER_IMAGE="um-restore.swu"
 UPDATE_IMG_MOUNT="/mnt/update_img"
 UPDATE_SRC_MOUNT="/mnt/update"
 PROVISIONING_USB_MOUNT="/mnt/usb"
@@ -300,11 +301,17 @@ find_and_run_update()
             continue
         fi
 
-        if [ ! -r "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" ]; then
+        if [ ! -r "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" ] && [ ! -r "${UPDATE_SRC_MOUNT}/${RESTORE_TRIGGER_IMAGE}" ]; then
             umount "${dev}"
-            echo "No update image '${UPDATE_IMAGE}' found on '${dev}', trying next."
+            echo "No update image '${UPDATE_IMAGE}' or '${RESTORE_TRIGGER_IMAGE}' found on '${dev}', trying next."
             continue
         fi
+
+        # If there is a file to trigger the restore mode, rename it to update and set the restore flag
+        if [ -r "${UPDATE_SRC_MOUNT}/${RESTORE_TRIGGER_IMAGE}" ]; then
+            SOFTWARE_INSTALL_MODE="restore"
+            mv "${UPDATE_SRC_MOUNT}/${RESTORE_TRIGGER_IMAGE}" "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}"
+        fi;
 
         update_tmpfs_mount="$(mktemp -d)"
         echo "Found '${UPDATE_IMAGE}' on '${dev}', moving to tmpfs."
