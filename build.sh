@@ -48,7 +48,7 @@ DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 
 # Init RAM FS definitions
-INITRAMFS_MODULES_REQUIRED="loop.ko"
+INITRAMFS_MODULES_REQUIRED="loop.ko leds-pca963x.ko"
 INITRAMFS_SRC_DIR="${SRC_DIR}/initramfs"
 INITRAMFS_DST_DIR="${KERNEL_BUILD_DIR}/initramfs"
 INITRAMFS_MODULES_DIR="${KERNEL_BUILD_DIR}/initramfs/lib/modules"
@@ -261,7 +261,7 @@ kernel_build()
     initramfs_add_modules
     # Here we need to rebuild the kernel Image to include the updated initramfs with kernel modules
     kernel_build_command LOADADDR=0x40480000 Image
-    
+
     # Install Kernel image
 
     if [ -d "${BOOT_FILE_OUTPUT_DIR}" ] && [ -z "${BOOT_FILE_OUTPUT_DIR##*_build*}" ]; then
@@ -357,7 +357,7 @@ copy_dma_firmware()
 
     # Copy all directories and files under proprietary_firmware to the output directory
     rsync -av --exclude 'Readme.md' "${PROPRIETARY_FIRMWARE_DIR}/" "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/"
-    
+
     # Copy specific proprietary firmware to the initramfs dir too
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx7d.bin" "${INITRAMFS_DST_DIR}"
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx6q.bin" "${INITRAMFS_DST_DIR}"
@@ -399,7 +399,7 @@ create_debian_package()
         -e 's|@PACKAGE_NAME@|'"${PACKAGE_NAME}"'|g' \
         -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}"'|g' \
         "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
-        
+
     cp "${SRC_DIR}/debian/preinst" "${DEBIAN_DIR}/DEBIAN/"
     cp "${SRC_DIR}/debian/postinst" "${DEBIAN_DIR}/DEBIAN/"
 
@@ -472,7 +472,7 @@ case "${1-}" in
         ;;
     dtbs)
         dtb_build
-        ;;        
+        ;;
     kernel)
         kernel_build
         ;;

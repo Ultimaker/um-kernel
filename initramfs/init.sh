@@ -467,12 +467,22 @@ busybox_setup()
     "${BB_BIN}" --install -s
 }
 
+load_kernel_modules()
+{
+    for file in /lib/modules/*/*.ko; do
+        basename="${file##*/}";  # Remove the full path
+        filename="${basename%.*}";  # Remove the extension. 
+        modprobe "${filename}";
+    done;
+}
+
 trap critical_error EXIT
 
 busybox_setup
 toolcheck
 kernel_mount
 parse_cmdline
+load_kernel_modules
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
