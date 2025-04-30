@@ -286,6 +286,7 @@ check_and_set_eeprom_data()
 find_and_run_update()
 {
     SOFTWARE_INSTALL_MODE="update"
+    FORCE_REBOOT_AFTER_UPDATE="no"
     if isBootingRestoreImage || [ "${FORCE_RESTORE_MODE}" = "yes" ]; then
         SOFTWARE_INSTALL_MODE="restore"
     fi
@@ -310,6 +311,7 @@ find_and_run_update()
         # If there is a file to trigger the restore mode, rename it to update and set the restore flag
         if [ -r "${UPDATE_SRC_MOUNT}/${RESTORE_TRIGGER_IMAGE}" ]; then
             SOFTWARE_INSTALL_MODE="restore"
+            FORCE_REBOOT_AFTER_UPDATE="yes"  # We can reboot after the update since there is no sd card inserted.
             mv "${UPDATE_SRC_MOUNT}/${RESTORE_TRIGGER_IMAGE}" "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}"
         fi;
 
@@ -372,7 +374,7 @@ find_and_run_update()
         fi
 
         # After restore do not remove the file and loop endlessly
-        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ]; then
+        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
            restore_complete_loop
         fi
 
