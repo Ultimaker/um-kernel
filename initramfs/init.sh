@@ -95,6 +95,7 @@ restore_complete_loop()
 
 rescue_shell()
 {
+    sleep 1  # Wait some kernel message to show up so we don't mess the beautiful robot bellow
     set +eu
     ${BB_BIN} echo ""
     ${BB_BIN} echo "##################################################"
@@ -447,6 +448,25 @@ kernel_mount()
     mount -t sysfs      -o nodev,noexec,nosuid  sysfs   /sys
 }
 
+# The S6/S8 mainboard has a hardware issue related to the way the Microchip USB Hub 2514B is wired. As of 2025-04-30,
+# the exact cause is still under investigation (see Jira ticket ELS-462). This issue can cause the hub to freeze or
+# become unresponsive when booting with the S8 camera connected. A software workaround involves resetting the
+# i.MX8 USB2 controller to force re-enumeration of the Microchip hub and its downstream devices. Unfortunately,
+# this is a software workaround for a hardware design flaw.
+reset_usb2()
+{
+    echo "Reseting USB2 Host Controller:"
+    # Wait for the Microchip USB Hub (2514B) enumeration; max 5 seconds.
+    retries=50
+    while [ ! -h "/sys/bus/usb/drivers/usb/2-1.4" ] && [ "${retries}" -gt 0 ]; do
+        retries="$((retries - 1))"
+        sleep 0.1
+    done
+    sleep 0.5 # We need this delay to wait the Microchip USB Hub to finish its enumeration
+    echo "usb2" > /sys/bus/usb/drivers/usb/unbind
+    echo "usb2" > /sys/bus/usb/drivers/usb/bind
+}
+
 kernel_umount()
 {
     umount /sys
@@ -483,6 +503,7 @@ toolcheck
 kernel_mount
 parse_cmdline
 load_kernel_modules
+reset_usb2
 if [ "${RESCUE_SHELL}" = "yes" ]; then
     rescue_shell
 fi
