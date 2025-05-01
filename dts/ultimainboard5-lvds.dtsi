@@ -41,7 +41,7 @@
     fsl,pins = <
         MX8MM_IOMUXC_SAI3_RXC_GPIO4_IO29        0x080 /* GPIO4 / SAFETY_ENABLED (input) */
         MX8MM_IOMUXC_SAI3_RXFS_GPIO4_IO28       0x080 /* GPIO6 / SOM_BOOT (IMXRT BootMode Enable) */
-        MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1         0x100 /* GPIO7 / USB RESET_HUB# */
+        MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1         0x140 /* GPIO7 / USB RESET_HUB# */
         MX8MM_IOMUXC_SAI1_TXC_GPIO4_IO11        0x140 /* GPIO9 */
         MX8MM_IOMUXC_SAI1_TXFS_GPIO4_IO10       0x100 /* GPIO10 / U12 EEPROM WRITE PROTECT */
         MX8MM_IOMUXC_SAI1_MCLK_GPIO4_IO20       0x080 /* GPIO11 / SOM_nRST (IMXRT_nReset) */
@@ -198,6 +198,22 @@
                       "", "", "", "", "", "", "", "", 
                       "", "", "", "", "IMXRT_nReset", "", "", "", 
                       "", "", "", "", "IMXRT_BootMode_En", "SAFETY_ENABLED", "", "";
+
+/* CES-3178: The S6 camera appears to have power-up issues when the board is powered on with the camera connected.
+   This was addressed in hardware (see ELS-458), but introduced a worse side effect: the S8 camera now causes
+   the i.MX8 USB Host Controller to freeze during boot (see ELS-462).
+   
+   A workaround involves configuring the Microchip USB Hub (2514B) reset pin as a GPIO hog with a pull-up.
+   Pay attention the signal is inverted when connected to the hub. During kernel boot, the GPIO pin is first pulled
+   high by the pull-up, then driven low by the hog configuration. This toggling of the hub’s reset line forces a
+   re-enumeration of the USB devices and resolves the issue. */
+   
+    usb2_reset_hog {
+        gpio-hog;
+        gpios = <01 GPIO_ACTIVE_HIGH>;
+        output-low;
+        line-name = "usb2_reset_hog";
+    };
 };
 
 &gpio5 {
