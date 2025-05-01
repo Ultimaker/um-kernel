@@ -41,7 +41,7 @@
     fsl,pins = <
         MX8MM_IOMUXC_SAI3_RXC_GPIO4_IO29        0x080 /* GPIO4 / SAFETY_ENABLED (input) */
         MX8MM_IOMUXC_SAI3_RXFS_GPIO4_IO28       0x080 /* GPIO6 / SOM_BOOT (IMXRT BootMode Enable) */
-        MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1         0x100 /* GPIO7 / USB RESET_HUB# */
+        MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1         0x140 /* GPIO7 / USB RESET_HUB# */
         MX8MM_IOMUXC_SAI1_TXC_GPIO4_IO11        0x140 /* GPIO9 */
         MX8MM_IOMUXC_SAI1_TXFS_GPIO4_IO10       0x100 /* GPIO10 / U12 EEPROM WRITE PROTECT */
         MX8MM_IOMUXC_SAI1_MCLK_GPIO4_IO20       0x080 /* GPIO11 / SOM_nRST (IMXRT_nReset) */
@@ -116,6 +116,29 @@
 };
 
 &i2c3 {
+/* CES-3178: The S6 camera appears to have power-up issues when the board is powered on with the camera connected.
+   This was addressed in hardware (see ELS-458), but it introduced a worse side effect: the S8 camera now causes
+   the i.MX8 USB Host Controller to freeze during boot (see ELS-462).
+
+   The root cause appears to be the time the S6 camera takes to power up. The Microchip USB2514B hub, when operating
+   in standalone mode (not configured via I2C), uses a default POWER-ON TIME of 100 ms. This is the delay the hub
+   waits before attempting to enumerate devices after enabling power to the port via the PRTPWR pins. For the S6 camera,
+   100 ms does not seem sufficient for it to be fully ready for enumeration, leading to failures.
+
+   Connecting the USB2514B to the I2C bus and increasing the POWER-ON TIME to 110 ms resolves the issue. In this configuration,
+   we set it to 200 ms to be on the safe side.
+*/
+   
+    usb2514b@2c {
+        compatible = "microchip,usb2514b";
+        reg = <0x2c>;
+        reset-gpios = <&gpio4 01 GPIO_ACTIVE_HIGH>;
+        self-powered;
+        individual-sensing;
+        individual-port-switching;
+        power-on-time-ms = <200>;
+    };
+    
     tca6416@20 {
         compatible = "ti,tca6416";
         reg = <0x20>;
@@ -194,7 +217,7 @@
 
 /* Set pin names for IMXRT control lines */
 &gpio4 {
-    gpio-line-names = "TCA6416A_nINT", "", "", "", "", "", "", "RESET_OUT", 
+    gpio-line-names = "TCA6416A_nINT", "USB2514B_Reset", "", "", "", "", "", "RESET_OUT", 
                       "", "", "", "", "", "", "", "", 
                       "", "", "", "", "IMXRT_nReset", "", "", "", 
                       "", "", "", "", "IMXRT_BootMode_En", "SAFETY_ENABLED", "", "";
