@@ -20,7 +20,30 @@ export CROSS_COMPILE="${CROSS_COMPILE}"
 
 set -eu
 
+# Some helper log functions to improve visibility:
+
+info_h1()
+{
+    echo -e "\n\033[1;36m${1}\033[0m"
+}
+
+info_h2()
+{
+    echo -e "\n\033[1;33m${1}\033[0m"
+}
+
+info_h3()
+{
+    echo -e "\033[1;37m${1}\033[0m"
+}
+
+info_err()
+{
+    echo -e "\n\033[1;31m${1}\033[0m"
+}
+
 cpu_cnt="$(nproc)"
+#cpu_cnt="1"
 export MAKEFLAGS="-j ${cpu_cnt}"
 echo "Compiling with ${cpu_cnt} CPUs..."
 
@@ -41,7 +64,7 @@ RELEASE_VERSION="${RELEASE_VERSION:-999.999.999}"
 LINUX_SRC_DIR="${SRC_DIR}/linux"
 
 # Setup internal variables
-KCONFIG="${SRC_DIR}/configs/sx8m_revB_config"
+KCONFIG="${SRC_DIR}/configs/sx8m_defconfig"
 KERNEL_BUILD_DIR="${SRC_DIR}/_build/sx8m-linux"
 KERNEL_IMAGE="uImage-sx8m"
 DEBIAN_DIR="${BUILD_DIR}/debian"
@@ -62,7 +85,7 @@ PROPRIETARY_FIRMWARE_OUTPUT_DIR="${DEBIAN_DIR}/lib/firmware"
 PROPRIETARY_FIRMWARE_INITRAMFS_DIR="${INITRAMFS_DST_DIR}/lib/firmware"
 
 
-BB_VERSION="1.31.0"
+BB_VERSION="1.36.1"
 BB_URL="https://busybox.net/downloads/busybox-${BB_VERSION}.tar.bz2"
 BB_BIN="busybox"
 BB_PKG="busybox-${BB_VERSION}.tar.bz2"
@@ -93,23 +116,27 @@ fi;
 # Busybox is downloaded from the global variable ${BB_PKG}.
 busybox_get()
 {
+    info_h2 "### Preparing Busybox... ###"
+        
     DEST_DIR="${1}"
 
     if [ ! -d "${DEST_DIR}" ]; then
-        echo "No initramfs dir set to download busybox into."
+        info_err "No initramfs dir set to download busybox into."
         exit 1
     fi
 
     if [ ! -f "${BB_PKG}" ]; then
+        info_h3 "Downloading Busybox tarbal from ${BB_URL} ..."
         if ! wget -q "${BB_URL}"; then
-            echo "Unable to download the busybox package '${BB_URL}'. Update the download URL."
+            info_err "Unable to download the busybox package '${BB_URL}'. Update the download URL."
             exit 1
         fi
     fi
 
     if [ ! -d "${BB_DIR}" ]; then
+        info_h3 "Unpacking Busybox tarbal ${BB_PKG} ..."
         if ! tar xvjf "${BB_PKG}" > /dev/null 2>&1; then
-            echo "Unable to extract Busybox package '${BB_PKG}'."
+            info_err "Unable to extract Busybox package '${BB_PKG}'."
             exit 1
         fi
     fi
@@ -117,15 +144,18 @@ busybox_get()
     cd "${BB_DIR}"
     cp "${SRC_DIR}/configs/busybox_config" ".config"
 
+    info_h3 "\nCompiling Busybox...\n"
     ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make
 
     mv "${BB_BIN}" "${DEST_DIR}/${BB_BIN}"
     cd "${SRC_DIR}"
 
     if [ ! -x "${DEST_DIR}/${BB_BIN}" ]; then
-        echo "Failed to get busybox."
+        info_err "Failed to get busybox."
         exit 1
     fi
+
+    info_h3 "Finished preparing Busybox"
 }
 
 ##
@@ -137,13 +167,13 @@ busybox_get()
 # and add the requested modules and its dependencies to initramfs.
 initramfs_add_modules()
 {
-    echo "Adding initramfs modules."
+    info_h2 "### Adding initramfs modules. ###"
 
     KERNEL_RELEASE=$(cat "${KERNEL_BUILD_DIR}/include/config/kernel.release")
 
     if [ ! -d "${DEBIAN_DIR}/lib" ] || [ -z "${KERNEL_RELEASE}" ] || \
         [ ! -f "${DEBIAN_DIR}/lib/modules/${KERNEL_RELEASE}/modules.dep" ]; then
-        echo "Error, no modules installed, cannot continue."
+        info_err "Error, no modules installed, cannot continue."
         exit 1
     fi
 
@@ -166,7 +196,7 @@ initramfs_add_modules()
             dependencies="$(grep "${module}:" "${MODULES_DIR}/modules.dep" | sed -e "s|^.*:\s*||")"
             for dependency in ${dependencies}; do
                 dep_module="$(basename "${dependency}")"
-                echo "Adding dependency: '${dep_module}' for module: '${module}'"
+                info_h3 "Adding dependency: '${dep_module}' for module: '${module}'"
                 if [ -n "${INITRAMFS_MODULES##*"${dep_module}"*}" ]; then
                     INITRAMFS_MODULES="${INITRAMFS_MODULES} ${dep_module}"
                 fi
@@ -176,16 +206,16 @@ initramfs_add_modules()
 
     for module in ${INITRAMFS_MODULES}; do
         if [ -z "$(find "${MODULES_DIR}" -name "${module}" -print -exec cp "{}" "${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}" \;)" ]; then
-            echo "Error: kernel module: '${module}' not available."
+            info_err "Error: kernel module: '${module}' not available."
             exit 1
         fi
 
-        echo "Adding kernel module: '${module}' to initrd."
+        info_h3 "Adding kernel module: '${module}' to initrd."
         echo "file /lib/modules/${KERNEL_RELEASE}/${module} ${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}/${module} 0755 0 0" >> "${INITRAMFS_DEST}"
     done
 
     if [ -n "${INITRAMFS_MODULES}" ] && ! ${DEPMOD} -ab "${INITRAMFS_DST_DIR}" "${KERNEL_RELEASE}"; then
-        echo "Failed to generate module dependencies."
+        info_err "Failed to generate module dependencies."
         exit 1
     fi
 
@@ -196,7 +226,7 @@ initramfs_add_modules()
         fi
     done
 
-    echo "Finished adding initramfs modules."
+    info_h3 "Finished adding initramfs modules."
 }
 
 ##
@@ -207,7 +237,7 @@ initramfs_add_modules()
 # to copy the source initramfs files and put some expected binaries in place.
 initramfs_prepare()
 {
-    echo "Preparing initramfs."
+    info_h2 "### Preparing initramfs. ###"
 
     if [ -d "${INITRAMFS_DST_DIR}" ]; then
         rm -rf "${INITRAMFS_DST_DIR}"
@@ -219,7 +249,21 @@ initramfs_prepare()
 
     busybox_get "${INITRAMFS_DST_DIR}"
 
-    echo "Finished preparing initramfs."
+    info_h3 "Finished preparing initramfs."
+}
+
+build_menuconfig()
+{
+    info_h1 "\nRunning Menuconfig for ${KCONFIG}\n"
+
+    mkdir -p "${KERNEL_BUILD_DIR}"
+    
+    cp "${KCONFIG}" "${KERNEL_BUILD_DIR}"/.config
+    cd "${LINUX_SRC_DIR}"   # Remove, replace by -C make option
+    ARCH="${ARCH}" make O="${KERNEL_BUILD_DIR}" menuconfig
+#    rm "${UBOOT_DIR}"/configs/tmp_defconfig
+    ARCH="${ARCH}" make O="${KERNEL_BUILD_DIR}" savedefconfig
+    cp "${KERNEL_BUILD_DIR}"/defconfig "${KCONFIG}"
 }
 
 ##
@@ -228,13 +272,17 @@ initramfs_prepare()
 # Wrap the argument into a Linux Kernel cross-compile command.
 kernel_build_command()
 {
+    info_h2 "### Compiling the Kernel ###"
     if [ ! -d "${KERNEL_BUILD_DIR}" ]; then
         mkdir -p "${KERNEL_BUILD_DIR}"
     fi
 
-    cd "${LINUX_SRC_DIR}"
-    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" KCONFIG_CONFIG="${KCONFIG}" "${@}"
+    cp "${KCONFIG}" "${KERNEL_BUILD_DIR}"/.config
+    cd "${LINUX_SRC_DIR}"  # Remove, replace by -C make option
+    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" olddefconfig
+    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" "${@}"
     cd "${SRC_DIR}"
+    info_h3 "Finished compiling the Kernel"
 }
 
 ##
@@ -246,19 +294,26 @@ kernel_build_command()
 # Creates a uImage binary in the build output boot directory.
 kernel_build()
 {
-    echo "Building Kernel."
+    info_h1 "##### Building Kernel. #####"
 
     # Prepare the initramfs 1st time
     initramfs_prepare
+
     # Copy the proprietary dma firmware before building the kernel so it endup in the initramfs
     copy_dma_firmware
+
     # Configure the kernel
     kernel_build_command
+#    kernel_build_command Image
+#    kernel_build_command modules
+
     # Build the Kernel modules and generate dependency list
     kernel_modules_install
+
     # New that all modules have been build and the dependency file is properly generated,
     # we can add the required Kernel modules to initramfs
     initramfs_add_modules
+
     # Here we need to rebuild the kernel Image to include the updated initramfs with kernel modules
     kernel_build_command LOADADDR=0x40480000 Image
 
@@ -270,7 +325,7 @@ kernel_build()
     mkdir -p "${BOOT_FILE_OUTPUT_DIR}"
 
     cp "${KERNEL_BUILD_DIR}/arch/arm64/boot/Image" "${BOOT_FILE_OUTPUT_DIR}/${KERNEL_IMAGE}"
-    echo "Finished building Kernel."
+    info_h3 "Finished building Kernel."
 }
 
 ##
@@ -280,12 +335,12 @@ kernel_build()
 # in the build output directory.
 kernel_modules_install()
 {
-    echo "Install Kernel modules."
+    info_h2 "##### Install Kernel modules. #####"
 
     KERNEL_RELEASE=$(cat "${KERNEL_BUILD_DIR}/include/config/kernel.release")
 
     if [ -z "${KERNEL_RELEASE}" ]; then
-        echo "Error, unable to get kernel release version, cannot continue."
+        info_err "Error, unable to get kernel release version, cannot continue."
         exit 1
     fi
 
@@ -296,11 +351,11 @@ kernel_modules_install()
     kernel_build_command INSTALL_MOD_PATH="${DEBIAN_DIR}" modules_install
 
     if ! "${DEPMOD}" -ab "${DEBIAN_DIR}" "${KERNEL_RELEASE}"; then
-        echo "Error, failed to generate module dependencies."
+        info_err "Error, failed to generate module dependencies."
         exit 1
     fi
 
-    echo "Finished installing Kernel modules."
+    info_h3 "Finished installing Kernel modules."
 }
 
 ##
@@ -315,7 +370,7 @@ kernel_modules_install()
 # binaries described above.
 dtb_build()
 {
-    echo "Building Device-trees."
+    info_h1 "##### Building Device-trees. #####"
 
     if [ -d "${KERNEL_BUILD_DIR}/dtb" ]; then
         rm -rf "${KERNEL_BUILD_DIR}/dtb"
@@ -333,8 +388,8 @@ dtb_build()
     for dts in "dts/"*".dts"; do
         dts="$(basename "${dts}")"
         dt="${dts%.dts}"
-        echo -e "\nBuilding devicetree blob '${dt}'"
-        echo "Using version of DTC: $(dtc --version)"
+        info_h2 "\n### Building devicetree blob '${dt}' ###"
+        info_h3 "Using version of DTC: $(dtc --version)"
         cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
             -I "${LINUX_SRC_DIR}/include" -I "${LINUX_SRC_DIR}/arch/${ARCH}/boot/dts" \
             -o "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp" "dts/${dts}"
@@ -342,14 +397,14 @@ dtb_build()
     done
 
 
-    echo -e "\nFinished building Device-trees.\n"
+    info_h3 "\nFinished building Device-trees.\n"
 }
 
 # We need this because the imx8m uart uses this.
 # We can choose not to use it and configure it differently in the device-tree.
 copy_dma_firmware()
 {
-    echo "Copying proprietary firmware."
+    info_h2 "### Copying proprietary firmware. ###"
 
     # Ensure the output directory exists
     mkdir -p "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}"
@@ -362,35 +417,35 @@ copy_dma_firmware()
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx7d.bin" "${INITRAMFS_DST_DIR}"
     cp "${PROPRIETARY_FIRMWARE_DIR}/imx/sdma/sdma-imx6q.bin" "${INITRAMFS_DST_DIR}"
 
-    echo "Finished copying proprietary firmware."
+    info_h3 "Finished copying proprietary firmware."
 }
 
 create_debian_package()
 {
-    echo "Building Debian package."
+    info_h1 "##### Building Debian package. #####"
 
     if [ ! -d "${BOOT_FILE_OUTPUT_DIR}" ]; then
-        echo "Error, boot directory not created, no boot files to package."config
+        info_err "Error, boot directory not created, no boot files to package."
         exit 1
     fi
 
     if ! ls "${BOOT_FILE_OUTPUT_DIR}/uImage"* 1> /dev/null 2>&1; then
-        echo "Error, no Kernel binary installed, run 'kernel' build first."
+        info_err "Error, no Kernel binary installed, run 'kernel' build first."
         exit 1
     fi
 
     if [ ! -d "${DEBIAN_DIR}/lib" ] || [ ! -f "${DEBIAN_DIR}/lib/modules/${KERNEL_RELEASE}/modules.dep" ]; then
-        echo "Error, no modules installed, run 'kernel' build first."
+        info_err "Error, no modules installed, run 'kernel' build first."
         exit 1
     fi
 
     if ! ls "${BOOT_FILE_OUTPUT_DIR}/"*".dtb" 1> /dev/null 2>&1; then
-        echo "Error, no Kernel device-tree files installed, run 'dtbs' build first."
+        info_err "Error, no Kernel device-tree files installed, run 'dtbs' build first."
         exit 1
     fi
 
     if ! ls "${PROPRIETARY_FIRMWARE_OUTPUT_DIR}/imx/sdma/"*".bin" 1> /dev/null 2>&1; then
-        echo "Error, linux-firmware proprietary directory not found for DMA drivers."
+        info_err "Error, linux-firmware proprietary directory not found for DMA drivers."
         exit 1
     fi
 
@@ -410,8 +465,8 @@ create_debian_package()
 
     cp "${BUILD_DIR}/${DEB_PACKAGE}" "${SRC_DIR}"
 
-    echo "Finished building Debian package."
-    echo "To check the contents of the Debian package run 'dpkg-deb -c um-kernel*.deb'"
+    info_h3 "Finished building Debian package."
+    info_h3 "To check the contents of the Debian package run 'dpkg-deb -c um-kernel*.deb'"
 }
 
 usage()
@@ -477,10 +532,8 @@ case "${1-}" in
         kernel_build
         ;;
     menuconfig)
-        kernel_build_command menuconfig
-        ;;
-    oldconfig)
-        kernel_build_command oldconfig
+#        kernel_build_command menuconfig
+        build_menuconfig
         ;;
     clean)
         if [ -d "${BUILD_DIR}" ] && [ -z "${BUILD_DIR##*_build*}" ]; then
