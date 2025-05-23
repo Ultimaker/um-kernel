@@ -26,8 +26,9 @@ env_check()
     return
 }
 
-run_build()
+check_submodules()
 {
+    echo "Checking if submodules are initialized..."
     # If the submodules are not initialized, do it now. 
 
     # List the path of non initialized submodules:
@@ -46,7 +47,10 @@ run_build()
         echo "#######  WARNING: The following submodules are checkedout in a different commit: #########"
         echo "${different_commit_submodules}"
     fi
+}
 
+run_build()
+{
     run_in_docker "./build.sh" "${@}"
 }
 
@@ -134,11 +138,16 @@ if [[ "${rebuild_docker}" == "yes" || "${action}" == "docker_build" ]]; then
 fi;
 
 case "${action}" in
+    shell)
+        run_in_docker bash
+        exit 0
+        ;;
     shellcheck)
         run_shellcheck
         exit 0
         ;;
     build)
+        check_submodules
         run_build
         exit 0
         ;;
@@ -168,7 +177,7 @@ fi
 if [ "${run_tests}" = "yes" ]; then
     run_tests
 fi
-
+#check_submodules
 run_build "${@}"
 
 exit 0
