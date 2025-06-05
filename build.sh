@@ -126,8 +126,8 @@ busybox_get()
     fi
 
     if [ ! -f "${BB_PKG}" ]; then
-        info_h3 "Downloading Busybox tarbal from ${BB_URL} ..."
-        if ! wget -q "${BB_URL}"; then
+        info_h3 "\nDownloading Busybox tarbal from ${BB_URL} ...\n"
+        if ! wget "${BB_URL}"; then
             info_err "Unable to download the busybox package '${BB_URL}'. Update the download URL."
             exit 1
         fi
