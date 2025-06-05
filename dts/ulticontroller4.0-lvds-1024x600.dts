@@ -6,7 +6,12 @@
 #include "ultimainboard5-lvds.dtsi"
 
 / {
-    lvdspanel {
+    panel-lvds {
+        width-mm = <155>;
+        height-mm = <86>;
+        
+        data-mapping = "vesa-24";
+            
         panel-timing {
             clock-frequency = <51206400>;
             hactive = <1024>;

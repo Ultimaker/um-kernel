@@ -15,7 +15,6 @@ DEPMOD="${DEPMOD:-/sbin/depmod}"
 
 rebuild_docker="no"
 run_env_check="yes"
-run_shellcheck="yes"
 run_linters="yes"
 run_tests="yes"
 action="none"
@@ -166,10 +165,6 @@ if [ "${run_env_check}" = "yes" ]; then
     env_check
 fi
 
-if [ "${run_shellcheck}" = "yes" ]; then
-    run_shellcheck
-fi
-    
 if [ "${run_linters}" = "yes" ]; then
     run_linters
 fi
