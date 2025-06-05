@@ -254,33 +254,51 @@ check_and_set_eeprom_data()
     done
 
     echo "Attempting to mount '${dev}'."
-    if ! mount -t f2fs,ext4,vfat,auto -o ro,exec,noatime "${dev}" "${PROVISIONING_USB_MOUNT}"; then
-        return 0
-    fi
+    if mount -t f2fs,ext4,vfat,auto -o ro,exec,noatime "${dev}" "${PROVISIONING_USB_MOUNT}"; then
+        if [ -r "${article_number_file}" ]; then
+            article_number="$(cat "${article_number_file}")"
 
-    if [ -r "${article_number_file}" ]; then
-        article_number="$(cat "${article_number_file}")"
-        echo "Trying to write article nr: '${article_number}'."
-        # shellcheck disable=SC2086
-        if ! i2ctransfer -y 1 w6@0x57 0x01 0x00 ${article_number}; then
-            echo "Failed to write article number to EEPROM, skipping."
+            art_num_hex_new=""
+            for hex in $article_number; do
+                art_num_hex_new="${art_num_hex_new}${hex#0x}"  # Remove the "0x" prefix
+            done
+            BOM_NUMBER_NEW=$(printf "%d\n" "0x$art_num_hex_new")
+    
+            if [ "${BOM_NUMBER_NEW}" -ne "${BOM_NUMBER}" ]; then
+                echo "Trying to write new article nr: '${article_number}'."
+                # The first i2c command writes the bom number to 0x100 and the second one erases the eeprom version at 0x000
+                # forcing the eeprom service to recalculate the CRC. We also need a few ms between the 2 transfer, so the
+                # EEPROM has time to finish the first transfer.
+                # shellcheck disable=SC2086
+                if i2ctransfer -y 1 w6@0x57 0x01 0x00 ${article_number} && \
+                   sleep 0.2 && \
+                   i2ctransfer -y 1 w6@0x57 0x00 0x00 0xFF 0xFF 0xFF 0xFF; then
+                    echo "Article number successfully written to EEPROM!"
+                    BOM_NUMBER="${BOM_NUMBER_NEW}"
+                else
+                    echo "Failed to write article number to EEPROM!"
+                fi
+            else
+                echo "Article number from the USB Stick matches the programmed one, skipping..."
+            fi;
+        else
+            echo "No article number file ${article_number_file} found, skipping."
         fi
-    else
-        echo "No article number file ${article_number_file} found, skipping."
-    fi
 
-    if [ -r "${country_code_lock_file}" ]; then
-        country_code="$(cat "${country_code_lock_file}")"
-        echo "Trying to write country code lock: '${country_code}'."
-        # shellcheck disable=SC2086
-        if ! i2ctransfer -y 1 w4@0x57 0x01 0x18 ${country_code}; then
-            echo "Failed to write country code lock to EEPROM, skipping."
+        if [ -r "${country_code_lock_file}" ]; then
+            country_code="$(cat "${country_code_lock_file}")"
+            echo "Trying to write country code lock: '${country_code}'."
+            # shellcheck disable=SC2086
+            if ! i2ctransfer -y 1 w4@0x57 0x01 0x18 ${country_code}; then
+                echo "Failed to write country code lock to EEPROM, skipping."
+            fi
+        else
+            echo "No country code lock file ${country_code_lock_file} found, skipping."
         fi
-    else
-        echo "No country code lock file ${country_code_lock_file} found, skipping."
-    fi
 
-    umount "${dev}"
+        sleep 0.5 # Prevent entangling previous messages with the umount kernel message.
+        umount "${dev}"
+    fi
 }
 
 find_and_run_update()
