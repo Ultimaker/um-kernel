@@ -3,21 +3,6 @@
 
 # This script builds the kernel, kernel modules, device trees and boot scripts for the A20 linux system that we use.
 
-# Check for a valid cross compiler. When unset, the kernel tries to build itself
-# using arm-none-eabi-gcc, so we need to ensure it exists. Because printenv and
-# which can cause bash -e to exit, so run this before setting this up.
-if [ "${CROSS_COMPILE}" == "" ]; then
-#    if [ "$(command -v aarch64-linux-gnu-gcc)" != "" ]; then
-        CROSS_COMPILE="aarch64-linux-gnu-"
-#    fi
-    if [ "${CROSS_COMPILE}" == "" ]; then
-        echo "No suitable cross-compiler found."
-        echo "One can be set explicitly via the environment variable CROSS_COMPILE='arm-linux-gnueabihf-' for example."
-        exit 1
-    fi
-fi
-export CROSS_COMPILE="${CROSS_COMPILE}"
-
 set -eu
 
 # Some helper log functions to improve visibility:
@@ -42,8 +27,8 @@ info_err()
     echo -e "\n\033[1;31m${1}\033[0m"
 }
 
+export CROSS_COMPILE="${CROSS_COMPILE:-aarch64-linux-gnu-}"
 cpu_cnt="$(nproc)"
-#cpu_cnt="1"
 export MAKEFLAGS="-j ${cpu_cnt}"
 echo "Compiling with ${cpu_cnt} CPUs..."
 
@@ -88,8 +73,8 @@ PROPRIETARY_FIRMWARE_INITRAMFS_DIR="${INITRAMFS_DST_DIR}/lib/firmware"
 BB_VERSION="1.36.1"
 BB_URL="https://busybox.net/downloads/busybox-${BB_VERSION}.tar.bz2"
 BB_BIN="busybox"
-BB_PKG="busybox-${BB_VERSION}.tar.bz2"
-BB_DIR="busybox-${BB_VERSION}"
+BB_PKG="${BUILD_DIR}/busybox-${BB_VERSION}.tar.bz2"
+BB_DIR="${BUILD_DIR}/busybox-${BB_VERSION}"
 
 DEPMOD="${DEPMOD:-/sbin/depmod}"
 
@@ -127,7 +112,8 @@ busybox_get()
 
     if [ ! -f "${BB_PKG}" ]; then
         info_h3 "\nDownloading Busybox tarbal from ${BB_URL} ...\n"
-        if ! wget "${BB_URL}"; then
+        mkdir -p "${BUILD_DIR}"
+        if ! wget "${BB_URL}" -P "${BUILD_DIR}"; then
             info_err "Unable to download the busybox package '${BB_URL}'. Update the download URL."
             exit 1
         fi
@@ -135,19 +121,18 @@ busybox_get()
 
     if [ ! -d "${BB_DIR}" ]; then
         info_h3 "Unpacking Busybox tarbal ${BB_PKG} ..."
-        if ! tar xvjf "${BB_PKG}" > /dev/null 2>&1; then
+        if ! tar xvjf "${BB_PKG}" -C "${BUILD_DIR}" > /dev/null 2>&1; then
             info_err "Unable to extract Busybox package '${BB_PKG}'."
             exit 1
         fi
     fi
 
-    cd "${BB_DIR}"
-    cp "${SRC_DIR}/configs/busybox_config" ".config"
+    cp "${SRC_DIR}/configs/busybox_config" "${BB_DIR}/.config"
 
     info_h3 "\nCompiling Busybox...\n"
-    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make
+    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make -C "${BB_DIR}"
 
-    mv "${BB_BIN}" "${DEST_DIR}/${BB_BIN}"
+    mv "${BB_DIR}/${BB_BIN}" "${DEST_DIR}/${BB_BIN}"
     cd "${SRC_DIR}"
 
     if [ ! -x "${DEST_DIR}/${BB_BIN}" ]; then
@@ -259,10 +244,8 @@ build_menuconfig()
     mkdir -p "${KERNEL_BUILD_DIR}"
     
     cp "${KCONFIG}" "${KERNEL_BUILD_DIR}"/.config
-    cd "${LINUX_SRC_DIR}"   # Remove, replace by -C make option
-    ARCH="${ARCH}" make O="${KERNEL_BUILD_DIR}" menuconfig
-#    rm "${UBOOT_DIR}"/configs/tmp_defconfig
-    ARCH="${ARCH}" make O="${KERNEL_BUILD_DIR}" savedefconfig
+    ARCH="${ARCH}" make O="${KERNEL_BUILD_DIR}" -C "${LINUX_SRC_DIR}" menuconfig
+    ARCH="${ARCH}" make O="${KERNEL_BUILD_DIR}" -C "${LINUX_SRC_DIR}" savedefconfig
     cp "${KERNEL_BUILD_DIR}"/defconfig "${KCONFIG}"
 }
 
@@ -272,15 +255,14 @@ build_menuconfig()
 # Wrap the argument into a Linux Kernel cross-compile command.
 kernel_build_command()
 {
-    info_h2 "### Compiling the Kernel ###"
+    info_h2 "### Compiling the Kernel ${*} ###"
     if [ ! -d "${KERNEL_BUILD_DIR}" ]; then
         mkdir -p "${KERNEL_BUILD_DIR}"
     fi
 
     cp "${KCONFIG}" "${KERNEL_BUILD_DIR}"/.config
-    cd "${LINUX_SRC_DIR}"  # Remove, replace by -C make option
-    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" olddefconfig
-    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make O="${KERNEL_BUILD_DIR}" "${@}"
+    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make -C "${LINUX_SRC_DIR}" O="${KERNEL_BUILD_DIR}" olddefconfig
+    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make -C "${LINUX_SRC_DIR}" O="${KERNEL_BUILD_DIR}" "${@}"
     cd "${SRC_DIR}"
     info_h3 "Finished compiling the Kernel"
 }
