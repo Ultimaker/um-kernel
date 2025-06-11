@@ -7,7 +7,7 @@
 set -eu
 
 # When releasing a new docker image, update the version below to match the one uploaded to cloudsmith
-DOCKER_IMAGE_RELEASED="v2"
+DOCKER_IMAGE_RELEASED="v3"
 DOCKER_IMAGE_CACHE="ghcr.io/ultimaker/um-kernel"
 
 set_docker_image_name_version()
