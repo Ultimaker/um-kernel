@@ -11,29 +11,48 @@ TARGET_DTS="cgtsx8m-ultimain5.dtb"
 UC32_DTS="ulticontroller3.2-lvds-800x320.dtb"
 UC4_DTS="ulticontroller4.0-lvds-1024x600.dtb"
 
-# During the bootstrap configuration stage, if the kernel is configured
-# before the mawk package, there will be no awk link pointing to the
-# mawk binary, so below we need to specify the correct binary.
+if [ "$1" = "configure" ]; then
+    # During the bootstrap configuration stage, if the kernel is configured
+    # before the mawk package, there will be no awk link pointing to the
+    # mawk binary, so below we need to specify the correct binary.
 
-first_article_number=$(mawk '/^article_numbers:/ {print $2}' ${ARTNUM_FILE})
+    first_article_number=$(mawk '/^article_numbers:/ {print $2}' ${ARTNUM_FILE})
 
-echo "-> Recipe's first article number: ${first_article_number}"
+    echo "-> Recipe's first article number: ${first_article_number}"
 
-case "${first_article_number}" in
-    10600|10700)
-        echo "-> Setting Ulticontroller 3.2 LVDS device tree."
-        ln -sf "${UC32_DTS}" "/boot/${TARGET_DTS}"
-        ;;
-    227380|10500)
-        echo "-> Setting Ulticontroller 4.0 LVDS device tree."
-        ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
-        ;;
-# Fallback to the larger screen
-    *)
-        echo "-> Falling back to Ulticontroller 4.0 LVDS device tree."
-        ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
-        ;;
-esac
+    case "${first_article_number}" in
+        10600|10700)
+            echo "-> Setting Ulticontroller 3.2 LVDS device tree."
+            ln -sf "${UC32_DTS}" "/boot/${TARGET_DTS}"
+            ;;
+        227380|10500)
+            echo "-> Setting Ulticontroller 4.0 LVDS device tree."
+            ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
+            ;;
+    # Fallback to the larger screen
+        *)
+            echo "-> Falling back to Ulticontroller 4.0 LVDS device tree."
+            ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
+            ;;
+    esac
+fi
 
-
+# Add a trigger to track when the regulatory db is modified. The official
+# debian wireless-regdb package selects the regulatory.db-debian, but an
+# upstream kernel like ours doesn't have the certificate to open this reg.db,
+# so we need to update the alternative to select the "-upstream" version.
+# We do this here by adding one rule pointing to -upstream and ask
+# update-alternatives to track it (manual move, not auto). When wireless-regdb
+# is configured, it replaces the rule but keeps the manual mode. 
+# With this trigger, everytime a package modifies the regulatory.db files,
+# including the wireless-regdb package, this script will run to
+# add the -upstream with high priority
+# See the "triggers" file in the debian control folder
+if [ "$1" = "configure" ] || [ "$1" = "triggered" ]; then
+    echo "Updating regulatory db alternative to upstream (if available):"
+    update-alternatives --install \
+        /lib/firmware/regulatory.db regulatory.db /lib/firmware/regulatory.db-upstream 1000 \
+        --slave /lib/firmware/regulatory.db.p7s regulatory.db.p7s /lib/firmware/regulatory.db.p7s-upstream || true
+    update-alternatives --set regulatory.db /lib/firmware/regulatory.db-upstream || true
+fi
 
