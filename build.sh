@@ -432,13 +432,11 @@ create_debian_package()
     fi
 
     mkdir -p "${DEBIAN_DIR}/DEBIAN"
-    sed -e 's|@ARCH@|'"${ARCH}"'|g' \
+    cp "${SRC_DIR}"/debian/* "${DEBIAN_DIR}/DEBIAN/"
+    sed -i -e 's|@ARCH@|'"${ARCH}"'|g' \
         -e 's|@PACKAGE_NAME@|'"${PACKAGE_NAME}"'|g' \
         -e 's|@RELEASE_VERSION@|'"${RELEASE_VERSION}"'|g' \
-        "${SRC_DIR}/debian/control.in" > "${DEBIAN_DIR}/DEBIAN/control"
-
-    cp "${SRC_DIR}/debian/preinst" "${DEBIAN_DIR}/DEBIAN/"
-    cp "${SRC_DIR}/debian/postinst" "${DEBIAN_DIR}/DEBIAN/"
+        "${DEBIAN_DIR}/DEBIAN/control"
 
     DEB_PACKAGE="${PACKAGE_NAME}_${RELEASE_VERSION}_${ARCH}.deb"
 
