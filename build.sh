@@ -285,9 +285,11 @@ kernel_build()
     copy_dma_firmware
 
     # Configure the kernel
-    kernel_build_command
-#    kernel_build_command Image
-#    kernel_build_command modules
+    # The "kernel_build_command" can be used without arguments for test (the "all" target for
+    # the make file), but for production it is better to split the Image and modules compilation,
+    # so the compilation log is more organized about what is being compiled
+    kernel_build_command Image
+    kernel_build_command modules
 
     # Build the Kernel modules and generate dependency list
     kernel_modules_install
@@ -512,7 +514,6 @@ case "${1-}" in
         kernel_build
         ;;
     menuconfig)
-#        kernel_build_command menuconfig
         build_menuconfig
         ;;
     clean)

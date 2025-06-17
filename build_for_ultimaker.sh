@@ -172,7 +172,7 @@ fi
 if [ "${run_tests}" = "yes" ]; then
     run_tests
 fi
-#check_submodules
+check_submodules
 run_build "${@}"
 
 exit 0
