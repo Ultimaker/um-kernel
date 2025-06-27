@@ -21,11 +21,11 @@ if [ "$1" = "configure" ]; then
     echo "-> Recipe's first article number: ${first_article_number}"
 
     case "${first_article_number}" in
-        10600|10700)
+        106* | 107*)
             echo "-> Setting Ulticontroller 3.2 LVDS device tree."
             ln -sf "${UC32_DTS}" "/boot/${TARGET_DTS}"
             ;;
-        227380|10500)
+        227380 | 105*)
             echo "-> Setting Ulticontroller 4.0 LVDS device tree."
             ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
             ;;
