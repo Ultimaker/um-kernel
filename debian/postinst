@@ -10,6 +10,7 @@ ARTNUM_FILE="/etc/ultimaker_firmware"
 TARGET_DTS="cgtsx8m-ultimain5.dtb"
 UC32_DTS="ulticontroller3.2-lvds-800x320.dtb"
 UC4_DTS="ulticontroller4.0-lvds-1024x600.dtb"
+OLD_UBOOT_DTS="imx8mm-cgtsx8m-ultimain5.0-lvds-1024x600.dtb"
 
 if [ "$1" = "configure" ]; then
     # During the bootstrap configuration stage, if the kernel is configured
@@ -24,15 +25,21 @@ if [ "$1" = "configure" ]; then
         106* | 107*)
             echo "-> Setting Ulticontroller 3.2 LVDS device tree."
             ln -sf "${UC32_DTS}" "/boot/${TARGET_DTS}"
+            # For backwards compatibility, with the Uboot2018 we also create a symlink to the old name needed by that u-boot version
+            ln -sf "${UC32_DTS}" "/boot/${OLD_UBOOT_DTS}"
             ;;
         227380 | 105*)
             echo "-> Setting Ulticontroller 4.0 LVDS device tree."
             ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
+            # For backwards compatibility, with the Uboot2018 we also create a symlink to the old name needed by that u-boot version
+            ln -sf "${UC4_DTS}" "/boot/${OLD_UBOOT_DTS}"
             ;;
     # Fallback to the larger screen
         *)
             echo "-> Falling back to Ulticontroller 4.0 LVDS device tree."
             ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
+            # For backwards compatibility, with the Uboot2018 we also create a symlink to the old name needed by that u-boot version
+            ln -sf "${UC4_DTS}" "/boot/${OLD_UBOOT_DTS}"
             ;;
     esac
 fi
@@ -43,7 +50,7 @@ fi
 # so we need to update the alternative to select the "-upstream" version.
 # We do this here by adding one rule pointing to -upstream and ask
 # update-alternatives to track it (manual move, not auto). When wireless-regdb
-# is configured, it replaces the rule but keeps the manual mode. 
+# is configured, it replaces the rule but keeps the manual mode.
 # With this trigger, everytime a package modifies the regulatory.db files,
 # including the wireless-regdb package, this script will run to
 # add the -upstream with high priority
