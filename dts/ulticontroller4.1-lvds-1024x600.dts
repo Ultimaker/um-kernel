@@ -3,68 +3,11 @@
  * Copyright (C) 2020 - Raymond Siudak <raysiudak@gmail.com>
 */
 
-#include "ultimainboard5-lvds.dtsi"
-
-/ {
-    panel-lvds {
-        width-mm = <155>;
-        height-mm = <86>;
-
-        data-mapping = "vesa-24";
-
-        panel-timing {
-            clock-frequency = <51206400>;
-            hactive = <1024>;
-            vactive = <600>;
-            hsync-len = <2>;
-            hfront-porch = <120>;
-            hback-porch = <120>;
-            vsync-len = <20>;
-            vfront-porch = <30>;
-            vback-porch = <180>;
-        };
-    };
-};
+#include "ulticontroller4.0-lvds-1024x600.dts"
 
 &i2c2 {
-    clock-frequency = <100000>;
     panel_touchscreen: ft5426@38 {
-        compatible = "edt,edt-ft5406";
-        reg = <0x38>;
-        poll-interval = <30>;
-        reset-gpios = <&panel_gpio 3 GPIO_ACTIVE_LOW>;
-        touchscreen-size-x = <1024>;
-        touchscreen-size-y = <600>;
-    };
-
-    panel_gpio: pca9536@41 {
-        compatible = "nxp,pca9536";
-        gpio-controller;
-        #gpio-cells = <2>;
-        reg = <0x41>;
-        gpio-line-names = "BUZZER_EN", "DOOR", "DISP_RST", "TOUCH_RST";
-    };
-
-    panel_lights: pca9632@60 {
-        compatible = "nxp,pca9632";
-        #address-cells = <1>;
-        #size-cells = <0>;
-        reg = <0x60>;
-        nxp,totem-pole;
-        nxp,hw-blink;
-        panel_backlight: backlight@3 {
-            label = "white:panel_backlight";
-            reg = <3>;
-            linux,default-trigger = "default-on";
-        };
-    };
-
-    edid_eeprom: 24c32@50 { /* 24LC02B 2K Microchip EEPROM */
-        // compatible = "24c32", "atmel,24c32";
-        compatible = "24c32";
-        reg = <0x50>;
-        pagesize = <32>;
-        size = <4096>;  // 32Kb (4KB) EEPROM size
+        /delete-property/ touchscreen-inverted-x;
+        /delete-property/ touchscreen-inverted-y;
     };
 };
-
