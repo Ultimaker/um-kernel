@@ -10,6 +10,7 @@ ARTNUM_FILE="/etc/ultimaker_firmware"
 TARGET_DTS="cgtsx8m-ultimain5.dtb"
 UC32_DTS="ulticontroller3.2-lvds-800x320.dtb"
 UC4_DTS="ulticontroller4.0-lvds-1024x600.dtb"
+UC4_INV_DTS="ulticontroller4.1-lvds-1024x600.dtb"
 
 if [ "$1" = "configure" ]; then
     # During the bootstrap configuration stage, if the kernel is configured
@@ -28,6 +29,10 @@ if [ "$1" = "configure" ]; then
         227380 | 105*)
             echo "-> Setting Ulticontroller 4.0 LVDS device tree."
             ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
+            ;;
+        109*)
+            echo "-> Setting Ulticontroller 4.0 LVDS Inverted device tree."
+            ln -sf "${UC4_INV_DTS}" "/boot/${TARGET_DTS}"
             ;;
     # Fallback to the larger screen
         *)
