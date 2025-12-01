@@ -27,50 +27,41 @@
 };
 
 
-/* 1. Disable the downstream NXP monolithic GPU node */
+/* Overwriting the existing NXP gpu node to be a valid Single-Core Etnaviv node */
 &gpu {
-    status = "disabled";
+    /* 1. Change binding to upstream Etnaviv */
+    compatible = "vivante,gc";
+
+    /* 2. FIX: Limit to ONE register range (The 3D Core only) */
+    /* Original NXP node had 4 ranges here, causing confusion */
+    reg = <0x0 0x38000000 0x0 0x8000>;
+
+    /* 3. FIX: Limit to ONE interrupt (The 3D Core IRQ) */
+    interrupts = <GIC_SPI 3 IRQ_TYPE_LEVEL_HIGH>;
+
+    /* 4. FIX: Rename clocks to match Etnaviv expectations */
+    /* Etnaviv looks for "core", "shader", "bus", "reg" */
+    clocks = <&clk IMX8MM_CLK_GPU3D_ROOT>,    /* core */
+             <&clk IMX8MM_CLK_GPU3D_ROOT>,    /* shader */
+             <&clk IMX8MM_CLK_GPU_BUS_ROOT>,  /* bus */
+             <&clk IMX8MM_CLK_GPU_AHB>;       /* reg */
+
+    clock-names = "core", "shader", "bus", "reg";
+
+    /* 5. Ensure power domain is active */
+    power-domains = <&pgc_gpu>;
+
+    status = "okay";
 };
 
-/* 2. Define the separate 3D and 2D cores expected by Etnaviv */
-&soc {
-    gpu_3d: gpu@38000000 {
-        compatible = "vivante,gc";
-        reg = <0x38000000 0x8000>;
-        interrupts = <GIC_SPI 3 IRQ_TYPE_LEVEL_HIGH>;
-        /* Map clocks: Core, Shader, Bus (AXI), Reg (AHB) */
-        clocks = <&clk IMX8MM_CLK_GPU3D_ROOT>,
-                 <&clk IMX8MM_CLK_DUMMY>, /* Shader clock often dummy on MM */
-                 <&clk IMX8MM_CLK_GPU_BUS_ROOT>,
-                 <&clk IMX8MM_CLK_GPU_AHB>;
-        clock-names = "core", "shader", "bus", "reg";
-        power-domains = <&pgc_gpu>;
-        status = "okay";
-    };
-
-    gpu_2d: gpu@38008000 {
-        compatible = "vivante,gc";
-        reg = <0x38008000 0x8000>;
-        interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
-        /* Map clocks: Core, Bus (AXI), Reg (AHB) */
-        clocks = <&clk IMX8MM_CLK_GPU2D_ROOT>,
-                 <&clk IMX8MM_CLK_GPU_BUS_ROOT>,
-                 <&clk IMX8MM_CLK_GPU_AHB>;
-        clock-names = "core", "bus", "reg";
-        power-domains = <&pgc_gpu>;
-        status = "okay";
-    };
-};
-
-/* 3. Group them in the generic GPU subsystem */
+/* Define the subsystem with just this single node */
 / {
     gpu-subsystem {
         compatible = "fsl,imx-gpu-subsystem";
-        cores = <&gpu_3d &gpu_2d>;
+        cores = <&gpu>;
         status = "okay";
     };
 };
-
 /* Remove pins used in Ultiboard 5 from generic GPIOs pinctrl settings of imx8mm. */
 &pinctrl_gpio1 {
     fsl,pins = <
