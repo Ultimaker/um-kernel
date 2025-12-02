@@ -27,19 +27,19 @@
 };
 
 
-/* Overwriting the existing NXP gpu node to be a valid Single-Core Etnaviv node */
+/*  SEM-703: Overwriting the existing NXP gpu node to use the GCNanoUltra GPU
+    The IMX8 mini were using has two GPU's one for 3D rendering and one for 2D blitting.
+    For our application only 3D rendering is needed. When enabling both the 2D and 3D core,
+    were running into memory crashes which seem related to the amount of memory used by both
+    chips.
+ */
 &gpu {
-    /* 1. Change binding to upstream Etnaviv */
     compatible = "vivante,gc";
-
-    /* 2. FIX: Limit to ONE register range (The 3D Core only) */
-    /* Original NXP node had 4 ranges here, causing confusion */
     reg = <0x0 0x38000000 0x0 0x8000>;
 
-    /* 3. FIX: Limit to ONE interrupt (The 3D Core IRQ) */
+    /* Limit to ONE interrupt (The 3D Core IRQ) */
     interrupts = <GIC_SPI 3 IRQ_TYPE_LEVEL_HIGH>;
 
-    /* 4. FIX: Rename clocks to match Etnaviv expectations */
     /* Etnaviv looks for "core", "shader", "bus", "reg" */
     clocks = <&clk IMX8MM_CLK_GPU3D_ROOT>,    /* core */
              <&clk IMX8MM_CLK_GPU3D_ROOT>,    /* shader */
@@ -48,9 +48,7 @@
 
     clock-names = "core", "shader", "bus", "reg";
 
-    /* 5. Ensure power domain is active */
     power-domains = <&pgc_gpu>;
-
     status = "okay";
 };
 
