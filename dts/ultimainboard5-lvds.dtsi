@@ -28,9 +28,9 @@
 
 
 /*  SEM-703: Overwriting the existing NXP gpu node to use the GCNanoUltra GPU
-    The IMX8 mini were using has two GPU's one for 3D rendering and one for 2D blitting.
+    The IMX8 mini we're using has two GPU's one for 3D rendering and one for 2D blitting.
     For our application only 3D rendering is needed. When enabling both the 2D and 3D core,
-    were running into memory crashes which seem related to the amount of memory used by both
+    we're running into memory crashes which seem related to the amount of memory used by both
     chips.
  */
 &gpu {
@@ -313,4 +313,3 @@
        status = "disabled";
     };
 };
-
