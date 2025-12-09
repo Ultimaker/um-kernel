@@ -27,13 +27,46 @@
 };
 
 
+/*  SEM-703: Overwriting the existing NXP gpu node to use the GCNanoUltra GPU
+    The IMX8 mini we're using has two GPU's one for 3D rendering and one for 2D blitting.
+    For our application only 3D rendering is needed. When enabling both the 2D and 3D core,
+    we're running into memory crashes which seem related to the amount of memory used by both
+    chips.
+ */
+&gpu {
+    compatible = "vivante,gc";
+    reg = <0x0 0x38000000 0x0 0x8000>;
+
+    /* Limit to ONE interrupt (The 3D Core IRQ) */
+    interrupts = <GIC_SPI 3 IRQ_TYPE_LEVEL_HIGH>;
+
+    /* Etnaviv looks for "core", "shader", "bus", "reg" */
+    clocks = <&clk IMX8MM_CLK_GPU3D_ROOT>,    /* core */
+             <&clk IMX8MM_CLK_GPU3D_ROOT>,    /* shader */
+             <&clk IMX8MM_CLK_GPU_BUS_ROOT>,  /* bus */
+             <&clk IMX8MM_CLK_GPU_AHB>;       /* reg */
+
+    clock-names = "core", "shader", "bus", "reg";
+
+    power-domains = <&pgc_gpu>;
+    status = "okay";
+};
+
+/* Define the subsystem with just this single node */
+/ {
+    gpu-subsystem {
+        compatible = "fsl,imx-gpu-subsystem";
+        cores = <&gpu>;
+        status = "okay";
+    };
+};
 /* Remove pins used in Ultiboard 5 from generic GPIOs pinctrl settings of imx8mm. */
 &pinctrl_gpio1 {
     fsl,pins = <
         MX8MM_IOMUXC_GPIO1_IO07_GPIO1_IO7       0x140 /* GPIO0 / CSI0 PWR */
         MX8MM_IOMUXC_GPIO1_IO15_GPIO1_IO15      0x140 /* TEST# */
         MX8MM_IOMUXC_SAI1_RXD0_GPIO4_IO2		0x140 /* GPIO12 */
-		MX8MM_IOMUXC_SAI1_RXD1_GPIO4_IO3		0x140 /* GPIO13 */        
+		MX8MM_IOMUXC_SAI1_RXD1_GPIO4_IO3		0x140 /* GPIO13 */
     >;
 };
 
@@ -55,9 +88,9 @@
 };
 
 /* SEM-503: We need to connect the IMX8MM pad UART3_RXD and UART3_TXD to the GPIO5 controller,
-   removing them from the UART1 controller. So we need to re-define these pin control groups 
+   removing them from the UART1 controller. So we need to re-define these pin control groups
    here, since it is not possible to delete a pin from a fsl,pin array */
-   
+
 &pinctrl_gpio5 {
     fsl,pins = <
         MX8MM_IOMUXC_SPDIF_RX_GPIO5_IO4         0x140 /* GPIO5 / PWMOUT */
@@ -80,7 +113,7 @@
     >;
 };
 
-    
+
 /* Add GPIOs pinctrl for Ultboard 5. */
 
 /* GPIO PAD setting */
@@ -98,10 +131,10 @@
             MX8MM_IOMUXC_SPDIF_EXT_CLK_GPIO5_IO5    0x100 /* GPIO3 / CSI1 RST / Led-0 Kernel Heartbeat */
         >;
     };
-    
+
     pinctrl_i2c3_tca6416: i2c3_tca6416 {
         fsl,pins = <
-            MX8MM_IOMUXC_SAI1_RXFS_GPIO4_IO0        0x080 /* GPIO8 / U35 - TCA6416 INT */  
+            MX8MM_IOMUXC_SAI1_RXFS_GPIO4_IO0        0x080 /* GPIO8 / U35 - TCA6416 INT */
         >;
     };
 };
@@ -128,7 +161,7 @@
    Connecting the USB2514B to the I2C bus and increasing the POWER-ON TIME to 110 ms resolves the issue. In this configuration,
    we set it to 200 ms to be on the safe side.
 */
-   
+
     usb2514b@2c {
         compatible = "microchip,usb2514b";
         reg = <0x2c>;
@@ -138,7 +171,7 @@
         individual-port-switching;
         power-on-time-ms = <200>;
     };
-    
+
     tca6416@20 {
         compatible = "ti,tca6416";
         reg = <0x20>;
@@ -148,12 +181,12 @@
         interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
         gpio-controller;
         #gpio-cells = <2>;
-        gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_FAN_EN", "VCC5_FAN_OK", 
-                          "HDMI_PWR_EN", "HDMI_PWR_OK", "VCC5_PH_EN", "VCC5_PH_OK", 
-                          "VCC24_HP_PG", "VCC24_MOT_PG", "LVDS_PWR_EN", "LVDS_PWR_OK", 
+        gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_FAN_EN", "VCC5_FAN_OK",
+                          "HDMI_PWR_EN", "HDMI_PWR_OK", "VCC5_PH_EN", "VCC5_PH_OK",
+                          "VCC24_HP_PG", "VCC24_MOT_PG", "LVDS_PWR_EN", "LVDS_PWR_OK",
                           "SAFETY_BTN_STATUS", "SAFETY_RESET", "VCC24_PH_EN", "VCC24_MOT_EN";
     };
-    
+
     cabin_light: pca9632@61 {
         compatible = "nxp,pca9632";
         #address-cells = <1>;
@@ -217,9 +250,9 @@
 
 /* Set pin names for IMXRT control lines */
 &gpio4 {
-    gpio-line-names = "TCA6416A_nINT", "USB2514B_Reset", "", "", "", "", "", "RESET_OUT", 
-                      "", "", "", "", "", "", "", "", 
-                      "", "", "", "", "IMXRT_nReset", "", "", "", 
+    gpio-line-names = "TCA6416A_nINT", "USB2514B_Reset", "", "", "", "", "", "RESET_OUT",
+                      "", "", "", "", "", "", "", "",
+                      "", "", "", "", "IMXRT_nReset", "", "", "",
                       "", "", "", "", "IMXRT_BootMode_En", "SAFETY_ENABLED", "", "";
 };
 
@@ -228,7 +261,7 @@
 /* SEM-503: The IMX8MM UART3_RXD pad (SMARC P138) is connected to the UMBus Drive Enable pin. It should be connected to VCC5 in HW,
    but up to now (2025-01-22) the current ultimainboard 5 still has it connected to wired to the SoM, without any specific
    reason / purpose. So here we claim this pin as gpio-hog and set it to high level and then it cannot be changed in runtime */
-   
+
     umbus_drive_enable_hog {
         gpio-hog;
         gpios = <26 GPIO_ACTIVE_HIGH>;
@@ -280,4 +313,3 @@
        status = "disabled";
     };
 };
-
