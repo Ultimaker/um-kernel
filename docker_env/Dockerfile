@@ -6,8 +6,9 @@ LABEL Maintainer="software-embedded-platform@ultimaker.com" \
 RUN apt-get update && \
     apt-get install -y \
         bc \
-    bison \
+        bison \
         bzip2 \
+        cpio \
         curl \
         device-tree-compiler \
         flex \
@@ -27,6 +28,9 @@ RUN apt-get update && \
         u-boot-tools \
         wget \
         xz-utils \
+        findutils \
+        gawk \
+        tar \
     && \
     apt-get clean && \
     rm -rf /var/cache/apt/*

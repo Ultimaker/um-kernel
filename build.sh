@@ -261,8 +261,8 @@ kernel_build_command()
     fi
 
     cp "${KCONFIG}" "${KERNEL_BUILD_DIR}"/.config
-    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make -C "${LINUX_SRC_DIR}" O="${KERNEL_BUILD_DIR}" olddefconfig
-    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" make -C "${LINUX_SRC_DIR}" O="${KERNEL_BUILD_DIR}" "${@}"
+    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" XZ=xz make -C "${LINUX_SRC_DIR}" O="${KERNEL_BUILD_DIR}" olddefconfig
+    ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" XZ=xz make -C "${LINUX_SRC_DIR}" O="${KERNEL_BUILD_DIR}" "${@}"
     cd "${SRC_DIR}"
     info_h3 "Finished compiling the Kernel"
 }
