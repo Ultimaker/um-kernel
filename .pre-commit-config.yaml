@@ -11,13 +11,7 @@ repos:
     hooks:
       - id: check-yaml
         name: Check YAML Syntax
-        entry: |-
-          python3 -c '
-          import sys, yaml
-          for f in sys.argv[1:]:
-              try: yaml.safe_load(open(f))
-              except Exception as e: print(f"YAML Error in {f}: {e}"); sys.exit(1)
-          ' "$@"
+        entry: python3 -c 'import sys, yaml; [yaml.safe_load(open(f)) for f in sys.argv[1:]]'
         language: system
         files: \.(yaml|yml)$
 
