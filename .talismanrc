@@ -1,0 +1,13 @@
+fileignoreconfig:
+- filename: AGENTS.md
+  ignore_detectors: [filecontent]
+- filename: .github/copilot-instructions.md
+  ignore_detectors: [filecontent]
+- filename: .github/copilot-instructions/pr-assistant.instructions.md
+  ignore_detectors: [filecontent]
+- filename: .github/copilot-instructions/code-reviewer.instructions.md
+  ignore_detectors: [filecontent]
+- filename: .github/copilot-instructions/testing-automation.instructions.md
+  ignore_detectors: [filecontent]
+- filename: .github/copilot-instructions/hardware-integration.instructions.md
+  ignore_detectors: [filecontent]
