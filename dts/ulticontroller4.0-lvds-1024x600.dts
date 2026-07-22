@@ -38,6 +38,13 @@
         touchscreen-inverted-x;
         touchscreen-inverted-y;
     };
+    panel_touchscreen_ngp: gt928@5d {
+        compatible = "goodix,gt911";
+        reg = <0x5d>;
+        reset-gpios = <&panel_gpio 3 GPIO_ACTIVE_LOW>;
+        touchscreen-size-x = <1024>;
+        touchscreen-size-y = <600>;
+    };
 
     panel_gpio: pca9536@41 {
         compatible = "nxp,pca9536";

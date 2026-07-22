@@ -2,8 +2,7 @@
 
 We have 3 device trees, one for each display currently supported by **Ultimainboard 5**:
 
-- *Ulticontroller 4.1-lvds-1024x600.dts (NGP Protos): `ulticontroller4.1-lvds-1024x600.dts`
-- *Ulticontroller 4.0 at 1024x600 (Factor 4, Falcon): `ulticontroller4.0-lvds-1024x600.dts`
+- *Ulticontroller 4.0 at 1024x600 (Factor 4, Factor 4+, NGP): `ulticontroller4.0-lvds-1024x600.dts`
 - *Ultricontroller 3.2 LVDS* at 800x600 (S6 and S8): `ulticontroller3.2-lvds-800x320.dts`
 
 Both device trees sources includes the Ultimainboard 5 device tree: `ultimainboard5-lvds.dtsi`.
