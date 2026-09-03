@@ -1,0 +1,214 @@
+#include "broadcom/bcm2711-rpi-cm4.dts"
+
+/ {
+    panel-lvds {
+        compatible = "panel-lvds";
+        status = "okay";
+        ports {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            port@0 {
+                reg = <0>;
+                panel_in: endpoint {
+                    remote-endpoint = <&lvds_bridge_out>;
+                };
+            };
+        };
+    };
+};
+
+&gpio {
+    gpio-line-names = "", "", "", "", "", "", "", "",
+                      "", "", "", "", "PWR_BTN_LED", "", "", "",
+                      "SAFETY_ENABLED", "", "EEPROM_WP", "PWR_BTN_STATE", "HEARTBEAT_LED", "ERR_LED", "", "TCA6416A_nINT",
+                      "USB2514B_Reset", "IMXRT_BootMode_En", "IMXRT_nReset",
+    gpio23_io_int: gpio23-io-int {
+        brcm,pins = <23>;
+        brcm,function = <BCM2835_FSEL_GPIO_IN>;
+    };
+
+    // Always set ultibus drive enable high
+    umbus_drive_enable_hog {
+        gpio-hog;
+        gpios = <7 GPIO_ACTIVE_HIGH>;
+        output-high;
+        line-name = "umbus_drive_en_hog";
+    };
+};
+
+&dsi1 {
+    #address-cells = <1>;
+    #size-cells = <0>;
+    status = "okay";
+    port {
+        dsi_out: endpoint {
+            remote-endpoint = <&lvds_bridge_in>;
+        };
+    };
+};
+
+i2c_display: &i2c0 {};
+i2c_interface: &i2c1 {
+    status = "okay";
+    clock-frequency = <100000>;
+
+    /*
+    usb2514b@2c {
+        compatible = "microchip,usb2514b";
+        reg = <0x2c>;
+        self-powered;
+        individual-sensing;
+        individual-port-switching;
+        power-on-time-ms = <200>;
+    };
+    */
+
+    lvds-bridge@2c {
+        compatible = "ti,sn65dsi83";
+        reg = <0x2c>;   // Well shit, why did they manage to pick the same address as the USB hub?
+        status = "okay";
+        ports {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            port@0 {
+		        // Video port for MIPI DSI Channel-A input
+                reg = <0>;
+                lvds_bridge_in: endpoint {
+                    remote-endpoint = <&dsi_out>;
+                    data-lanes = <1 2 3 4>;     // Apparently, getting all 4 lanes to work can be finicky... If it doesn't work, try using only 2
+                };
+            };
+
+            port@2 {
+		        // Video port for LVDS Channel-A output (panel or bridge).
+                reg = <2>;
+                lvds_bridge_out: endpoint {
+                    remote-endpoint = <&panel_in>;
+                };
+            };
+        };
+    };
+};
+
+i2c_mainboard: &i2c3 {
+    status = "okay";
+    clock-frequency = <100000>;
+
+    usb2514b@2c {
+        compatible = "microchip,usb2514b";
+        reg = <0x2c>;
+        reset-gpios = <&gpio 24 GPIO_ACTIVE_HIGH>;
+        self-powered;
+        individual-sensing;
+        individual-port-switching;
+        power-on-time-ms = <200>;
+    };
+
+    tca6416@20 {
+        compatible = "ti,tca6416";
+        reg = <0x20>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&gpio23_io_int>;
+        interrupt-parent = <&gpio>;
+        interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
+        gpio-controller;
+        #gpio-cells = <2>;
+        gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_FAN_EN", "VCC5_FAN_OK",
+                          "HDMI_PWR_EN", "HDMI_PWR_OK", "VCC5_PH_EN", "VCC5_PH_OK",
+                          "VCC24_HP_PG", "VCC24_MOT_PG", "LVDS_PWR_EN", "LVDS_PWR_OK",
+                          "SAFETY_BTN_STATUS", "SAFETY_RESET", "VCC24_PH_EN", "VCC24_MOT_EN";
+    };
+
+    cabin_light: pca9632@61 {
+        compatible = "nxp,pca9632";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        reg = <0x61>;
+        nxp,totem-pole;
+        nxp,inverted-out;
+        nxp,hw-blink;
+        white4@0 {
+            label = "white4:cabin_light";
+            reg = <0>;
+            linux,default-trigger = "default-on";
+        };
+        white3@1 {
+            label = "white3:cabin_light";
+            reg = <1>;
+            linux,default-trigger = "default-on";
+        };
+        white2@2 {
+            label = "white2:cabin_light";
+            reg = <2>;
+            linux,default-trigger = "default-on";
+        };
+        white@3 {
+            label = "white:cabin_light";
+            reg = <3>;
+            linux,default-trigger = "default-on";
+        };
+    };
+
+    cabin_light_2: pca9633@62 {
+        compatible = "nxp,pca9633";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        reg = <0x62>;
+        nxp,totem-pole;
+        nxp,inverted-out;
+        nxp,hw-blink;
+        white4@0 {
+            label = "white4:cabin_light";
+            reg = <0>;
+            linux,default-trigger = "default-on";
+        };
+        white3@1 {
+            label = "white3:cabin_light";
+            reg = <1>;
+            linux,default-trigger = "default-on";
+        };
+        white2@2 {
+            label = "white2:cabin_light";
+            reg = <2>;
+            linux,default-trigger = "default-on";
+        };
+        white@3 {
+            label = "white:cabin_light";
+            reg = <3>;
+            linux,default-trigger = "default-on";
+        };
+    };
+};
+
+/ {
+    leds {
+        compatible = "gpio-leds";
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_leds_1>;
+
+        led0 {
+            label = "som:red:carrier-led0";
+            gpios = <&gpio 20 GPIO_ACTIVE_HIGH>;
+            linux,default-trigger = "heartbeat";
+            default-state = "keep";
+        };
+
+        led1 {
+            label = "som:red:carrier-led1";
+            gpios = <&gpio 21 GPIO_ACTIVE_HIGH>;
+            linux,default-trigger = "none";
+            default-state = "keep";
+        };
+
+        // led2 {
+        //     label = "som:red:carrier-sd-led";
+        //     gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
+        //     linux,default-trigger = "mmc1";
+        //     default-state = "keep";
+        // };
+    };
+
+    gpio-keys {
+       status = "disabled";
+    };
+};

@@ -33,7 +33,7 @@ export MAKEFLAGS="-j ${cpu_cnt}"
 echo "Compiling with ${cpu_cnt} CPUs..."
 
 ARCH="${ARCH:-arm64}"
-UM_ARCH="imx8mm" # Empty string, or sun7i for R1, or imx6dl for R2, or imx8mm for Colorado
+UM_ARCH="rpi" # Empty string, or sun7i for R1, or imx6dl for R2, or imx8mm for Colorado
 
 # common directory variablesS
 SYSCONFDIR="${SYSCONFDIR:-/etc}"
@@ -49,9 +49,9 @@ RELEASE_VERSION="${RELEASE_VERSION:-999.999.999}"
 LINUX_SRC_DIR="${SRC_DIR}/linux"
 
 # Setup internal variables
-KCONFIG="${SRC_DIR}/configs/sx8m_defconfig"
-KERNEL_BUILD_DIR="${SRC_DIR}/_build/sx8m-linux"
-KERNEL_IMAGE="uImage-sx8m"
+KCONFIG="${SRC_DIR}/configs/bcm2711_defconfig"
+KERNEL_BUILD_DIR="${SRC_DIR}/_build/rpi-linux"
+KERNEL_IMAGE="uImage-rpi"
 DEBIAN_DIR="${BUILD_DIR}/debian"
 BOOT_FILE_OUTPUT_DIR="${DEBIAN_DIR}/boot"
 

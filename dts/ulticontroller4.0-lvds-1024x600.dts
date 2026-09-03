@@ -3,7 +3,7 @@
  * Copyright (C) 2020 - Raymond Siudak <raysiudak@gmail.com>
 */
 
-#include "ultimainboard5-lvds.dtsi"
+#include "ultimainboard5-rpi-cm4.dts"
 
 / {
     panel-lvds {
@@ -26,7 +26,7 @@
     };
 };
 
-&i2c2 {
+&i2c_display {
     clock-frequency = <100000>;
     panel_touchscreen: ft5426@38 {
         compatible = "edt,edt-ft5406";
