@@ -1,0 +1,227 @@
+/*
+ * Device Tree overlay for UltiMaker Ulticontroller 4.0 Touchscreen panel (1024x600)
+ * on Raspberry Pi Compute Module 4 with Ultimainboard 5.
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2835";
+
+    /* Fragment 0: DSI1 host output to TI SN65DSI84 bridge */
+    dsi_frag: fragment@0 {
+        target = <&dsi1>;
+        __overlay__ {
+            status = "okay";
+
+            port {
+                dsi_out: endpoint {
+                    remote-endpoint = <&lvds_bridge_in>;
+                    data-lanes = <1 2>;
+                    attach-bridge;
+                };
+            };
+        };
+    };
+
+    /* Fragment 1: SN65DSI84 DSI-to-LVDS bridge on I2C1 (GPIO 44/45) */
+    i2c_bridge_frag: fragment@1 {
+        target = <&i2c1>;
+        __overlay__ {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "okay";
+
+            lvds-bridge@2d {
+                compatible = "ti,sn65dsi84";
+                reg = <0x2d>;
+                status = "okay";
+
+                ports {
+                    #address-cells = <1>;
+                    #size-cells = <0>;
+
+                    port@0 {
+                        reg = <0>;
+                        lvds_bridge_in: endpoint {
+                            remote-endpoint = <&dsi_out>;
+                            data-lanes = <1 2>;
+                        };
+                    };
+
+                    port@2 {
+                        reg = <2>;
+                        lvds_bridge_out: endpoint {
+                            remote-endpoint = <&panel_in>;
+                        };
+                    };
+                };
+            };
+        };
+    };
+
+    /* Fragment 2: LVDS Panel definition */
+    panel_frag: fragment@2 {
+        target-path = "/";
+        __overlay__ {
+            panel-lvds {
+                compatible = "panel-lvds";
+                status = "okay";
+                width-mm = <155>;
+                height-mm = <86>;
+                data-mapping = "vesa-24";
+
+                port {
+                    panel_in: endpoint {
+                        remote-endpoint = <&lvds_bridge_out>;
+                    };
+                };
+
+                panel-timing {
+                    clock-frequency = <51200000>;
+                    hactive = <1024>;
+                    vactive = <600>;
+                    hfront-porch = <160>;
+                    hsync-len = <10>;
+                    hback-porch = <150>;
+                    vfront-porch = <12>;
+                    vsync-len = <10>;
+                    vback-porch = <13>;
+                    de-active = <0>;
+                };
+            };
+        };
+    };
+
+    /* Fragment 3: Ulticontroller peripherals on I2C0 (GPIO 0/1) */
+    i2c_display_frag: fragment@3 {
+        target = <&i2c0>;
+        __overlay__ {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "okay";
+
+            panel_gpio: pca9536@41 {
+                compatible = "nxp,pca9536";
+                reg = <0x41>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                gpio-line-names = "BUZZER_EN", "DOOR", "DISP_RST", "TOUCH_RST";
+
+                disp_rst_hog {
+                    gpio-hog;
+                    gpios = <2 0>;
+                    output-high;
+                    line-name = "disp_rst_hog";
+                };
+            };
+
+            panel_lights: pca9632@60 {
+                compatible = "nxp,pca9632";
+                reg = <0x60>;
+                #address-cells = <1>;
+                #size-cells = <0>;
+                nxp,totem-pole;
+                nxp,hw-blink;
+
+                panel_backlight: backlight@3 {
+                    label = "white:panel_backlight";
+                    reg = <3>;
+                    linux,default-trigger = "default-on";
+                };
+            };
+
+            panel_touchscreen: ft5426@38 {
+                compatible = "edt,edt-ft5406";
+                reg = <0x38>;
+                poll-interval = <30>;
+                reset-gpios = <&panel_gpio 3 1>;
+                touchscreen-size-x = <1024>;
+                touchscreen-size-y = <600>;
+                touchscreen-inverted-x;
+                touchscreen-inverted-y;
+            };
+
+            panel_touchscreen_ngp: gt928@5d {
+                compatible = "goodix,gt911";
+                reg = <0x5d>;
+                reset-gpios = <&panel_gpio 3 1>;
+                touchscreen-size-x = <1024>;
+                touchscreen-size-y = <600>;
+                status = "disabled";
+            };
+
+            edid_eeprom: 24c32@50 {
+                compatible = "24c32";
+                reg = <0x50>;
+                pagesize = <32>;
+            };
+        };
+    };
+
+    /* Fragment 4: Ultimainboard 5 power, GPIOs, and cabin lights on I2C3 (GPIO 2/3) */
+    i2c_mainboard_frag: fragment@4 {
+        target = <&i2c3>;
+        __overlay__ {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "okay";
+
+            tca6416@20 {
+                compatible = "ti,tca6416";
+                reg = <0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_FAN_EN", "VCC5_FAN_OK",
+                                  "HDMI_PWR_EN", "HDMI_PWR_OK", "VCC5_PH_EN", "VCC5_PH_OK",
+                                  "VCC24_HP_PG", "VCC24_MOT_PG", "LVDS_PWR_EN", "LVDS_PWR_OK",
+                                  "SAFETY_BTN_STATUS", "SAFETY_RESET", "VCC24_PH_EN", "VCC24_MOT_EN";
+
+                lvds_pwr_en_hog {
+                    gpio-hog;
+                    gpios = <10 0>;
+                    output-high;
+                    line-name = "lvds_pwr_en_hog";
+                };
+            };
+
+            carrierdata@57 {
+                compatible = "atmel,24c32";
+                reg = <0x57>;
+                pagesize = <32>;
+            };
+
+            cabin_light: pca9633@62 {
+                compatible = "nxp,pca9633";
+                reg = <0x62>;
+                #address-cells = <1>;
+                #size-cells = <0>;
+                nxp,totem-pole;
+                nxp,inverted-out;
+                nxp,hw-blink;
+
+                white4@0 {
+                    label = "white4:cabin_light";
+                    reg = <0>;
+                    linux,default-trigger = "default-on";
+                };
+                white3@1 {
+                    label = "white3:cabin_light";
+                    reg = <1>;
+                    linux,default-trigger = "default-on";
+                };
+                white2@2 {
+                    label = "white2:cabin_light";
+                    reg = <2>;
+                    linux,default-trigger = "default-on";
+                };
+                white@3 {
+                    label = "white:cabin_light";
+                    reg = <3>;
+                    linux,default-trigger = "default-on";
+                };
+            };
+        };
+    };
+};

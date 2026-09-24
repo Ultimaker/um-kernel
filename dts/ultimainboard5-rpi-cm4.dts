@@ -21,7 +21,7 @@
     gpio-line-names = "", "", "", "", "", "", "", "",
                       "", "", "", "", "PWR_BTN_LED", "", "", "",
                       "SAFETY_ENABLED", "", "EEPROM_WP", "PWR_BTN_STATE", "HEARTBEAT_LED", "ERR_LED", "", "TCA6416A_nINT",
-                      "USB2514B_Reset", "IMXRT_BootMode_En", "IMXRT_nReset",
+                      "USB2514B_Reset", "IMXRT_BootMode_En", "IMXRT_nReset";
     gpio23_io_int: gpio23-io-int {
         brcm,pins = <23>;
         brcm,function = <BCM2835_FSEL_GPIO_IN>;
@@ -63,9 +63,9 @@ i2c_interface: &i2c1 {
     };
     */
 
-    lvds-bridge@2c {
-        compatible = "ti,sn65dsi83";
-        reg = <0x2c>;   // Well shit, why did they manage to pick the same address as the USB hub?
+    lvds-bridge@2d {
+        compatible = "ti,sn65dsi84";
+        reg = <0x2d>;
         status = "okay";
         ports {
             #address-cells = <1>;
@@ -75,7 +75,7 @@ i2c_interface: &i2c1 {
                 reg = <0>;
                 lvds_bridge_in: endpoint {
                     remote-endpoint = <&dsi_out>;
-                    data-lanes = <1 2 3 4>;     // Apparently, getting all 4 lanes to work can be finicky... If it doesn't work, try using only 2
+                    data-lanes = <1 2>;
                 };
             };
 
@@ -117,6 +117,13 @@ i2c_mainboard: &i2c3 {
                           "HDMI_PWR_EN", "HDMI_PWR_OK", "VCC5_PH_EN", "VCC5_PH_OK",
                           "VCC24_HP_PG", "VCC24_MOT_PG", "LVDS_PWR_EN", "LVDS_PWR_OK",
                           "SAFETY_BTN_STATUS", "SAFETY_RESET", "VCC24_PH_EN", "VCC24_MOT_EN";
+
+        lvds_pwr_en_hog {
+            gpio-hog;
+            gpios = <10 GPIO_ACTIVE_HIGH>;
+            output-high;
+            line-name = "lvds_pwr_en_hog";
+        };
     };
 
     cabin_light: pca9632@61 {
@@ -183,8 +190,6 @@ i2c_mainboard: &i2c3 {
 / {
     leds {
         compatible = "gpio-leds";
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_leds_1>;
 
         led0 {
             label = "som:red:carrier-led0";

@@ -52,6 +52,13 @@
         #gpio-cells = <2>;
         reg = <0x41>;
         gpio-line-names = "BUZZER_EN", "DOOR", "DISP_RST", "TOUCH_RST";
+
+        disp_rst_hog {
+            gpio-hog;
+            gpios = <2 GPIO_ACTIVE_HIGH>;
+            output-high;
+            line-name = "disp_rst_hog";
+        };
     };
 
     panel_lights: pca9632@60 {
