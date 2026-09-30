@@ -20,7 +20,12 @@ PREFIX="${PREFIX:-/usr/}"
 EXEC_PREFIX="${PREFIX}"
 SBINDIR="${EXEC_PREFIX}/sbin"
 
-EMMC_DEV="/dev/mmcblk2"
+# Detect eMMC device: /dev/mmcblk0 on CM4/BCM2711, /dev/mmcblk2 on i.MX8
+if [ -b "/dev/mmcblk0" ] && [ ! -b "/dev/mmcblk2" ]; then
+    EMMC_DEV="/dev/mmcblk0"
+else
+    EMMC_DEV="/dev/mmcblk2"
+fi
 SPLASH_SCREEN_PARTITION="${EMMC_DEV}p2"
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
@@ -229,21 +234,30 @@ check_and_set_eeprom_data()
     article_number_file="${PROVISIONING_USB_MOUNT}/article_number"
     country_code_lock_file="${PROVISIONING_USB_MOUNT}/country_code_lock"
 
+    eeprom_i2c_bus="1"
+    if [ -e "/dev/i2c-3" ] && i2ctransfer -y 3 w2@0x57 0x01 0x00 r1 >/dev/null 2>&1; then
+        eeprom_i2c_bus="3"
+    fi
+
     # Get the article number from EEPROM
-    art_num=$(i2ctransfer -y 1 w2@0x57 0x01 0x00 r4)
+    art_num=$(i2ctransfer -y "${eeprom_i2c_bus}" w2@0x57 0x01 0x00 r4 2>/dev/null || echo "")
     echo "---> Article number read from EEPROM: >${art_num}<"
 
-    art_num_hex=""
-    for hex in $art_num; do
-        art_num_hex="${art_num_hex}${hex#0x}"  # Remove the "0x" prefix
-    done
-    BOM_NUMBER=$(printf "%d\n" "0x$art_num_hex")
+    if [ -n "${art_num}" ]; then
+        art_num_hex=""
+        for hex in $art_num; do
+            art_num_hex="${art_num_hex}${hex#0x}"  # Remove the "0x" prefix
+        done
+        if [ -n "${art_num_hex}" ]; then
+            BOM_NUMBER=$(printf "%d\n" "0x$art_num_hex" 2>/dev/null || echo "${BOM_NUMBER}")
+        fi
+    fi
 
     echo "---> Article number in decimal: >${BOM_NUMBER}<"
 
 
     # Get the country code lock from EEPROM
-    country_code_lock=$(i2ctransfer -y 1 w2@0x57 0x01 0x18 r2)
+    country_code_lock=$(i2ctransfer -y "${eeprom_i2c_bus}" w2@0x57 0x01 0x18 r2 2>/dev/null || echo "")
     echo "--> Country code lock read from EEPROM: >${country_code_lock}<"
 
     # Wait for the USB drive to become visible; max 5 seconds.
@@ -270,9 +284,9 @@ check_and_set_eeprom_data()
                 # forcing the eeprom service to recalculate the CRC. We also need a few ms between the 2 transfer, so the
                 # EEPROM has time to finish the first transfer.
                 # shellcheck disable=SC2086
-                if i2ctransfer -y 1 w6@0x57 0x01 0x00 ${article_number} && \
+                if i2ctransfer -y "${eeprom_i2c_bus}" w6@0x57 0x01 0x00 ${article_number} && \
                    sleep 0.2 && \
-                   i2ctransfer -y 1 w6@0x57 0x00 0x00 0xFF 0xFF 0xFF 0xFF; then
+                   i2ctransfer -y "${eeprom_i2c_bus}" w6@0x57 0x00 0x00 0xFF 0xFF 0xFF 0xFF; then
                     echo "Article number successfully written to EEPROM!"
                     BOM_NUMBER="${BOM_NUMBER_NEW}"
                 else
@@ -289,7 +303,7 @@ check_and_set_eeprom_data()
             country_code="$(cat "${country_code_lock_file}")"
             echo "Trying to write country code lock: '${country_code}'."
             # shellcheck disable=SC2086
-            if ! i2ctransfer -y 1 w4@0x57 0x01 0x18 ${country_code}; then
+            if ! i2ctransfer -y "${eeprom_i2c_bus}" w4@0x57 0x01 0x18 ${country_code}; then
                 echo "Failed to write country code lock to EEPROM, skipping."
             fi
         else
