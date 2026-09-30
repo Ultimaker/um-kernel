@@ -175,28 +175,53 @@ initramfs_add_modules()
         } >> "${INITRAMFS_DEST}"
 
         MODULES_DIR="${DEBIAN_DIR}/lib/modules/${KERNEL_RELEASE}"
-        INITRAMFS_MODULES="${INITRAMFS_MODULES_REQUIRED}"
+        INITRAMFS_MODULES=""
 
         for module in ${INITRAMFS_MODULES_REQUIRED}; do
-            dependencies="$(grep "${module}:" "${MODULES_DIR}/modules.dep" | sed -e "s|^.*:\s*||")"
-            for dependency in ${dependencies}; do
-                dep_module="$(basename "${dependency}")"
-                info_h3 "Adding dependency: '${dep_module}' for module: '${module}'"
-                if [ -n "${INITRAMFS_MODULES##*"${dep_module}"*}" ]; then
-                    INITRAMFS_MODULES="${INITRAMFS_MODULES} ${dep_module}"
-                fi
-            done
+            mod_base="$(basename "${module}" | sed -e 's/\.ko.*$//')"
+            if [ -f "${MODULES_DIR}/modules.builtin" ] && grep -q "/${mod_base}\.ko" "${MODULES_DIR}/modules.builtin"; then
+                info_h3 "Module '${mod_base}' is built-in to kernel, skipping initramfs inclusion."
+                continue
+            fi
+
+            mod_file="$(find "${MODULES_DIR}" -name "${mod_base}.ko*" | head -n 1)"
+            if [ -z "${mod_file}" ]; then
+                info_err "Error: kernel module: '${module}' not available."
+                exit 1
+            fi
+
+            INITRAMFS_MODULES="${INITRAMFS_MODULES} $(basename "${mod_file}")"
+
+            dep_lines="$(grep "/${mod_base}\.ko" "${MODULES_DIR}/modules.dep" 2>/dev/null || true)"
+            if [ -n "${dep_lines}" ]; then
+                dependencies="$(echo "${dep_lines}" | sed -e "s|^.*:\s*||")"
+                for dependency in ${dependencies}; do
+                    dep_file="$(basename "${dependency}")"
+                    info_h3 "Adding dependency: '${dep_file}' for module: '${mod_base}'"
+                    if [ -n "${INITRAMFS_MODULES##*"${dep_file}"*}" ]; then
+                        INITRAMFS_MODULES="${INITRAMFS_MODULES} ${dep_file}"
+                    fi
+                done
+            fi
         done
     fi
 
     for module in ${INITRAMFS_MODULES}; do
-        if [ -z "$(find "${MODULES_DIR}" -name "${module}" -print -exec cp "{}" "${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}" \;)" ]; then
+        mod_src="$(find "${MODULES_DIR}" -name "${module}" | head -n 1)"
+        if [ -z "${mod_src}" ]; then
             info_err "Error: kernel module: '${module}' not available."
             exit 1
         fi
 
-        info_h3 "Adding kernel module: '${module}' to initrd."
-        echo "file /lib/modules/${KERNEL_RELEASE}/${module} ${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}/${module} 0755 0 0" >> "${INITRAMFS_DEST}"
+        cp "${mod_src}" "${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}/"
+        final_mod_name="${module}"
+        if [[ "${final_mod_name}" == *.xz ]]; then
+            xz -d -f "${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}/${final_mod_name}"
+            final_mod_name="${final_mod_name%.xz}"
+        fi
+
+        info_h3 "Adding kernel module: '${final_mod_name}' to initrd."
+        echo "file /lib/modules/${KERNEL_RELEASE}/${final_mod_name} ${INITRAMFS_MODULES_DIR}/${KERNEL_RELEASE}/${final_mod_name} 0755 0 0" >> "${INITRAMFS_DEST}"
     done
 
     if [ -n "${INITRAMFS_MODULES}" ] && ! ${DEPMOD} -ab "${INITRAMFS_DST_DIR}" "${KERNEL_RELEASE}"; then
