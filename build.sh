@@ -194,7 +194,7 @@ initramfs_add_modules()
 
             dep_lines="$(grep "/${mod_base}\.ko" "${MODULES_DIR}/modules.dep" 2>/dev/null || true)"
             if [ -n "${dep_lines}" ]; then
-                dependencies="$(echo "${dep_lines}" | sed -e "s|^.*:\s*||")"
+                dependencies="${dep_lines#*:}"
                 for dependency in ${dependencies}; do
                     dep_file="$(basename "${dependency}")"
                     info_h3 "Adding dependency: '${dep_file}' for module: '${mod_base}'"
