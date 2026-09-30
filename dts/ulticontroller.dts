@@ -224,4 +224,17 @@
             };
         };
     };
+
+    /* Fragment 6: CM4 GPIO pin naming */
+    gpio_frag: fragment@6 {
+        target = <&gpio>;
+        __overlay__ {
+            gpio-line-names =
+                "", "", "", "", "", "", "", "",
+                "", "", "", "", "", "", "", "",
+                "", "", "Heartbeat_LED", "ERR_LED",
+                "SAFETY_ENABLED", "TCA6416A_nINT", "ONOFF_BTN_LED", "EEPROM_WP",
+                "USB2514B_Reset", "IMXRT_BootMode_En", "IMXRT_nReset";
+        };
+    };
 };
