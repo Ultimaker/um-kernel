@@ -181,10 +181,10 @@
         interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
         gpio-controller;
         #gpio-cells = <2>;
-        gpio-line-names = "VCC5_EXT_EN", "VCC5_EXT_OK", "VCC5_FAN_EN", "VCC5_FAN_OK",
-                          "HDMI_PWR_EN", "HDMI_PWR_OK", "VCC5_PH_EN", "VCC5_PH_OK",
-                          "VCC24_HP_PG", "VCC24_MOT_PG", "LVDS_PWR_EN", "LVDS_PWR_OK",
-                          "SAFETY_BTN_STATUS", "SAFETY_RESET", "VCC24_PH_EN", "VCC24_MOT_EN";
+        gpio-line-names = "IONIZER_EN", "", "", "",
+                          "HDMI_PWR_EN", "HDMI_PWR_OK", "", "",
+                          "", "", "LVDS_PWR_EN", "LVDS_PWR_OK",
+                          "SAFETY_BTN_STATUS", "SAFETY_RESET", "", "";
     };
 
     cabin_light: pca9632@61 {
