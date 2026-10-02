@@ -20,13 +20,32 @@ PREFIX="${PREFIX:-/usr/}"
 EXEC_PREFIX="${PREFIX}"
 SBINDIR="${EXEC_PREFIX}/sbin"
 
-# Detect eMMC device: /dev/mmcblk0 on CM4/BCM2711, /dev/mmcblk2 on i.MX8
-if [ -b "/dev/mmcblk0" ] && [ ! -b "/dev/mmcblk2" ]; then
-    EMMC_DEV="/dev/mmcblk0"
-else
-    EMMC_DEV="/dev/mmcblk2"
-fi
-SPLASH_SCREEN_PARTITION="${EMMC_DEV}p2"
+get_emmc_dev()
+{
+    if [ -f "/proc/device-tree/model" ] && grep -qiE "Raspberry Pi|Compute Module" /proc/device-tree/model; then
+        echo "/dev/mmcblk0"
+        return 0
+    fi
+
+    retries=30
+    while [ "${retries}" -gt 0 ]; do
+        if [ -b "/dev/mmcblk0" ] && [ ! -b "/dev/mmcblk2" ]; then
+            echo "/dev/mmcblk0"
+            return 0
+        elif [ -b "/dev/mmcblk2" ]; then
+            echo "/dev/mmcblk2"
+            return 0
+        fi
+        sleep 0.1
+        retries=$((retries - 1))
+    done
+
+    if [ -b "/dev/mmcblk0" ]; then
+        echo "/dev/mmcblk0"
+    else
+        echo "/dev/mmcblk2"
+    fi
+}
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
 UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
@@ -169,14 +188,15 @@ set_display_splash()
     echo "Setting display image."
 
     TMP_MOUNT="/splash"
+    splash_partition="$(get_emmc_dev)p2"
 
     # Mount the splash screen partition
     if [ ! -d ${TMP_MOUNT} ]; then
         mkdir -p "${TMP_MOUNT}"
     fi
 
-    if ! mount -o ro "${SPLASH_SCREEN_PARTITION}" "${TMP_MOUNT}"; then
-        echo "- Error mounting splash screen partition ${SPLASH_SCREEN_PARTITION} at ${TMP_MOUNT}."
+    if ! mount -o ro "${splash_partition}" "${TMP_MOUNT}"; then
+        echo "- Error mounting splash screen partition ${splash_partition} at ${TMP_MOUNT}."
         rmdir "${TMP_MOUNT}"
         return 0
     fi
@@ -235,9 +255,21 @@ check_and_set_eeprom_data()
     country_code_lock_file="${PROVISIONING_USB_MOUNT}/country_code_lock"
 
     eeprom_i2c_bus="1"
-    if [ -e "/dev/i2c-3" ] && i2ctransfer -y 3 w2@0x57 0x01 0x00 r1 >/dev/null 2>&1; then
+    if [ -f "/proc/device-tree/model" ] && grep -qiE "Raspberry Pi|Compute Module" /proc/device-tree/model; then
+        eeprom_i2c_bus="3"
+    elif [ -e "/dev/i2c-3" ] && i2ctransfer -y 3 w2@0x57 0x01 0x00 r1 >/dev/null 2>&1; then
         eeprom_i2c_bus="3"
     fi
+
+    # Wait for the i2c bus to become available; max 3 seconds
+    retries=30
+    while [ "${retries}" -gt 0 ]; do
+        if [ -e "/dev/i2c-${eeprom_i2c_bus}" ]; then
+            break
+        fi
+        sleep 0.1
+        retries=$((retries - 1))
+    done
 
     # Get the article number from EEPROM
     art_num=$(i2ctransfer -y "${eeprom_i2c_bus}" w2@0x57 0x01 0x00 r4 2>/dev/null || echo "")
@@ -398,9 +430,14 @@ find_and_run_update()
             echo "Warning: unable to unmount '${UPDATE_IMG_MOUNT}'."
         fi
 
-        echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute, with ${BOM_NUMBER}."
-        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${EMMC_DEV}" "${BOM_NUMBER}" "${SOFTWARE_INSTALL_MODE}"; then
-            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${EMMC_DEV} ${BOM_NUMBER} ${SOFTWARE_INSTALL_MODE}'."
+        target_storage="$(get_emmc_dev)"
+        disk_from_dev="${dev%p[0-9]*}"
+        if [ -b "${disk_from_dev}" ] && [ -z "${disk_from_dev##*/mmcblk*}" ]; then
+            target_storage="${disk_from_dev}"
+        fi
+        echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute on '${target_storage}', with ${BOM_NUMBER}."
+        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${target_storage}" "${BOM_NUMBER}" "${SOFTWARE_INSTALL_MODE}"; then
+            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${target_storage} ${BOM_NUMBER} ${SOFTWARE_INSTALL_MODE}'."
             critical_error
             break
         fi
