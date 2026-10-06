@@ -1,0 +1,150 @@
+# AGENTS.md — Orientation for AI Agents
+
+> **What this file is:** everything an agent needs to understand *what this
+> repository is and how to work in it*. It is orientation, not policy.
+>
+> **What this file is NOT:** it does not contain rules. Normative constraints —
+> what you MUST and MUST NOT do — live in `.agents/rules/` and are enforced by
+> hooks. Never restate a rule here; a duplicated rule drifts from the original
+> and agents then follow the stale copy. See *Where Everything Lives* at the end.
+
+---
+
+## 1. What This Repository Is
+
+**Repository:** `um-kernel`
+**Ecosystem context:** UltiMaker Firmware & Embedded OS Ecosystem
+
+`um-kernel` contains the Linux kernel configuration, patches, device trees, early initramfs, and Debian packaging scripts for UltiMaker 3D printers based on the NXP i.MX8M Mini SOM (e.g. Factor 4, Factor 4+, S6, S8, NGP) as well as legacy platforms (A20, i.MX6). It packages the compiled kernel `uImage`, kernel modules (`/lib/modules/`), and compiled device tree blobs (`.dtb`) into the `um-kernel` Debian package (`.deb`) deployed directly to machine storage or integrated into rootfs images.
+
+## 2. Position in the Wider System
+
+### Submodules
+
+This repository vendors the following submodule. Run `git submodule update --init` after cloning:
+
+- `linux` — UltiMaker fork of the Linux kernel (`Ultimaker/linux.git`). Contains device drivers and BSP support for UltiMaker printer mainboards.
+
+## 3. Tech Stack
+
+- **Kernel & C**: Linux Kernel (aarch64 / arm64 architecture)
+- **Device Tree**: DTS/DTSI source definitions for Ultimainboard 5 and display panels
+- **Debian packaging**: `debian/` control, preinst, postinst, and trigger scripts
+- **Shell Scripting**: Bash build scripts, initramfs generator, shellcheck verification
+
+## 4. Architecture & Domain Concepts
+
+- **Kernel Source Submodule (`linux/`)**:
+  - Upstream Linux kernel tree customized for UltiMaker hardware.
+  - Development on the kernel itself happens in `Ultimaker/linux.git`. This repository tracks specific revisions via git submodules.
+- **Kernel Configuration (`configs/`)**:
+  - `configs/sx8m_defconfig`: Primary defconfig for Congatec i.MX8M Mini SOM (`cgtsx8m`).
+- **Device Tree Architecture (`dts/`)**:
+  - Ultimainboard 5 hosts displays for multiple printer platforms.
+  - Ulticontroller 4.0 (1024x600 for Factor 4, Factor 4+, NGP): `dts/ulticontroller4.0-lvds-1024x600.dts`.
+  - Ulticontroller 3.2 LVDS (800x320 for S6 and S8): `dts/ulticontroller3.2-lvds-800x320.dts`.
+  - Both trees include `dts/ultimainboard5-lvds.dtsi`.
+  - In-tree reference: [dts/Readme.md](dts/Readme.md) specifies how U-Boot resolves `cgtsx8m-ultimain5.dtb` via symlinks created during `debian/postinst`.
+- **Proprietary Firmware (`proprietary_firmware/`)**:
+  - Stores closed-source firmware blobs (e.g. WiFi/Bluetooth firmware) and wireless regulatory DB, as cited in [proprietary_firmware/Readme.md](proprietary_firmware/Readme.md).
+- **Initramfs (`initramfs/`)**:
+  - `initramfs/initramfs.lst`: Definitions for the early userspace ramdisk, packaging critical boot modules (e.g. `loop.ko`, `leds-pca963x.ko`).
+- **Packaging Pipeline (`debian/`, `build.sh`)**:
+  - `build_for_ultimaker.sh` invokes `build.sh` inside Docker to compile the kernel, assemble modules, build the initramfs, compile device tree blobs, and package everything into `um-kernel_<version>_arm64.deb`.
+
+## 5. Directory Map
+
+| Directory | Files | Predominant types | Purpose |
+|---|---|---|---|
+| `configs/` | 3 | defconfig | Linux kernel configurations (e.g. `sx8m_defconfig`) |
+| `dts/` | 4 | .dts, .dtsi, .md | Device tree sources and display mapping documentation |
+| `debian/` | 4 | control, scripts | Debian package metadata and post-installation scripts |
+| `initramfs/` | 2 | .lst, .sh | Early userspace initramfs file list and build script |
+| `patches/` | 6 | .patch, .diff | Standalone kernel patches applied during build |
+| `proprietary_firmware/` | 6 | .bin, .md | Closed-source hardware firmware and regulatory DB |
+| `docker_env/` | 2 | .sh | Docker build environment setup and verification |
+| `linux/` | — | submodule | Linux kernel source tree submodule |
+
+## 6. Local Development & Verification
+
+### Build
+
+```bash
+./build_for_ultimaker.sh
+```
+
+Build options:
+- `-c`: Skip build environment checks
+- `-l`: Skip shellcheck code linting
+- `-t`: Skip tests
+
+### Linting
+
+Run ShellCheck across all repository shell scripts:
+
+```bash
+./run_shellcheck.sh
+```
+
+Or via Docker (as done in CI):
+```bash
+./build_for_ultimaker.sh
+```
+
+### Automated Tests
+
+There is no automated unit test suite for this kernel build repository (`run_tests` in `build_for_ultimaker.sh` notes: *"There are no tests available for this repository"*).
+
+### Verification & Validation (V&V)
+
+1. **Lint Verification**: All shell scripts must pass `./run_shellcheck.sh` cleanly without warnings.
+2. **Build Verification**: `./build_for_ultimaker.sh` must successfully compile the kernel image (`uImage-sx8m`), modules, device tree blobs, and generate the final `.deb` package.
+3. **Hardware / Device V&V**: Empirical validation requires installing the generated `.deb` package on target hardware (Factor 4, S6, S8, or NGP) or virtual test environment, verifying bootloader handover, kernel boot via `dmesg`, correct device tree symlink resolution, and display / peripheral initialization.
+
+### Continuous Integration
+
+CI runs on GitHub Actions (`.github/workflows/build_on_push_pr.yml`):
+- `Prepare`: Sets up build environment variables
+- `Shellcheck`: Executes shellcheck against repository scripts
+- `Build`: Executes Docker-based kernel build and package compilation
+- `Release_Package`: Releases Debian package when triggered on release branches/tags
+
+## 7. Where Everything Lives
+
+Each fact belongs in exactly one place. When they disagree, the more specific
+one wins — and the disagreement is a bug worth fixing.
+
+| Layer | Answers | Location |
+|---|---|---|
+| **Orientation** | What is this, how do I work in it? | this file |
+| **Rules** | What must I do, what must I never do? | `.agents/rules/*.md` (symlinked into `.claude/rules/`, `.opencode/rules/`) |
+| **Mechanical enforcement** | What does the tooling refuse, regardless of intent? | `.agents/hooks/*` and `.pre-commit-config.yaml` |
+| **AI exclusion** | What must never be read by a model? | `.aiignore` (compiled into each platform's mechanism) |
+| **What was inferred** | Why is this configured the way it is? | `.agents/bootstrap-profile.json` |
+| **Open proposals** | What might still become a rule? | `.agents/bootstrap-observations.md` |
+
+Rule numbers encode the LOAD TIER and the OWNER, not the age of the rule:
+
+| Band | Load tier | Owner |
+|---|---|---|
+| `01`–`14` | always on | managed — regenerated by the bootstrap |
+| `15`–`19` | always on | this repository — never touched by the bootstrap |
+| `20`–`34` | glob-scoped (`paths:`) | managed — regenerated by the bootstrap |
+| `35`–`39` | glob-scoped (`paths:`) | this repository |
+| `40`–`44` | model decision | managed — regenerated by the bootstrap |
+| `45`–`59` | model decision | this repository |
+
+`compile_rule_frontmatter.py` enforces these bands. Put a repository-specific
+rule in a repo-owned band; one left in a managed band is renumbered into the
+matching custom band on the next run.
+
+### Skills to load
+
+This repository is covered by the following UltiCortex skills. Load the relevant
+one before designing or implementing — `.agents/rules/05-*` explains when each
+applies:
+
+- `software-architect`
+- `ultimaker-firmware-development`
+- `ultimaker-printer-ssh`
+- `ultimaker-printer-logs`

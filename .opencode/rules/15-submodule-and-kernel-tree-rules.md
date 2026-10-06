@@ -1,0 +1,1 @@
+../../.agents/rules/15-submodule-and-kernel-tree-rules.md

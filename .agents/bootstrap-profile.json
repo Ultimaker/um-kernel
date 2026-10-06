@@ -1,0 +1,306 @@
+{
+  "repository": {
+    "name": "um-kernel",
+    "source": "git-remote:origin"
+  },
+  "stacks": {
+    "has_frontend": false,
+    "has_cloud": false,
+    "has_cpp": false,
+    "has_infra": false,
+    "has_qml": false,
+    "has_freertos": false,
+    "has_debian": true,
+    "has_materials": false
+  },
+  "git": {
+    "commits_sampled": 200,
+    "jira_keys": {
+      "CES": 68,
+      "SEM": 7,
+      "EMB": 6
+    },
+    "allowed_jira_keys": [
+      "EMB",
+      "CES",
+      "SEM"
+    ],
+    "branch_jira_key": "EMB",
+    "history_jira_key": "CES",
+    "dominant_jira_key": "EMB",
+    "semantic_prefix_ratio": 0.0
+  },
+  "base_branch": "master/imx8",
+  "submodules": [
+    "linux"
+  ],
+  "ci": {
+    "providers": [
+      "github-actions"
+    ],
+    "workflows": [
+      ".github/workflows/build_on_push_pr.yml",
+      ".github/workflows/release_docker_img.yml"
+    ],
+    "signals": {
+      "tests": false,
+      "lint": false,
+      "build": false
+    }
+  },
+  "tests": {
+    "frameworks": [],
+    "commands": []
+  },
+  "linters": {
+    "ruff": false,
+    "black": false,
+    "flake8": false,
+    "mypy": false,
+    "eslint": false,
+    "prettier": false,
+    "stylelint": false,
+    "clang_format": false,
+    "clang_tidy": false,
+    "pre_commit_config": false
+  },
+  "lint_scripts": [
+    {
+      "path": "run_shellcheck.sh",
+      "command": "./run_shellcheck.sh"
+    }
+  ],
+  "protected_branches": [
+    "master/imx8"
+  ],
+  "cpp": {},
+  "c": {},
+  "python": {},
+  "ui": {
+    "has_ui": false,
+    "design_md_exists": false,
+    "token_sources": [],
+    "uses_stardust": false
+  },
+  "pr_template": {
+    "exists": true,
+    "path": "pull_request_template.md",
+    "has_why": true,
+    "has_what": true,
+    "has_how": true,
+    "content": "Read the [Definition of Ready for Review](https://ultimaker.atlassian.net/l/cp/U0ErL5NA) for more details on the rationale behind this PR template\n\n## Description\n_A concise explanation of the changes made in this Pull Request. Consider adding_ \\\n_- Why this change was necessary_ \\\n_- Notable decisions made_ \\\n_- Out of scope items_ \\\n_- Screenshots/GIFs for visual changes_\n\n## How has this been tested\n_A brief description of what was tested, how, and on what machines. \\\nIf tests remain to be done, also mention that here!_\n\n\n## Ready for Review Checklist\nTo help with deciding if this PR is RFR, use this checklist.\n\nThe author confirms that:\n- [ ] the author has **self-reviewed** this work and is highly confident about the quality\n- [ ] this work satisfies all **acceptance criteria** that are stated in the linked ticket\n- [ ] this work has been **tested** on all product families and the process and results are documented in the above section\n- [ ] The **description** above is concise yet complete\n- [ ] the reviewer has been offered a **walkthrough** (if needed)\n- [ ] the code is **cleaned** from any rubbish (e.g. meaningless comments, log-spamming, etc...)\n- [ ] remaining `#TODO` **comments** mention a Jira ticket number\n- [ ] all **CI** checks are passing\n- [ ] all **commits** are (re)structured to be meaningful and clearly arranged, and all are prepended with the ticket number for traceability\n"
+  },
+  "build_commands": [
+    "./build_for_ultimaker.sh"
+  ],
+  "directory_map": [
+    {
+      "name": "patches",
+      "count": 6,
+      "extensions": ".patch, .diff"
+    },
+    {
+      "name": "proprietary_firmware",
+      "count": 6,
+      "extensions": ".bin, .md"
+    },
+    {
+      "name": "dts",
+      "count": 4,
+      "extensions": ".dts, .dtsi, .md"
+    },
+    {
+      "name": "debian",
+      "count": 4,
+      "extensions": ""
+    },
+    {
+      "name": "configs",
+      "count": 3,
+      "extensions": ""
+    },
+    {
+      "name": "docker_env",
+      "count": 2,
+      "extensions": ".sh"
+    },
+    {
+      "name": "initramfs",
+      "count": 2,
+      "extensions": ".lst, .sh"
+    }
+  ],
+  "artifact_dirs": [],
+  "has_api_surface": false,
+  "interface_dirs": [],
+  "api_doc_paths": [],
+  "has_storybook": false,
+  "host": {
+    "os": "linux",
+    "has_secret_tool": false,
+    "has_security": false
+  },
+  "vendored": [
+    "linux/"
+  ],
+  "generated": [],
+  "evidence": {
+    "has_systemd": false,
+    "systemd_units": [],
+    "has_udev": false,
+    "udev_rules": [],
+    "has_dbus": false,
+    "dbus_policy": [],
+    "has_machine_json": false,
+    "machine_json_files": [],
+    "has_gcode": false,
+    "gcode_evidence": [],
+    "has_po_files": false,
+    "po_files": [],
+    "has_debian_packaging": true,
+    "debian_evidence": [
+      "debian/control"
+    ],
+    "shell_script_count": 9
+  },
+  "license": {
+    "declared": "GNU GENERAL PUBLIC",
+    "source": "LICENSE",
+    "proprietary": false
+  },
+  "has_package_json": false,
+  "node_package_dirs": [],
+  "python_packaging_manifests": [],
+  "file_count": 43,
+  "complexity": {},
+  "skills": {
+    "catalog_root": "~/.gemini/config/plugins/ulticortex-plugin",
+    "catalog_size": 28,
+    "matched": [
+      "software-architect",
+      "ultimaker-firmware-development",
+      "ultimaker-printer-ssh",
+      "ultimaker-printer-logs"
+    ]
+  },
+  "observations": [
+    {
+      "category": "architecture",
+      "title": "The repository documents its own architecture in-tree",
+      "evidence": [
+        "`dts/Readme.md` \u2014 14 lines",
+        "`proprietary_firmware/Readme.md` \u2014 8 lines"
+      ],
+      "question": "Read these before writing anything about this repository's architecture. Which of them state a convention that is a correctness requirement rather than a style preference, and which name a footgun a newcomer would hit? Anything already written here belongs in AGENTS.md as a CITATION, never as a paraphrase that will drift from the original.",
+      "draft_rule": "Before changing `<area>`, read `<doc path>` \u2014 it is the authored convention for this subsystem. State the constraint it carries (`<constraint>`) and cite the document rather than restating it here.",
+      "confidence": "high",
+      "data": {
+        "docs": [
+          "dts/Readme.md",
+          "proprietary_firmware/Readme.md"
+        ]
+      }
+    },
+    {
+      "category": "ecosystem_contract",
+      "title": "This repository is a provider or consumer in a submodule graph",
+      "evidence": [
+        "`linux`"
+      ],
+      "question": "For each submodule: does this repository merely consume it, or does it own it? Who else pins the same submodule, and what is the ordering discipline when a change spans both trees (innermost first, push the submodule branch before moving the parent pointer)?",
+      "draft_rule": "Submodule pointers in this repository are moved only after the corresponding change is merged and pushed in `<submodule repo>`. Never commit inside a submodule tree from this checkout. A pointer bump is its own commit and names the upstream revision it moves to.",
+      "confidence": "high",
+      "data": {
+        "submodules": [
+          "linux"
+        ]
+      }
+    },
+    {
+      "category": "commit-style",
+      "title": "Commits are small and tightly scoped",
+      "evidence": [
+        "median 1 files per commit, 90th percentile 5"
+      ],
+      "question": "Should the scope rule name a concrete file-count expectation derived from this repository's own history?",
+      "draft_rule": "Keep commits tightly scoped: this repository's median commit touches 1 files. A commit touching more than 5 files needs an explicit justification in the message.",
+      "confidence": "medium",
+      "data": {}
+    },
+    {
+      "category": "git-workflow",
+      "title": "History keeps merge commits",
+      "evidence": [
+        "80/300 sampled commits are merges (mostly pull request merges)",
+        "`Merge pull request`: 66, `Merge branch`: 12"
+      ],
+      "question": "Is the merge commit intentional (preserving branch topology), and should agents therefore NOT rebase published branches?",
+      "draft_rule": "This repository preserves merge topology. Do not rewrite or rebase branches that have already been pushed; integrate with merges.",
+      "confidence": "medium",
+      "data": {}
+    },
+    {
+      "category": "release",
+      "title": "Releases are tagged with v-prefixed semantic versions",
+      "evidence": [
+        "37/40 recent tags are semantic versions",
+        "most recent tags: v498.2.0-dev, v498.0.1-dev, v498.0.0-dev, v12.4.0-3, v12.4.0-4"
+      ],
+      "question": "Do version bumps have a required home (packaging metadata, recipe file, CMake project version) that must move together with the tag?",
+      "draft_rule": "Release tags follow v-prefixed semantic versions. When bumping a version, update every location that carries it (<list them>) in the same commit.",
+      "confidence": "low",
+      "data": {}
+    }
+  ],
+  "hook_verification": {
+    "block-secrets": {
+      "fired": true,
+      "blocked": true,
+      "detail": "staged violation rejected",
+      "at": "2026-10-06T05:33:43+00:00",
+      "sha": "6eeb8ed"
+    },
+    "block-absolute-paths": {
+      "fired": true,
+      "blocked": true,
+      "detail": "staged violation rejected",
+      "at": "2026-10-06T05:33:43+00:00",
+      "sha": "6eeb8ed"
+    },
+    "pretool-guard": {
+      "fired": true,
+      "blocked": true,
+      "detail": "secret payload denied",
+      "at": "2026-10-06T05:33:43+00:00",
+      "sha": "6eeb8ed"
+    },
+    "block-name-matched-kill": {
+      "fired": true,
+      "blocked": true,
+      "detail": "pkill denied",
+      "at": "2026-10-06T05:33:43+00:00",
+      "sha": "6eeb8ed"
+    },
+    "check-rule-frontmatter": {
+      "fired": true,
+      "blocked": null,
+      "detail": "exit 0 (advisory; executed, not violated)",
+      "at": "2026-10-06T05:33:44+00:00",
+      "sha": "6eeb8ed"
+    },
+    "audit-quad-agent-parity": {
+      "fired": true,
+      "blocked": null,
+      "detail": "exit 0 (advisory; executed, not violated)",
+      "at": "2026-10-06T05:33:44+00:00",
+      "sha": "6eeb8ed"
+    },
+    "check-upstream-alignment": {
+      "fired": true,
+      "blocked": null,
+      "detail": "exit 0 (advisory; executed, not violated)",
+      "at": "2026-10-06T05:33:45+00:00",
+      "sha": "6eeb8ed"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+../../.agents/rules/35-device-tree-and-firmware-rules.md
