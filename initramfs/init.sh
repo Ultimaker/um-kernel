@@ -48,7 +48,7 @@ get_emmc_dev()
 }
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
-UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
+UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9] /dev/sd[a-z][0-9]*"
 
 UM_SPLASH="/var/lib/splash_screen/umsplash.fb"
 FB_DEVICE="/dev/fb0"
