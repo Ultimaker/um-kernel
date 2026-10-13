@@ -52,7 +52,6 @@ i2c_interface: &i2c1 {
     status = "okay";
     clock-frequency = <100000>;
 
-    /*
     usb2514b@2c {
         compatible = "microchip,usb2514b";
         reg = <0x2c>;
@@ -61,7 +60,6 @@ i2c_interface: &i2c1 {
         individual-port-switching;
         power-on-time-ms = <200>;
     };
-    */
 
     lvds-bridge@2d {
         compatible = "ti,sn65dsi84";
@@ -93,16 +91,6 @@ i2c_interface: &i2c1 {
 i2c_mainboard: &i2c3 {
     status = "okay";
     clock-frequency = <100000>;
-
-    usb2514b@2c {
-        compatible = "microchip,usb2514b";
-        reg = <0x2c>;
-        reset-gpios = <&gpio 24 GPIO_ACTIVE_HIGH>;
-        self-powered;
-        individual-sensing;
-        individual-port-switching;
-        power-on-time-ms = <200>;
-    };
 
     tca6416@20 {
         compatible = "ti,tca6416";
