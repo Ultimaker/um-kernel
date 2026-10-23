@@ -257,7 +257,7 @@ check_and_set_eeprom_data()
     eeprom_i2c_bus="1"
     if [ -f "/proc/device-tree/model" ] && grep -qiE "Raspberry Pi|Compute Module" /proc/device-tree/model; then
         eeprom_i2c_bus="3"
-    elif [ -e "/dev/i2c-3" ] && i2ctransfer -y 3 w2@0x57 0x01 0x00 r1 >/dev/null 2>&1; then
+    elif [ -e "/dev/i2c-3" ] && i2ctransfer -f -y 3 w2@0x57 0x01 0x00 r1 >/dev/null 2>&1; then
         eeprom_i2c_bus="3"
     fi
 
@@ -272,7 +272,7 @@ check_and_set_eeprom_data()
     done
 
     # Get the article number from EEPROM
-    art_num=$(i2ctransfer -y "${eeprom_i2c_bus}" w2@0x57 0x01 0x00 r4 2>/dev/null || echo "")
+    art_num=$(i2ctransfer -f -y "${eeprom_i2c_bus}" w2@0x57 0x01 0x00 r4 2>/dev/null || echo "")
     echo "---> Article number read from EEPROM: >${art_num}<"
 
     if [ -n "${art_num}" ]; then
@@ -289,7 +289,7 @@ check_and_set_eeprom_data()
 
 
     # Get the country code lock from EEPROM
-    country_code_lock=$(i2ctransfer -y "${eeprom_i2c_bus}" w2@0x57 0x01 0x18 r2 2>/dev/null || echo "")
+    country_code_lock=$(i2ctransfer -f -y "${eeprom_i2c_bus}" w2@0x57 0x01 0x18 r2 2>/dev/null || echo "")
     echo "--> Country code lock read from EEPROM: >${country_code_lock}<"
 
     # Wait for the USB drive to become visible; max 5 seconds.
@@ -316,9 +316,9 @@ check_and_set_eeprom_data()
                 # forcing the eeprom service to recalculate the CRC. We also need a few ms between the 2 transfer, so the
                 # EEPROM has time to finish the first transfer.
                 # shellcheck disable=SC2086
-                if i2ctransfer -y "${eeprom_i2c_bus}" w6@0x57 0x01 0x00 ${article_number} && \
+                if i2ctransfer -f -y "${eeprom_i2c_bus}" w6@0x57 0x01 0x00 ${article_number} && \
                    sleep 0.2 && \
-                   i2ctransfer -y "${eeprom_i2c_bus}" w6@0x57 0x00 0x00 0xFF 0xFF 0xFF 0xFF; then
+                   i2ctransfer -f -y "${eeprom_i2c_bus}" w6@0x57 0x00 0x00 0xFF 0xFF 0xFF 0xFF; then
                     echo "Article number successfully written to EEPROM!"
                     BOM_NUMBER="${BOM_NUMBER_NEW}"
                 else
@@ -335,7 +335,7 @@ check_and_set_eeprom_data()
             country_code="$(cat "${country_code_lock_file}")"
             echo "Trying to write country code lock: '${country_code}'."
             # shellcheck disable=SC2086
-            if ! i2ctransfer -y "${eeprom_i2c_bus}" w4@0x57 0x01 0x18 ${country_code}; then
+            if ! i2ctransfer -f -y "${eeprom_i2c_bus}" w4@0x57 0x01 0x18 ${country_code}; then
                 echo "Failed to write country code lock to EEPROM, skipping."
             fi
         else

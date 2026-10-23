@@ -13,5 +13,5 @@ if ! mountpoint -q /boot; then
     # Set the device for the boot partition
     boot_part=${root_part/%p2/p1}
 
-    mount "${boot_part}" /boot
+    mount "${boot_part}" /boot 2>/dev/null || true
 fi

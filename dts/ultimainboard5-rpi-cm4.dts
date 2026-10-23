@@ -114,6 +114,12 @@ i2c_mainboard: &i2c3 {
         };
     };
 
+    carrierdata@57 {
+        compatible = "atmel,24c32";
+        reg = <0x57>;
+        pagesize = <32>;
+    };
+
     cabin_light: pca9632@61 {
         compatible = "nxp,pca9632";
         #address-cells = <1>;

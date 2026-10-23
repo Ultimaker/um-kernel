@@ -408,10 +408,44 @@ dtb_build()
             -o "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp" "dts/${dts}"
         if grep -q "/plugin/;" "dts/${dts}"; then
             dtc -@ -I dts -o "${BOOT_FILE_OUTPUT_DIR}/${dt}.dtbo" -O dtb "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp"
+            mkdir -p "${BOOT_FILE_OUTPUT_DIR}/overlays"
+            cp "${BOOT_FILE_OUTPUT_DIR}/${dt}.dtbo" "${BOOT_FILE_OUTPUT_DIR}/overlays/${dt}.dtbo"
         else
             dtc -@ -I dts -o "${BOOT_FILE_OUTPUT_DIR}/${dt}.dtb" -O dtb "${KERNEL_BUILD_DIR}/dtb/.${dt}.dtb.tmp"
         fi
     done
+
+    # Build standard Raspberry Pi overlays needed by CM4
+    if [ -d "${LINUX_SRC_DIR}/arch/arm/boot/dts/overlays" ]; then
+        info_h2 "### Building standard Raspberry Pi overlays ###"
+        mkdir -p "${BOOT_FILE_OUTPUT_DIR}/overlays"
+        rpi_overlays=(dwc2 vc4-kms-v3d vc4-kms-v3d-pi4 i2c0 i2c1 i2c3 uart3 uart4)
+        for ov in "${rpi_overlays[@]}"; do
+            src="${LINUX_SRC_DIR}/arch/arm/boot/dts/overlays/${ov}-overlay.dts"
+            if [ -f "${src}" ]; then
+                cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
+                    -I "${LINUX_SRC_DIR}/scripts/dtc/include-prefixes" \
+                    -I "${LINUX_SRC_DIR}/include" \
+                    -I "${LINUX_SRC_DIR}/arch/${ARCH}/boot/dts" \
+                    -I "${LINUX_SRC_DIR}/arch/arm/boot/dts" \
+                    -I "${LINUX_SRC_DIR}/arch/arm/boot/dts/broadcom" \
+                    -I "${LINUX_SRC_DIR}/arch/arm/boot/dts/overlays" \
+                    -o "${KERNEL_BUILD_DIR}/dtb/.${ov}.dtbo.tmp" "${src}"
+                dtc -@ -I dts -o "${BOOT_FILE_OUTPUT_DIR}/overlays/${ov}.dtbo" -O dtb "${KERNEL_BUILD_DIR}/dtb/.${ov}.dtbo.tmp"
+            fi
+        done
+        if [ -f "${LINUX_SRC_DIR}/arch/arm/boot/dts/overlays/overlay_map.dts" ]; then
+            cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
+                -I "${LINUX_SRC_DIR}/scripts/dtc/include-prefixes" \
+                -I "${LINUX_SRC_DIR}/include" \
+                -I "${LINUX_SRC_DIR}/arch/${ARCH}/boot/dts" \
+                -I "${LINUX_SRC_DIR}/arch/arm/boot/dts" \
+                -I "${LINUX_SRC_DIR}/arch/arm/boot/dts/broadcom" \
+                -I "${LINUX_SRC_DIR}/arch/arm/boot/dts/overlays" \
+                -o "${KERNEL_BUILD_DIR}/dtb/.overlay_map.tmp" "${LINUX_SRC_DIR}/arch/arm/boot/dts/overlays/overlay_map.dts"
+            dtc -I dts -o "${BOOT_FILE_OUTPUT_DIR}/overlays/overlay_map.dtb" -O dtb "${KERNEL_BUILD_DIR}/dtb/.overlay_map.tmp"
+        fi
+    fi
 
 
     info_h3 "\nFinished building Device-trees.\n"
