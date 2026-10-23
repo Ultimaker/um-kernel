@@ -419,7 +419,7 @@ dtb_build()
     if [ -d "${LINUX_SRC_DIR}/arch/arm/boot/dts/overlays" ]; then
         info_h2 "### Building standard Raspberry Pi overlays ###"
         mkdir -p "${BOOT_FILE_OUTPUT_DIR}/overlays"
-        rpi_overlays=(dwc2 vc4-kms-v3d vc4-kms-v3d-pi4 i2c0 i2c1 i2c3 uart3 uart4)
+        rpi_overlays=(dwc2 vc4-kms-v3d vc4-kms-v3d-pi4 i2c0 i2c1 i2c3 uart3 uart4 pcie-32bit-dma)
         for ov in "${rpi_overlays[@]}"; do
             src="${LINUX_SRC_DIR}/arch/arm/boot/dts/overlays/${ov}-overlay.dts"
             if [ -f "${src}" ]; then
