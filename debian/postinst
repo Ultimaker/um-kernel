@@ -16,25 +16,48 @@ if [ "$1" = "configure" ]; then
     # before the mawk package, there will be no awk link pointing to the
     # mawk binary, so below we need to specify the correct binary.
 
-    first_article_number=$(mawk '/^article_numbers:/ {print $2}' ${ARTNUM_FILE})
+    first_article_number=$(mawk '/^article_numbers:/ {print $2}' ${ARTNUM_FILE} 2>/dev/null || true)
+    som=$(mawk '/^som:/ {print $2}' ${ARTNUM_FILE} 2>/dev/null || true)
 
-    echo "-> Recipe's first article number: ${first_article_number}"
+    echo "-> Recipe's first article number: ${first_article_number}, SOM: ${som}"
 
-    case "${first_article_number}" in
-        106* | 107*)
-            echo "-> Setting Ulticontroller 3.2 LVDS device tree."
-            ln -sf "${UC32_DTS}" "/boot/${TARGET_DTS}"
-            ;;
-        227380 | 105* | 109*)
-            echo "-> Setting Ulticontroller 4.0 LVDS device tree."
-            ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
-            ;;
-    # Fallback to the larger screen
-        *)
-            echo "-> Falling back to Ulticontroller 4.0 LVDS device tree."
-            ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
-            ;;
-    esac
+    if [ "${som}" = "cm4" ] || { [ -f "/boot/config.txt" ] && grep -qiE "bcm2711|raspberrypi" /proc/device-tree/compatible 2>/dev/null; }; then
+        echo "-> Configuring CM4 display overlay in /boot/config.txt..."
+        case "${first_article_number}" in
+            106* | 107*)
+                overlay="ulticontroller-800x320"
+                ;;
+            109*)
+                overlay="ulticontroller-ngp"
+                ;;
+            227380 | 105* | *)
+                overlay="ulticontroller"
+                ;;
+        esac
+        if [ -f "/boot/config.txt" ]; then
+            if grep -q "^dtoverlay=ulticontroller" /boot/config.txt; then
+                sed -i "s/^dtoverlay=ulticontroller.*/dtoverlay=${overlay}/" /boot/config.txt
+            else
+                echo "dtoverlay=${overlay}" >> /boot/config.txt
+            fi
+        fi
+    else
+        case "${first_article_number}" in
+            106* | 107*)
+                echo "-> Setting Ulticontroller 3.2 LVDS device tree."
+                ln -sf "${UC32_DTS}" "/boot/${TARGET_DTS}"
+                ;;
+            227380 | 105* | 109*)
+                echo "-> Setting Ulticontroller 4.0 LVDS device tree."
+                ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
+                ;;
+        # Fallback to the larger screen
+            *)
+                echo "-> Falling back to Ulticontroller 4.0 LVDS device tree."
+                ln -sf "${UC4_DTS}" "/boot/${TARGET_DTS}"
+                ;;
+        esac
+    fi
 fi
 
 # Add a trigger to track when the regulatory db is modified. The official
