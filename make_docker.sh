@@ -47,14 +47,21 @@ run_in_docker()
     if tty; then
         terminal_arg="-it"        
     fi;
+    tz_args=""
+    if [ -f /etc/localtime ]; then
+        tz_args="${tz_args} -v /etc/localtime:/etc/localtime:ro"
+    fi
+    if [ -f /etc/timezone ]; then
+        tz_args="${tz_args} -v /etc/timezone:/etc/timezone:ro"
+    fi
+    # shellcheck disable=SC2086
     docker run \
         --rm \
         --privileged \
         "${terminal_arg}" \
         -u "$(id -u):$(id -g)" \
         -v "$(pwd):${DOCKER_WORK_DIR}" \
-        -v /etc/localtime:/etc/localtime:ro \
-        -v /etc/timezone:/etc/timezone:ro \
+        ${tz_args} \
         -e "PREFIX=${PREFIX}" \
         -e "RELEASE_VERSION=${RELEASE_VERSION:-999.999.999}" \
         -e "ONLY_CHECK_STAGED=${ONLY_CHECK_STAGED:-}" \
