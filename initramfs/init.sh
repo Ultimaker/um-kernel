@@ -157,6 +157,76 @@ critical_error()
     shutdown
 }
 
+ensure_user_partition()
+{
+    disk_dev="${root_device%p[0-9]*}"
+    if [ "${disk_dev}" = "${root_device}" ] || [ ! -b "${disk_dev}" ]; then
+        return 0
+    fi
+
+    user_part="${disk_dev}p3"
+    if [ -b "${user_part}" ]; then
+        return 0
+    fi
+
+    disk_name="${disk_dev#/dev/}"
+    if [ ! -f "/sys/class/block/${disk_name}/size" ] || \
+       [ ! -f "/sys/class/block/${disk_name}p2/start" ] || \
+       [ ! -f "/sys/class/block/${disk_name}p2/size" ]; then
+        return 0
+    fi
+
+    total_sectors="$(cat "/sys/class/block/${disk_name}/size")"
+    p2_start="$(cat "/sys/class/block/${disk_name}p2/start")"
+    p2_size="$(cat "/sys/class/block/${disk_name}p2/size")"
+
+    if [ "${total_sectors}" -ge 20971520 ]; then
+        target_p2_size=16677888
+    elif [ "${total_sectors}" -ge 10485760 ]; then
+        target_p2_size=7864320
+    else
+        target_p2_size="${p2_size}"
+    fi
+
+    if [ "${target_p2_size}" -lt "${p2_size}" ]; then
+        target_p2_size="${p2_size}"
+    fi
+
+    p3_start="$((p2_start + target_p2_size))"
+    if [ "${p3_start}" -ge "${total_sectors}" ]; then
+        echo "Not enough disk space on ${disk_dev} to create ${user_part}, skipping."
+        return 0
+    fi
+
+    echo "First boot detected (no ${user_part}): expanding ${root_device} and creating ${user_part} (user)..."
+    mount -o remount,rw "${ROOT_MOUNT}" 2>/dev/null || true
+    mount --bind /dev "${ROOT_MOUNT}/dev"
+    mount --bind /proc "${ROOT_MOUNT}/proc"
+    mount --bind /sys "${ROOT_MOUNT}/sys"
+
+    p1_line="$(chroot "${ROOT_MOUNT}" sfdisk --quiet --dump "${disk_dev}" 2>/dev/null | grep "^${disk_dev}p1 " || true)"
+    if [ -n "${p1_line}" ]; then
+        cat <<EOF | chroot "${ROOT_MOUNT}" sfdisk --no-reread "${disk_dev}" || true
+label: dos
+unit: sectors
+${p1_line}
+${disk_dev}p2 : start=${p2_start}, size=${target_p2_size}, type=83
+${disk_dev}p3 : start=${p3_start}, size=+, type=83
+EOF
+        chroot "${ROOT_MOUNT}" partx -u "${disk_dev}" || true
+        if [ "${target_p2_size}" -gt "${p2_size}" ]; then
+            chroot "${ROOT_MOUNT}" resize2fs "${root_device}" || true
+        fi
+        if [ -b "${user_part}" ]; then
+            chroot "${ROOT_MOUNT}" mkfs.ext4 -F -L user -q "${user_part}" || true
+        fi
+    fi
+
+    umount "${ROOT_MOUNT}/sys" 2>/dev/null || true
+    umount "${ROOT_MOUNT}/proc" 2>/dev/null || true
+    umount "${ROOT_MOUNT}/dev" 2>/dev/null || true
+}
+
 boot_root()
 {
     root_device="${root}"
@@ -166,6 +236,7 @@ boot_root()
     fi
     echo "Mounting ${root_device}."
     mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root_device}" "${ROOT_MOUNT}"
+    ensure_user_partition
     kernel_umount
 
     test_init="${init}"
@@ -360,11 +431,18 @@ find_and_run_update()
 {
     SOFTWARE_INSTALL_MODE="update"
     FORCE_REBOOT_AFTER_UPDATE="no"
+    update_search_retries=1
     if isBootingRestoreImage || [ "${FORCE_RESTORE_MODE}" = "yes" ]; then
         SOFTWARE_INSTALL_MODE="restore"
+    elif [ ! -b "$(get_emmc_dev)p2" ]; then
+        echo "No root partition on $(get_emmc_dev) (minimal boot image): enabling restore mode and waiting for USB stick."
+        SOFTWARE_INSTALL_MODE="restore"
+        FORCE_REBOOT_AFTER_UPDATE="yes"
+        update_search_retries=60
     fi
 
     echo "Checking for updates ..."
+    while [ "${update_search_retries}" -gt 0 ]; do
     for dev in ${UPDATE_DEVICES}; do
         if [ ! -b "${dev}" ]; then
             continue
@@ -457,6 +535,17 @@ find_and_run_update()
         fi
 
         restart
+    done
+        update_search_retries="$((update_search_retries - 1))"
+        if [ "${update_search_retries}" -gt 0 ]; then
+            for usb_cfg in /sys/bus/usb/devices/[0-9]*-[0-9]*/bConfigurationValue; do
+                if [ -f "${usb_cfg}" ] && [ -z "$(cat "${usb_cfg}" 2>/dev/null)" ]; then
+                    echo 1 > "${usb_cfg}" 2>/dev/null || true
+                fi
+            done
+            mdev -s 2>/dev/null || true
+            sleep 1
+        fi
     done
     echo "No updates found."
 }
