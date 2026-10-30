@@ -293,7 +293,7 @@ check_and_set_eeprom_data()
     echo "--> Country code lock read from EEPROM: >${country_code_lock}<"
 
     # Ensure any USB device rejected due to 100mA bus-power budget has configuration 1 enabled,
-    # and wait up to 10 seconds for the USB drive to become visible.
+    # and wait up to 10 seconds for the USB drive partition to become visible.
     retries=10
     while [ ! -b "${dev}" ] && [ "${retries}" -gt 0 ]; do
         for usb_cfg in /sys/bus/usb/devices/[0-9]*-[0-9]*/bConfigurationValue; do
@@ -301,12 +301,12 @@ check_and_set_eeprom_data()
                 echo 1 > "${usb_cfg}" 2>/dev/null || true
             fi
         done
-        if [ ! -b "${dev}" ] && [ -b "/dev/sda" ]; then
-            dev="/dev/sda"
-        fi
         retries="$((retries - 1))"
         sleep 1
     done
+    if [ ! -b "${dev}" ] && [ -b "/dev/sda" ]; then
+        dev="/dev/sda"
+    fi
 
     echo "Attempting to mount '${dev}'."
     if mount -t vfat,exfat,ext4,f2fs,auto -o ro,exec,noatime "${dev}" "${PROVISIONING_USB_MOUNT}"; then
@@ -440,10 +440,6 @@ find_and_run_update()
         fi
 
         target_storage="$(get_emmc_dev)"
-        disk_from_dev="${dev%p[0-9]*}"
-        if [ -b "${disk_from_dev}" ] && [ -z "${disk_from_dev##*/mmcblk*}" ]; then
-            target_storage="${disk_from_dev}"
-        fi
         echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute on '${target_storage}', with ${BOM_NUMBER}."
         if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${target_storage}" "${BOM_NUMBER}" "${SOFTWARE_INSTALL_MODE}"; then
             echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${target_storage} ${BOM_NUMBER} ${SOFTWARE_INSTALL_MODE}'."
