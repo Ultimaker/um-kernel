@@ -137,6 +137,7 @@
             panel_lights: pca9632@60 {
                 compatible = "nxp,pca9632";
                 reg = <0x60>;
+                vcc-supply = <&vcc_lvds>;
                 #address-cells = <1>;
                 #size-cells = <0>;
                 nxp,totem-pole;
@@ -147,15 +148,6 @@
                     reg = <3>;
                     linux,default-trigger = "default-on";
                 };
-            };
-
-            panel_touchscreen: ft5426@38 {
-                compatible = "edt,edt-ft5406";
-                reg = <0x38>;
-                poll-interval = <30>;
-                reset-gpios = <&panel_gpio 3 1>;
-                touchscreen-size-x = <1024>;
-                touchscreen-size-y = <600>;
             };
 
             panel_touchscreen_ngp: gt928@5d {
@@ -170,6 +162,7 @@
             edid_eeprom: 24c32@50 {
                 compatible = "24c32";
                 reg = <0x50>;
+                vcc-supply = <&vcc_lvds>;
                 pagesize = <32>;
             };
         };

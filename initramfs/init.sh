@@ -23,6 +23,12 @@ SBINDIR="${EXEC_PREFIX}/sbin"
 get_emmc_dev()
 {
     if [ -f "/proc/device-tree/model" ] && grep -qiE "Raspberry Pi|Compute Module" /proc/device-tree/model; then
+        retries=50
+        while [ ! -b "/dev/mmcblk0" ] && [ "${retries}" -gt 0 ]; do
+            mdev -s 2>/dev/null || true
+            sleep 0.1
+            retries=$((retries - 1))
+        done
         echo "/dev/mmcblk0"
         return 0
     fi
@@ -254,9 +260,34 @@ boot_root()
 }
 
 
+ensure_display_ready()
+{
+    fb_retries=50
+    while [ ! -c "${FB_DEVICE}" ] && [ "${fb_retries}" -gt 0 ]; do
+        mdev -s 2>/dev/null || true
+        sleep 0.1
+        fb_retries=$((fb_retries - 1))
+    done
+
+    if [ -w /sys/class/graphics/fbcon/cursor_blink ]; then
+        echo 0 > /sys/class/graphics/fbcon/cursor_blink 2>/dev/null || true
+    fi
+
+    if [ -d /sys/bus/i2c/devices/0-0060 ] && [ ! -e /sys/bus/i2c/devices/0-0060/driver ]; then
+        echo 0-0060 > /sys/bus/i2c/drivers/leds-pca963x/bind 2>/dev/null || true
+    fi
+
+    if [ -w /sys/class/leds/white:panel_backlight/brightness ]; then
+        echo 0 > /sys/class/leds/white:panel_backlight/brightness 2>/dev/null || true
+        echo 255 > /sys/class/leds/white:panel_backlight/brightness 2>/dev/null || true
+    fi
+}
+
 set_display_splash()
 {
     echo "Setting display image."
+
+    ensure_display_ready
 
     TMP_MOUNT="/splash"
     splash_partition="$(get_emmc_dev)p2"
@@ -266,9 +297,12 @@ set_display_splash()
         mkdir -p "${TMP_MOUNT}"
     fi
 
-    if ! mount -o ro "${splash_partition}" "${TMP_MOUNT}"; then
-        echo "- Error mounting splash screen partition ${splash_partition} at ${TMP_MOUNT}."
+    if [ ! -b "${splash_partition}" ] || ! mount -o ro "${splash_partition}" "${TMP_MOUNT}"; then
+        echo "- Splash partition ${splash_partition} not available; displaying USB prompt if available."
         rmdir "${TMP_MOUNT}"
+        if [ -f "/usr/share/usb_prompt.fb.gz" ] && [ -c "${FB_DEVICE}" ]; then
+            zcat "/usr/share/usb_prompt.fb.gz" > "${FB_DEVICE}" 2>/dev/null || true
+        fi
         return 0
     fi
 
@@ -438,7 +472,7 @@ find_and_run_update()
         echo "No root partition on $(get_emmc_dev) (minimal boot image): enabling restore mode and waiting for USB stick."
         SOFTWARE_INSTALL_MODE="restore"
         FORCE_REBOOT_AFTER_UPDATE="yes"
-        update_search_retries=60
+        update_search_retries=999999
     fi
 
     echo "Checking for updates ..."
@@ -612,9 +646,6 @@ kernel_mount()
     mount -t sysfs      -o nodev,noexec,nosuid  sysfs   /sys
     if [ -w /sys/class/graphics/fbcon/cursor_blink ]; then
         echo 0 > /sys/class/graphics/fbcon/cursor_blink 2>/dev/null || true
-    fi
-    if [ -w /sys/class/vtconsole/vtcon1/bind ]; then
-        echo 0 > /sys/class/vtconsole/vtcon1/bind 2>/dev/null || true
     fi
 }
 
