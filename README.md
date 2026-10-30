@@ -71,7 +71,8 @@ RELEASE_VERSION="498.5.0-dev" ./build_for_ultimaker.sh -a build
 ```
 
 ### Output Artifacts
-* **On `master/imx8`**: `./um-kernel_<RELEASE_VERSION>-imx8mm_arm64.deb` (and in `_build/`).
-* **On `master/cm4`**: `./um-kernel_<RELEASE_VERSION>-cm4_arm64.deb` (and in `_build/`).
+*(Note: When `RELEASE_VERSION` ends with `-dev`, `build.sh` places `-${UM_ARCH}` before `-dev`).*
+* **On `master/imx8`**: `./um-kernel_<ver>-imx8mm_arm64.deb` (or `./um-kernel_<ver>-imx8mm-dev_arm64.deb` for `-dev` builds; also in `_build/`).
+* **On `master/cm4`**: `./um-kernel_<ver>-cm4_arm64.deb` (or `./um-kernel_<ver>-cm4-dev_arm64.deb` for `-dev` builds; also in `_build/`).
 
 For AI agent conventions and code-path invariants, see [AGENTS.md](AGENTS.md).

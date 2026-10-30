@@ -47,7 +47,7 @@ This file provides critical context, commands, and invariants for AI agents work
 4. **Keep `target_storage="$(get_emmc_dev)"` Independent of the Update Source Device in `initramfs/init.sh`**:
    - Never override `target_storage` with the block device where `um-update.swu` was found (`${dev%p[0-9]*}`), because on i.MX8 an external recovery SD card is `/dev/mmcblk0p2` while the internal eMMC is `/dev/mmcblk2`. `get_emmc_dev()` already returns `/dev/mmcblk0` on CM4 and `/dev/mmcblk2` on i.MX8.
 5. **Keep `mount "${boot_part}" /boot 2>/dev/null || true` in `debian/preinst`**:
-   - `jedi-build` runs inside a `docker run --privileged` container where host block devices exist in `/dev` and `findmnt -o source -n /` resolves the host's root disk. Keeping `|| true` prevents chroot `dpkg` invocations from failing or mounting a host partition.
+   - Provides mount-failure tolerance during chroot package unpacking/installation (where `/boot` is a directory inside the chroot rather than a separate mountable block device).
 
 ---
 
