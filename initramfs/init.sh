@@ -20,11 +20,35 @@ PREFIX="${PREFIX:-/usr/}"
 EXEC_PREFIX="${PREFIX}"
 SBINDIR="${EXEC_PREFIX}/sbin"
 
-EMMC_DEV="/dev/mmcblk2"
-SPLASH_SCREEN_PARTITION="${EMMC_DEV}p2"
+get_emmc_dev()
+{
+    if [ -f "/proc/device-tree/model" ] && grep -qiE "Raspberry Pi|Compute Module" /proc/device-tree/model; then
+        echo "/dev/mmcblk0"
+        return 0
+    fi
+
+    retries=30
+    while [ "${retries}" -gt 0 ]; do
+        if [ -b "/dev/mmcblk0" ] && [ ! -b "/dev/mmcblk2" ]; then
+            echo "/dev/mmcblk0"
+            return 0
+        elif [ -b "/dev/mmcblk2" ]; then
+            echo "/dev/mmcblk2"
+            return 0
+        fi
+        sleep 0.1
+        retries=$((retries - 1))
+    done
+
+    if [ -b "/dev/mmcblk0" ]; then
+        echo "/dev/mmcblk0"
+    else
+        echo "/dev/mmcblk2"
+    fi
+}
 
 SYSTEM_UPDATE_ENTRYPOINT="start_update.sh"
-UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9]"
+UPDATE_DEVICES="/dev/mmcblk[0-9]p[0-9] /dev/sd[a-z][0-9]* /dev/sd[a-z]"
 
 UM_SPLASH="/var/lib/splash_screen/umsplash.fb"
 FB_DEVICE="/dev/fb0"
@@ -164,14 +188,15 @@ set_display_splash()
     echo "Setting display image."
 
     TMP_MOUNT="/splash"
+    splash_partition="$(get_emmc_dev)p2"
 
     # Mount the splash screen partition
     if [ ! -d ${TMP_MOUNT} ]; then
         mkdir -p "${TMP_MOUNT}"
     fi
 
-    if ! mount -o ro "${SPLASH_SCREEN_PARTITION}" "${TMP_MOUNT}"; then
-        echo "- Error mounting splash screen partition ${SPLASH_SCREEN_PARTITION} at ${TMP_MOUNT}."
+    if ! mount -o ro "${splash_partition}" "${TMP_MOUNT}"; then
+        echo "- Error mounting splash screen partition ${splash_partition} at ${TMP_MOUNT}."
         rmdir "${TMP_MOUNT}"
         return 0
     fi
@@ -229,32 +254,62 @@ check_and_set_eeprom_data()
     article_number_file="${PROVISIONING_USB_MOUNT}/article_number"
     country_code_lock_file="${PROVISIONING_USB_MOUNT}/country_code_lock"
 
+    eeprom_i2c_bus="1"
+    if [ -f "/proc/device-tree/model" ] && grep -qiE "Raspberry Pi|Compute Module" /proc/device-tree/model; then
+        eeprom_i2c_bus="3"
+    elif [ -e "/dev/i2c-3" ] && i2ctransfer -f -y 3 w2@0x57 0x01 0x00 r1 >/dev/null 2>&1; then
+        eeprom_i2c_bus="3"
+    fi
+
+    # Wait for the i2c bus to become available; max 3 seconds
+    retries=30
+    while [ "${retries}" -gt 0 ]; do
+        if [ -e "/dev/i2c-${eeprom_i2c_bus}" ]; then
+            break
+        fi
+        sleep 0.1
+        retries=$((retries - 1))
+    done
+
     # Get the article number from EEPROM
-    art_num=$(i2ctransfer -y 1 w2@0x57 0x01 0x00 r4)
+    art_num=$(i2ctransfer -f -y "${eeprom_i2c_bus}" w2@0x57 0x01 0x00 r4 2>/dev/null || echo "")
     echo "---> Article number read from EEPROM: >${art_num}<"
 
-    art_num_hex=""
-    for hex in $art_num; do
-        art_num_hex="${art_num_hex}${hex#0x}"  # Remove the "0x" prefix
-    done
-    BOM_NUMBER=$(printf "%d\n" "0x$art_num_hex")
+    if [ -n "${art_num}" ]; then
+        art_num_hex=""
+        for hex in $art_num; do
+            art_num_hex="${art_num_hex}${hex#0x}"  # Remove the "0x" prefix
+        done
+        if [ -n "${art_num_hex}" ]; then
+            BOM_NUMBER=$(printf "%d\n" "0x$art_num_hex" 2>/dev/null || echo "${BOM_NUMBER}")
+        fi
+    fi
 
     echo "---> Article number in decimal: >${BOM_NUMBER}<"
 
 
     # Get the country code lock from EEPROM
-    country_code_lock=$(i2ctransfer -y 1 w2@0x57 0x01 0x18 r2)
+    country_code_lock=$(i2ctransfer -f -y "${eeprom_i2c_bus}" w2@0x57 0x01 0x18 r2 2>/dev/null || echo "")
     echo "--> Country code lock read from EEPROM: >${country_code_lock}<"
 
-    # Wait for the USB drive to become visible; max 5 seconds.
-    retries=5
+    # Ensure any USB device rejected due to 100mA bus-power budget has configuration 1 enabled,
+    # and wait up to 10 seconds for the USB drive partition to become visible.
+    retries=10
     while [ ! -b "${dev}" ] && [ "${retries}" -gt 0 ]; do
+        for usb_cfg in /sys/bus/usb/devices/[0-9]*-[0-9]*/bConfigurationValue; do
+            if [ -f "${usb_cfg}" ] && [ -z "$(cat "${usb_cfg}" 2>/dev/null)" ]; then
+                echo 1 > "${usb_cfg}" 2>/dev/null || true
+            fi
+        done
         retries="$((retries - 1))"
         sleep 1
     done
+    if [ ! -b "${dev}" ] && [ -b "/dev/sda" ]; then
+        dev="/dev/sda"
+    fi
 
     echo "Attempting to mount '${dev}'."
-    if mount -t f2fs,ext4,vfat,auto -o ro,exec,noatime "${dev}" "${PROVISIONING_USB_MOUNT}"; then
+    if mount -t vfat,exfat,ext4,f2fs,auto -o ro,exec,noatime "${dev}" "${PROVISIONING_USB_MOUNT}"; then
         if [ -r "${article_number_file}" ]; then
             article_number="$(cat "${article_number_file}")"
 
@@ -270,9 +325,9 @@ check_and_set_eeprom_data()
                 # forcing the eeprom service to recalculate the CRC. We also need a few ms between the 2 transfer, so the
                 # EEPROM has time to finish the first transfer.
                 # shellcheck disable=SC2086
-                if i2ctransfer -y 1 w6@0x57 0x01 0x00 ${article_number} && \
+                if i2ctransfer -f -y "${eeprom_i2c_bus}" w6@0x57 0x01 0x00 ${article_number} && \
                    sleep 0.2 && \
-                   i2ctransfer -y 1 w6@0x57 0x00 0x00 0xFF 0xFF 0xFF 0xFF; then
+                   i2ctransfer -f -y "${eeprom_i2c_bus}" w6@0x57 0x00 0x00 0xFF 0xFF 0xFF 0xFF; then
                     echo "Article number successfully written to EEPROM!"
                     BOM_NUMBER="${BOM_NUMBER_NEW}"
                 else
@@ -289,7 +344,7 @@ check_and_set_eeprom_data()
             country_code="$(cat "${country_code_lock_file}")"
             echo "Trying to write country code lock: '${country_code}'."
             # shellcheck disable=SC2086
-            if ! i2ctransfer -y 1 w4@0x57 0x01 0x18 ${country_code}; then
+            if ! i2ctransfer -f -y "${eeprom_i2c_bus}" w4@0x57 0x01 0x18 ${country_code}; then
                 echo "Failed to write country code lock to EEPROM, skipping."
             fi
         else
@@ -316,7 +371,7 @@ find_and_run_update()
         fi
 
         echo "Attempting to mount '${dev}'."
-        if ! mount -t f2fs,ext4,vfat,auto -o exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}"; then
+        if ! mount -t vfat,exfat,ext4,f2fs,auto -o exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}"; then
             continue
         fi
 
@@ -336,8 +391,8 @@ find_and_run_update()
         update_tmpfs_mount="$(mktemp -d)"
         echo "Found '${UPDATE_IMAGE}' on '${dev}', moving to tmpfs."
 
-        # When we are restoring we want to keep the update image on the SD card.
-        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ]; then
+        # When we are restoring from a dedicated recovery image we want to keep the update image on the SD/USB card.
+        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
             if ! cp "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
                 echo "Error, update failed: unable to copy ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
                 critical_error
@@ -384,9 +439,10 @@ find_and_run_update()
             echo "Warning: unable to unmount '${UPDATE_IMG_MOUNT}'."
         fi
 
-        echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute, with ${BOM_NUMBER}."
-        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${EMMC_DEV}" "${BOM_NUMBER}" "${SOFTWARE_INSTALL_MODE}"; then
-            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${EMMC_DEV} ${BOM_NUMBER} ${SOFTWARE_INSTALL_MODE}'."
+        target_storage="$(get_emmc_dev)"
+        echo "Got '${SYSTEM_UPDATE_ENTRYPOINT}' script, trying to execute on '${target_storage}', with ${BOM_NUMBER}."
+        if ! "${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT}" "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${target_storage}" "${BOM_NUMBER}" "${SOFTWARE_INSTALL_MODE}"; then
+            echo "Error, update failed: executing '${update_tmpfs_mount}/${SYSTEM_UPDATE_ENTRYPOINT} ${update_tmpfs_mount}/${UPDATE_IMAGE} ${target_storage} ${BOM_NUMBER} ${SOFTWARE_INSTALL_MODE}'."
             critical_error
             break
         fi
@@ -465,6 +521,12 @@ kernel_mount()
     mount -t devtmpfs   -o nosuid,mode=0755 udev    /dev
     mount -t proc       -o nodev,noexec,nosuid  proc    /proc
     mount -t sysfs      -o nodev,noexec,nosuid  sysfs   /sys
+    if [ -w /sys/class/graphics/fbcon/cursor_blink ]; then
+        echo 0 > /sys/class/graphics/fbcon/cursor_blink 2>/dev/null || true
+    fi
+    if [ -w /sys/class/vtconsole/vtcon1/bind ]; then
+        echo 0 > /sys/class/vtconsole/vtcon1/bind 2>/dev/null || true
+    fi
 }
 
 kernel_umount()
@@ -490,6 +552,9 @@ busybox_setup()
 load_kernel_modules()
 {
     for file in /lib/modules/*/*.ko; do
+        if [ ! -f "${file}" ]; then
+            continue
+        fi
         basename="${file##*/}";  # Remove the full path
         filename="${basename%.*}";  # Remove the extension. 
         modprobe "${filename}";
