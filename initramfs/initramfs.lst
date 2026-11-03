@@ -31,6 +31,7 @@ slink   /bin/sh         /bin/busybox            0755 0 0
 # init
 file    /init           initramfs/init.sh       0755 0 0
 file    /usr/share/usb_prompt.fb.gz initramfs/usb_prompt.fb.gz 0644 0 0
+file    /usr/share/starting_update.fb.gz initramfs/starting_update.fb.gz 0644 0 0
 
 # Proprietary Firmware
 dir     /lib                                                              0755 0 0

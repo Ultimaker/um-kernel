@@ -10,7 +10,7 @@ set -eu
 ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
 RESTORE_TRIGGER_IMAGE="um-restore.swu"
-KEEP_RECOVERY_FILE="KEEP_UM_RECOVERY"
+KEEP_SWU_FILES="KEEP_UM_SWU KEEP_UM_RESTORE KEEP_UM_UPDATE KEEP_UM_RECOVERY"
 USB_INSTALL_COMPLETE_FLAG=".usb_install_complete"
 UPDATE_IMG_MOUNT="/mnt/update_img"
 UPDATE_SRC_MOUNT="/mnt/update"
@@ -519,11 +519,19 @@ find_and_run_update()
         fi
 
         keep_update_file="no"
-        if [ -e "${UPDATE_SRC_MOUNT}/${KEEP_RECOVERY_FILE}" ]; then
-            echo "Found '${KEEP_RECOVERY_FILE}' on '${dev}', keeping update image on USB stick."
+        for keep_marker in ${KEEP_SWU_FILES}; do
+            if [ -e "${UPDATE_SRC_MOUNT}/${keep_marker}" ]; then
+                echo "Found '${keep_marker}' on '${dev}', keeping update image on USB stick."
+                keep_update_file="yes"
+                break
+            fi
+        done
+        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
             keep_update_file="yes"
-        elif [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
-            keep_update_file="yes"
+        fi
+
+        if [ -f "/usr/share/starting_update.fb.gz" ] && [ -c "${FB_DEVICE}" ]; then
+            zcat "/usr/share/starting_update.fb.gz" > "${FB_DEVICE}" 2>/dev/null || true
         fi
 
         update_tmpfs_mount="$(mktemp -d)"
