@@ -11,6 +11,7 @@ ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
 RESTORE_TRIGGER_IMAGE="um-restore.swu"
 KEEP_RECOVERY_FILE="KEEP_UM_RECOVERY"
+USB_INSTALL_COMPLETE_FLAG=".usb_install_complete"
 UPDATE_IMG_MOUNT="/mnt/update_img"
 UPDATE_SRC_MOUNT="/mnt/update"
 PROVISIONING_USB_MOUNT="/mnt/usb"
@@ -467,6 +468,18 @@ check_and_set_eeprom_data()
 
 find_and_run_update()
 {
+    target_root_part="$(get_emmc_dev)p2"
+    if [ -b "${target_root_part}" ] && mount "${target_root_part}" "${ROOT_MOUNT}" 2>/dev/null; then
+        if [ -f "${ROOT_MOUNT}/${USB_INSTALL_COMPLETE_FLAG}" ]; then
+            echo "Found one-shot '${USB_INSTALL_COMPLETE_FLAG}' on '${target_root_part}': clearing flag and skipping update to boot freshly installed OS."
+            rm -f "${ROOT_MOUNT}/${USB_INSTALL_COMPLETE_FLAG}" || true
+            sync
+            umount "${ROOT_MOUNT}"
+            return 0
+        fi
+        umount "${ROOT_MOUNT}"
+    fi
+
     SOFTWARE_INSTALL_MODE="update"
     FORCE_REBOOT_AFTER_UPDATE="no"
     update_search_retries=1
@@ -509,7 +522,6 @@ find_and_run_update()
         if [ -e "${UPDATE_SRC_MOUNT}/${KEEP_RECOVERY_FILE}" ]; then
             echo "Found '${KEEP_RECOVERY_FILE}' on '${dev}', keeping update image on USB stick."
             keep_update_file="yes"
-            FORCE_REBOOT_AFTER_UPDATE="no"
         elif [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
             keep_update_file="yes"
         fi
@@ -575,9 +587,17 @@ find_and_run_update()
             break
         fi
 
-        # After restore (or when KEEP_UM_RECOVERY is present) do not remove the file and loop endlessly
-        if [ "${keep_update_file}" = "yes" ] || { [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; }; then
+        # After dedicated SD restore image, do not remove the file and loop endlessly
+        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
            restore_complete_loop
+        fi
+
+        if [ "${keep_update_file}" = "yes" ] && [ -b "${target_storage}p2" ]; then
+            if mount "${target_storage}p2" "${ROOT_MOUNT}" 2>/dev/null; then
+                touch "${ROOT_MOUNT}/${USB_INSTALL_COMPLETE_FLAG}" || true
+                sync
+                umount "${ROOT_MOUNT}"
+            fi
         fi
 
         if ! rm "${update_tmpfs_mount}/${UPDATE_IMAGE:?}"; then
