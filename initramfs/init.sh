@@ -10,6 +10,7 @@ set -eu
 ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
 RESTORE_TRIGGER_IMAGE="um-restore.swu"
+KEEP_RECOVERY_FILE="KEEP_UM_RECOVERY"
 UPDATE_IMG_MOUNT="/mnt/update_img"
 UPDATE_SRC_MOUNT="/mnt/update"
 PROVISIONING_USB_MOUNT="/mnt/usb"
@@ -117,6 +118,9 @@ restart()
 
 restore_complete_loop()
 {
+    if [ -f "/tmp/remove_sd_png.fb" ] && [ -c "${FB_DEVICE}" ]; then
+        cat "/tmp/remove_sd_png.fb" > "${FB_DEVICE}" 2>/dev/null || true
+    fi
     while true; do
         echo "Restore complete, remove the recovery SD card and powercycle the printer."
         sleep 30s
@@ -493,26 +497,38 @@ find_and_run_update()
             continue
         fi
 
-        # If there is a file to trigger the restore mode, rename it to update and set the restore flag
+        # If there is a file to trigger the restore mode, set the restore flag without renaming on the USB stick
+        src_update_file="${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}"
         if [ -r "${UPDATE_SRC_MOUNT}/${RESTORE_TRIGGER_IMAGE}" ]; then
             SOFTWARE_INSTALL_MODE="restore"
             FORCE_REBOOT_AFTER_UPDATE="yes"  # We can reboot after the update since there is no sd card inserted.
-            mv "${UPDATE_SRC_MOUNT}/${RESTORE_TRIGGER_IMAGE}" "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}"
-        fi;
+            src_update_file="${UPDATE_SRC_MOUNT}/${RESTORE_TRIGGER_IMAGE}"
+        fi
+
+        keep_update_file="no"
+        if [ -e "${UPDATE_SRC_MOUNT}/${KEEP_RECOVERY_FILE}" ]; then
+            echo "Found '${KEEP_RECOVERY_FILE}' on '${dev}', keeping update image on USB stick."
+            keep_update_file="yes"
+            FORCE_REBOOT_AFTER_UPDATE="no"
+        elif [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
+            keep_update_file="yes"
+        fi
 
         update_tmpfs_mount="$(mktemp -d)"
-        echo "Found '${UPDATE_IMAGE}' on '${dev}', moving to tmpfs."
 
-        # When we are restoring from a dedicated recovery image we want to keep the update image on the SD/USB card.
-        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
-            if ! cp "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
-                echo "Error, update failed: unable to copy ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
+        # When KEEP_UM_RECOVERY is present or we are restoring from a dedicated recovery image,
+        # copy to tmpfs (renaming to ${UPDATE_IMAGE} only in tmpfs) so the USB/SD card is unmodified.
+        if [ "${keep_update_file}" = "yes" ]; then
+            echo "Found '${src_update_file##*/}' on '${dev}', copying to '${update_tmpfs_mount}/${UPDATE_IMAGE}'."
+            if ! cp "${src_update_file}" "${update_tmpfs_mount}/${UPDATE_IMAGE}"; then
+                echo "Error, update failed: unable to copy ${src_update_file} to ${update_tmpfs_mount}/${UPDATE_IMAGE}."
                 critical_error
                 break
             fi
         else
-            if ! mv "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
-                echo "Error, update failed: unable to move ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
+            echo "Found '${src_update_file##*/}' on '${dev}', moving to '${update_tmpfs_mount}/${UPDATE_IMAGE}'."
+            if ! mv "${src_update_file}" "${update_tmpfs_mount}/${UPDATE_IMAGE}"; then
+                echo "Error, update failed: unable to move ${src_update_file} to ${update_tmpfs_mount}/${UPDATE_IMAGE}."
                 critical_error
                 break
             fi
@@ -559,8 +575,8 @@ find_and_run_update()
             break
         fi
 
-        # After restore do not remove the file and loop endlessly
-        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
+        # After restore (or when KEEP_UM_RECOVERY is present) do not remove the file and loop endlessly
+        if [ "${keep_update_file}" = "yes" ] || { [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; }; then
            restore_complete_loop
         fi
 
