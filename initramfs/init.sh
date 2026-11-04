@@ -164,6 +164,10 @@ rescue_shell()
 critical_error()
 {
     echo "A critical error has occurred, entering recovery mode."
+    if [ -f "/usr/share/update_failed.fb.gz" ] && [ -c "${FB_DEVICE}" ]; then
+        ensure_display_ready
+        zcat "/usr/share/update_failed.fb.gz" > "${FB_DEVICE}" 2>/dev/null || true
+    fi
     rescue_shell
     shutdown
 }
@@ -276,6 +280,16 @@ ensure_display_ready()
 
     if [ -w /sys/class/graphics/fbcon/cursor_blink ]; then
         echo 0 > /sys/class/graphics/fbcon/cursor_blink 2>/dev/null || true
+    fi
+
+    # Disable VT console blanking and VESA powerdown so static splash screens never fade out
+    for tty_dev in /dev/tty0 /dev/tty1; do
+        if [ -w "${tty_dev}" ]; then
+            printf '\033[9;0]\033[14;0]' > "${tty_dev}" 2>/dev/null || true
+        fi
+    done
+    if [ -w /sys/class/graphics/fb0/blank ]; then
+        echo 0 > /sys/class/graphics/fb0/blank 2>/dev/null || true
     fi
 
     if [ -d /sys/bus/i2c/devices/0-0060 ] && [ ! -e /sys/bus/i2c/devices/0-0060/driver ]; then
@@ -562,7 +576,7 @@ find_and_run_update()
         fi
 
         echo "Attempting to mount '${update_tmpfs_mount}/${UPDATE_IMAGE}' to '${UPDATE_IMG_MOUNT}'."
-        if ! mount "${update_tmpfs_mount}/${UPDATE_IMAGE}" ${UPDATE_IMG_MOUNT}; then
+        if ! mount -t squashfs "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${UPDATE_IMG_MOUNT}"; then
             echo "Error, update failed: unable to mount '${update_tmpfs_mount}/${UPDATE_IMAGE}'."
             critical_error
             break;
