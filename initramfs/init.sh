@@ -296,10 +296,12 @@ ensure_display_ready()
         echo 0-0060 > /sys/bus/i2c/drivers/leds-pca963x/bind 2>/dev/null || true
     fi
 
-    if [ -w /sys/class/leds/white:panel_backlight/brightness ]; then
-        echo 0 > /sys/class/leds/white:panel_backlight/brightness 2>/dev/null || true
-        echo 255 > /sys/class/leds/white:panel_backlight/brightness 2>/dev/null || true
-    fi
+    for bl_path in /sys/class/leds/pca963x:white:panel_backlight/brightness /sys/class/leds/white:panel_backlight/brightness; do
+        if [ -w "${bl_path}" ]; then
+            echo 0 > "${bl_path}" 2>/dev/null || true
+            echo 255 > "${bl_path}" 2>/dev/null || true
+        fi
+    done
 }
 
 set_display_splash()
