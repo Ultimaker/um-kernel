@@ -514,7 +514,9 @@ find_and_run_update()
         fi
 
         echo "Attempting to mount '${dev}'."
-        if ! mount -t vfat,exfat,ext4,f2fs,auto -o exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}"; then
+        if ! mount -t vfat,exfat,ntfs3,ext4,f2fs,auto -o exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}" && \
+           ! mount -t ntfs3 -o force,exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}" && \
+           ! mount -t ntfs3 -o ro,noatime "${dev}" "${UPDATE_SRC_MOUNT}"; then
             continue
         fi
 
@@ -541,6 +543,9 @@ find_and_run_update()
             fi
         done
         if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
+            keep_update_file="yes"
+        fi
+        if [ ! -w "${UPDATE_SRC_MOUNT}" ]; then
             keep_update_file="yes"
         fi
 
