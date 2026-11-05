@@ -166,7 +166,7 @@ critical_error()
     echo "A critical error has occurred, entering recovery mode."
     if [ -f "/usr/share/update_failed.fb.gz" ] && [ -c "${FB_DEVICE}" ]; then
         ensure_display_ready
-        zcat "/usr/share/update_failed.fb.gz" > "${FB_DEVICE}" 2>/dev/null || true
+        show_1024x600_splash "/usr/share/update_failed.fb.gz"
     fi
     rescue_shell
     shutdown
@@ -180,7 +180,7 @@ ensure_user_partition()
     fi
 
     user_part="${disk_dev}p3"
-    if [ -b "${user_part}" ]; then
+    if [ -b "${user_part}" ] && [ "$(findfs LABEL=user 2>/dev/null || true)" = "${user_part}" ]; then
         return 0
     fi
 
@@ -207,34 +207,44 @@ ensure_user_partition()
         target_p2_size="${p2_size}"
     fi
 
-    p3_start="$((p2_start + target_p2_size))"
-    if [ "${p3_start}" -ge "${total_sectors}" ]; then
-        echo "Not enough disk space on ${disk_dev} to create ${user_part}, skipping."
-        return 0
-    fi
-
-    echo "First boot detected (no ${user_part}): expanding ${root_device} and creating ${user_part} (user)..."
+    echo "First boot detected: ensuring ${root_device} is expanded and ${user_part} (user) is initialized..."
     mount -o remount,rw "${ROOT_MOUNT}" 2>/dev/null || true
     mount --bind /dev "${ROOT_MOUNT}/dev"
     mount --bind /proc "${ROOT_MOUNT}/proc"
     mount --bind /sys "${ROOT_MOUNT}/sys"
 
-    p1_line="$(chroot "${ROOT_MOUNT}" sfdisk --quiet --dump "${disk_dev}" 2>/dev/null | grep "^${disk_dev}p1 " || true)"
-    if [ -n "${p1_line}" ]; then
-        cat <<EOF | chroot "${ROOT_MOUNT}" sfdisk --no-reread "${disk_dev}" || true
-label: dos
-unit: sectors
-${p1_line}
-${disk_dev}p2 : start=${p2_start}, size=${target_p2_size}, type=83
-${disk_dev}p3 : start=${p3_start}, size=+, type=83
-EOF
-        chroot "${ROOT_MOUNT}" partx -u "${disk_dev}" || true
-        if [ "${target_p2_size}" -gt "${p2_size}" ]; then
-            chroot "${ROOT_MOUNT}" resize2fs "${root_device}" || true
+    if [ ! -b "${user_part}" ]; then
+        p3_start="$((p2_start + target_p2_size))"
+        if [ "${p3_start}" -ge "${total_sectors}" ]; then
+            echo "Not enough disk space on ${disk_dev} to create ${user_part}, skipping."
+            umount "${ROOT_MOUNT}/sys" 2>/dev/null || true
+            umount "${ROOT_MOUNT}/proc" 2>/dev/null || true
+            umount "${ROOT_MOUNT}/dev" 2>/dev/null || true
+            return 0
         fi
-        if [ -b "${user_part}" ]; then
-            chroot "${ROOT_MOUNT}" mkfs.ext4 -F -L user -q "${user_part}" || true
+
+        sfdisk_dump="$(chroot "${ROOT_MOUNT}" sfdisk --quiet --dump "${disk_dev}" 2>/dev/null || true)"
+        label_id_line="$(printf '%s\n' "${sfdisk_dump}" | grep "^label-id:" || true)"
+        p1_line="$(printf '%s\n' "${sfdisk_dump}" | grep "^${disk_dev}p1 " || true)"
+        if [ -n "${p1_line}" ]; then
+            {
+                echo "label: dos"
+                if [ -n "${label_id_line}" ]; then
+                    echo "${label_id_line}"
+                fi
+                echo "unit: sectors"
+                echo "${p1_line}"
+                echo "${disk_dev}p2 : start=${p2_start}, size=${target_p2_size}, type=83"
+                echo "${disk_dev}p3 : start=${p3_start}, size=+, type=83"
+            } | chroot "${ROOT_MOUNT}" sfdisk --no-reread "${disk_dev}" || true
+            chroot "${ROOT_MOUNT}" partx -u "${disk_dev}" || true
+            mdev -s 2>/dev/null || true
         fi
+    fi
+
+    chroot "${ROOT_MOUNT}" resize2fs "${root_device}" || true
+    if [ -b "${user_part}" ] && [ "$(findfs LABEL=user 2>/dev/null || true)" != "${user_part}" ]; then
+        chroot "${ROOT_MOUNT}" mkfs.ext4 -F -L user -q "${user_part}" || true
     fi
 
     umount "${ROOT_MOUNT}/sys" 2>/dev/null || true
@@ -304,6 +314,23 @@ ensure_display_ready()
     done
 }
 
+show_1024x600_splash()
+{
+    splash_gz="${1}"
+    if [ ! -f "${splash_gz}" ] || [ ! -c "${FB_DEVICE}" ]; then
+        return 0
+    fi
+    fb_vsize="$(cat /sys/class/graphics/fb0/virtual_size 2>/dev/null || true)"
+    fb_bpp="$(cat /sys/class/graphics/fb0/bits_per_pixel 2>/dev/null || true)"
+    if [ -n "${fb_vsize}" ] && [ "${fb_vsize}" != "1024,600" ]; then
+        return 0
+    fi
+    if [ -n "${fb_bpp}" ] && [ "${fb_bpp}" != "32" ]; then
+        return 0
+    fi
+    zcat "${splash_gz}" > "${FB_DEVICE}" 2>/dev/null || true
+}
+
 set_display_splash()
 {
     echo "Setting display image."
@@ -321,9 +348,7 @@ set_display_splash()
     if [ ! -b "${splash_partition}" ] || ! mount -o ro "${splash_partition}" "${TMP_MOUNT}"; then
         echo "- Splash partition ${splash_partition} not available; displaying USB prompt if available."
         rmdir "${TMP_MOUNT}"
-        if [ -f "/usr/share/usb_prompt.fb.gz" ] && [ -c "${FB_DEVICE}" ]; then
-            zcat "/usr/share/usb_prompt.fb.gz" > "${FB_DEVICE}" 2>/dev/null || true
-        fi
+        show_1024x600_splash "/usr/share/usb_prompt.fb.gz"
         return 0
     fi
 
@@ -551,9 +576,7 @@ find_and_run_update()
             keep_update_file="yes"
         fi
 
-        if [ -f "/usr/share/starting_update.fb.gz" ] && [ -c "${FB_DEVICE}" ]; then
-            zcat "/usr/share/starting_update.fb.gz" > "${FB_DEVICE}" 2>/dev/null || true
-        fi
+        show_1024x600_splash "/usr/share/starting_update.fb.gz"
 
         update_tmpfs_mount="$(mktemp -d)"
 
@@ -622,10 +645,14 @@ find_and_run_update()
         fi
 
         if [ "${keep_update_file}" = "yes" ] && [ -b "${target_storage}p2" ]; then
-            if mount "${target_storage}p2" "${ROOT_MOUNT}" 2>/dev/null; then
-                touch "${ROOT_MOUNT}/${USB_INSTALL_COMPLETE_FLAG}" || true
-                sync
-                umount "${ROOT_MOUNT}"
+            if ! mount "${target_storage}p2" "${ROOT_MOUNT}" 2>/dev/null || \
+               ! touch "${ROOT_MOUNT}/${USB_INSTALL_COMPLETE_FLAG}" || \
+               ! sync || \
+               ! umount "${ROOT_MOUNT}"; then
+                umount "${ROOT_MOUNT}" 2>/dev/null || true
+                echo "Error, update failed: unable to write '${USB_INSTALL_COMPLETE_FLAG}' on '${target_storage}p2'."
+                critical_error
+                break
             fi
         fi
 
