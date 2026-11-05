@@ -10,6 +10,8 @@ set -eu
 ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
 RESTORE_TRIGGER_IMAGE="um-restore.swu"
+KEEP_SWU_FILES="KEEP_UM_SWU KEEP_UM_RESTORE KEEP_UM_UPDATE KEEP_UM_RECOVERY"
+USB_INSTALL_COMPLETE_FLAG=".usb_install_complete"
 UPDATE_IMG_MOUNT="/mnt/update_img"
 UPDATE_SRC_MOUNT="/mnt/update"
 PROVISIONING_USB_MOUNT="/mnt/usb"
@@ -23,6 +25,12 @@ SBINDIR="${EXEC_PREFIX}/sbin"
 get_emmc_dev()
 {
     if [ -f "/proc/device-tree/model" ] && grep -qiE "Raspberry Pi|Compute Module" /proc/device-tree/model; then
+        retries=50
+        while [ ! -b "/dev/mmcblk0" ] && [ "${retries}" -gt 0 ]; do
+            mdev -s 2>/dev/null || true
+            sleep 0.1
+            retries=$((retries - 1))
+        done
         echo "/dev/mmcblk0"
         return 0
     fi
@@ -111,6 +119,9 @@ restart()
 
 restore_complete_loop()
 {
+    if [ -f "/tmp/remove_sd_png.fb" ] && [ -c "${FB_DEVICE}" ]; then
+        cat "/tmp/remove_sd_png.fb" > "${FB_DEVICE}" 2>/dev/null || true
+    fi
     while true; do
         echo "Restore complete, remove the recovery SD card and powercycle the printer."
         sleep 30s
@@ -153,8 +164,92 @@ rescue_shell()
 critical_error()
 {
     echo "A critical error has occurred, entering recovery mode."
+    if [ -f "/usr/share/update_failed.fb.gz" ] && [ -c "${FB_DEVICE}" ]; then
+        ensure_display_ready
+        show_1024x600_splash "/usr/share/update_failed.fb.gz"
+    fi
     rescue_shell
     shutdown
+}
+
+ensure_user_partition()
+{
+    disk_dev="${root_device%p[0-9]*}"
+    if [ "${disk_dev}" = "${root_device}" ] || [ ! -b "${disk_dev}" ]; then
+        return 0
+    fi
+
+    user_part="${disk_dev}p3"
+    if [ -b "${user_part}" ] && [ "$(findfs LABEL=user 2>/dev/null || true)" = "${user_part}" ]; then
+        return 0
+    fi
+
+    disk_name="${disk_dev#/dev/}"
+    if [ ! -f "/sys/class/block/${disk_name}/size" ] || \
+       [ ! -f "/sys/class/block/${disk_name}p2/start" ] || \
+       [ ! -f "/sys/class/block/${disk_name}p2/size" ]; then
+        return 0
+    fi
+
+    total_sectors="$(cat "/sys/class/block/${disk_name}/size")"
+    p2_start="$(cat "/sys/class/block/${disk_name}p2/start")"
+    p2_size="$(cat "/sys/class/block/${disk_name}p2/size")"
+
+    if [ "${total_sectors}" -ge 20971520 ]; then
+        target_p2_size=16677888
+    elif [ "${total_sectors}" -ge 10485760 ]; then
+        target_p2_size=7864320
+    else
+        target_p2_size="${p2_size}"
+    fi
+
+    if [ "${target_p2_size}" -lt "${p2_size}" ]; then
+        target_p2_size="${p2_size}"
+    fi
+
+    echo "First boot detected: ensuring ${root_device} is expanded and ${user_part} (user) is initialized..."
+    mount -o remount,rw "${ROOT_MOUNT}" 2>/dev/null || true
+    mount --bind /dev "${ROOT_MOUNT}/dev"
+    mount --bind /proc "${ROOT_MOUNT}/proc"
+    mount --bind /sys "${ROOT_MOUNT}/sys"
+
+    if [ ! -b "${user_part}" ]; then
+        p3_start="$((p2_start + target_p2_size))"
+        if [ "${p3_start}" -ge "${total_sectors}" ]; then
+            echo "Not enough disk space on ${disk_dev} to create ${user_part}, skipping."
+            umount "${ROOT_MOUNT}/sys" 2>/dev/null || true
+            umount "${ROOT_MOUNT}/proc" 2>/dev/null || true
+            umount "${ROOT_MOUNT}/dev" 2>/dev/null || true
+            return 0
+        fi
+
+        sfdisk_dump="$(chroot "${ROOT_MOUNT}" sfdisk --quiet --dump "${disk_dev}" 2>/dev/null || true)"
+        label_id_line="$(printf '%s\n' "${sfdisk_dump}" | grep "^label-id:" || true)"
+        p1_line="$(printf '%s\n' "${sfdisk_dump}" | grep "^${disk_dev}p1 " || true)"
+        if [ -n "${p1_line}" ]; then
+            {
+                echo "label: dos"
+                if [ -n "${label_id_line}" ]; then
+                    echo "${label_id_line}"
+                fi
+                echo "unit: sectors"
+                echo "${p1_line}"
+                echo "${disk_dev}p2 : start=${p2_start}, size=${target_p2_size}, type=83"
+                echo "${disk_dev}p3 : start=${p3_start}, size=+, type=83"
+            } | chroot "${ROOT_MOUNT}" sfdisk --no-reread "${disk_dev}" || true
+            chroot "${ROOT_MOUNT}" partx -u "${disk_dev}" || true
+            mdev -s 2>/dev/null || true
+        fi
+    fi
+
+    chroot "${ROOT_MOUNT}" resize2fs "${root_device}" || true
+    if [ -b "${user_part}" ] && [ "$(findfs LABEL=user 2>/dev/null || true)" != "${user_part}" ]; then
+        chroot "${ROOT_MOUNT}" mkfs.ext4 -F -L user -q "${user_part}" || true
+    fi
+
+    umount "${ROOT_MOUNT}/sys" 2>/dev/null || true
+    umount "${ROOT_MOUNT}/proc" 2>/dev/null || true
+    umount "${ROOT_MOUNT}/dev" 2>/dev/null || true
 }
 
 boot_root()
@@ -166,6 +261,7 @@ boot_root()
     fi
     echo "Mounting ${root_device}."
     mount -t "${rootfstype}" -o exec,suid,dev,noatime,"${rootflags},${rwmode}" "${root_device}" "${ROOT_MOUNT}"
+    ensure_user_partition
     kernel_umount
 
     test_init="${init}"
@@ -183,9 +279,63 @@ boot_root()
 }
 
 
+ensure_display_ready()
+{
+    fb_retries=50
+    while [ ! -c "${FB_DEVICE}" ] && [ "${fb_retries}" -gt 0 ]; do
+        mdev -s 2>/dev/null || true
+        sleep 0.1
+        fb_retries=$((fb_retries - 1))
+    done
+
+    if [ -w /sys/class/graphics/fbcon/cursor_blink ]; then
+        echo 0 > /sys/class/graphics/fbcon/cursor_blink 2>/dev/null || true
+    fi
+
+    # Disable VT console blanking and VESA powerdown so static splash screens never fade out
+    for tty_dev in /dev/tty0 /dev/tty1; do
+        if [ -w "${tty_dev}" ]; then
+            printf '\033[9;0]\033[14;0]' > "${tty_dev}" 2>/dev/null || true
+        fi
+    done
+    if [ -w /sys/class/graphics/fb0/blank ]; then
+        echo 0 > /sys/class/graphics/fb0/blank 2>/dev/null || true
+    fi
+
+    if [ -d /sys/bus/i2c/devices/0-0060 ] && [ ! -e /sys/bus/i2c/devices/0-0060/driver ]; then
+        echo 0-0060 > /sys/bus/i2c/drivers/leds-pca963x/bind 2>/dev/null || true
+    fi
+
+    for bl_path in /sys/class/leds/pca963x:white:panel_backlight/brightness /sys/class/leds/white:panel_backlight/brightness; do
+        if [ -w "${bl_path}" ]; then
+            echo 0 > "${bl_path}" 2>/dev/null || true
+            echo 255 > "${bl_path}" 2>/dev/null || true
+        fi
+    done
+}
+
+show_1024x600_splash()
+{
+    splash_gz="${1}"
+    if [ ! -f "${splash_gz}" ] || [ ! -c "${FB_DEVICE}" ]; then
+        return 0
+    fi
+    fb_vsize="$(cat /sys/class/graphics/fb0/virtual_size 2>/dev/null || true)"
+    fb_bpp="$(cat /sys/class/graphics/fb0/bits_per_pixel 2>/dev/null || true)"
+    if [ -n "${fb_vsize}" ] && [ "${fb_vsize}" != "1024,600" ]; then
+        return 0
+    fi
+    if [ -n "${fb_bpp}" ] && [ "${fb_bpp}" != "32" ]; then
+        return 0
+    fi
+    zcat "${splash_gz}" > "${FB_DEVICE}" 2>/dev/null || true
+}
+
 set_display_splash()
 {
     echo "Setting display image."
+
+    ensure_display_ready
 
     TMP_MOUNT="/splash"
     splash_partition="$(get_emmc_dev)p2"
@@ -195,9 +345,10 @@ set_display_splash()
         mkdir -p "${TMP_MOUNT}"
     fi
 
-    if ! mount -o ro "${splash_partition}" "${TMP_MOUNT}"; then
-        echo "- Error mounting splash screen partition ${splash_partition} at ${TMP_MOUNT}."
+    if [ ! -b "${splash_partition}" ] || ! mount -o ro "${splash_partition}" "${TMP_MOUNT}"; then
+        echo "- Splash partition ${splash_partition} not available; displaying USB prompt if available."
         rmdir "${TMP_MOUNT}"
+        show_1024x600_splash "/usr/share/usb_prompt.fb.gz"
         return 0
     fi
 
@@ -358,20 +509,41 @@ check_and_set_eeprom_data()
 
 find_and_run_update()
 {
+    target_root_part="$(get_emmc_dev)p2"
+    if [ -b "${target_root_part}" ] && mount "${target_root_part}" "${ROOT_MOUNT}" 2>/dev/null; then
+        if [ -f "${ROOT_MOUNT}/${USB_INSTALL_COMPLETE_FLAG}" ]; then
+            echo "Found one-shot '${USB_INSTALL_COMPLETE_FLAG}' on '${target_root_part}': clearing flag and skipping update to boot freshly installed OS."
+            rm -f "${ROOT_MOUNT}/${USB_INSTALL_COMPLETE_FLAG}" || true
+            sync
+            umount "${ROOT_MOUNT}"
+            return 0
+        fi
+        umount "${ROOT_MOUNT}"
+    fi
+
     SOFTWARE_INSTALL_MODE="update"
     FORCE_REBOOT_AFTER_UPDATE="no"
+    update_search_retries=1
     if isBootingRestoreImage || [ "${FORCE_RESTORE_MODE}" = "yes" ]; then
         SOFTWARE_INSTALL_MODE="restore"
+    elif [ ! -b "$(get_emmc_dev)p2" ]; then
+        echo "No root partition on $(get_emmc_dev) (minimal boot image): enabling restore mode and waiting for USB stick."
+        SOFTWARE_INSTALL_MODE="restore"
+        FORCE_REBOOT_AFTER_UPDATE="yes"
+        update_search_retries=999999
     fi
 
     echo "Checking for updates ..."
+    while [ "${update_search_retries}" -gt 0 ]; do
     for dev in ${UPDATE_DEVICES}; do
         if [ ! -b "${dev}" ]; then
             continue
         fi
 
         echo "Attempting to mount '${dev}'."
-        if ! mount -t vfat,exfat,ext4,f2fs,auto -o exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}"; then
+        if ! mount -t vfat,exfat,ntfs3,ext4,f2fs,auto -o exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}" && \
+           ! mount -t ntfs3 -o force,exec,noatime "${dev}" "${UPDATE_SRC_MOUNT}" && \
+           ! mount -t ntfs3 -o ro,noatime "${dev}" "${UPDATE_SRC_MOUNT}"; then
             continue
         fi
 
@@ -381,26 +553,46 @@ find_and_run_update()
             continue
         fi
 
-        # If there is a file to trigger the restore mode, rename it to update and set the restore flag
+        # If there is a file to trigger the restore mode, set the restore flag without renaming on the USB stick
+        src_update_file="${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}"
         if [ -r "${UPDATE_SRC_MOUNT}/${RESTORE_TRIGGER_IMAGE}" ]; then
             SOFTWARE_INSTALL_MODE="restore"
             FORCE_REBOOT_AFTER_UPDATE="yes"  # We can reboot after the update since there is no sd card inserted.
-            mv "${UPDATE_SRC_MOUNT}/${RESTORE_TRIGGER_IMAGE}" "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}"
-        fi;
+            src_update_file="${UPDATE_SRC_MOUNT}/${RESTORE_TRIGGER_IMAGE}"
+        fi
+
+        keep_update_file="no"
+        for keep_marker in ${KEEP_SWU_FILES}; do
+            if [ -e "${UPDATE_SRC_MOUNT}/${keep_marker}" ]; then
+                echo "Found '${keep_marker}' on '${dev}', keeping update image on USB stick."
+                keep_update_file="yes"
+                break
+            fi
+        done
+        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
+            keep_update_file="yes"
+        fi
+        if [ ! -w "${UPDATE_SRC_MOUNT}" ]; then
+            keep_update_file="yes"
+        fi
+
+        show_1024x600_splash "/usr/share/starting_update.fb.gz"
 
         update_tmpfs_mount="$(mktemp -d)"
-        echo "Found '${UPDATE_IMAGE}' on '${dev}', moving to tmpfs."
 
-        # When we are restoring from a dedicated recovery image we want to keep the update image on the SD/USB card.
-        if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
-            if ! cp "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
-                echo "Error, update failed: unable to copy ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
+        # When KEEP_UM_RECOVERY is present or we are restoring from a dedicated recovery image,
+        # copy to tmpfs (renaming to ${UPDATE_IMAGE} only in tmpfs) so the USB/SD card is unmodified.
+        if [ "${keep_update_file}" = "yes" ]; then
+            echo "Found '${src_update_file##*/}' on '${dev}', copying to '${update_tmpfs_mount}/${UPDATE_IMAGE}'."
+            if ! cp "${src_update_file}" "${update_tmpfs_mount}/${UPDATE_IMAGE}"; then
+                echo "Error, update failed: unable to copy ${src_update_file} to ${update_tmpfs_mount}/${UPDATE_IMAGE}."
                 critical_error
                 break
             fi
         else
-            if ! mv "${UPDATE_SRC_MOUNT}/${UPDATE_IMAGE}" "${update_tmpfs_mount}"; then
-                echo "Error, update failed: unable to move ${UPDATE_IMAGE} to ${update_tmpfs_mount}."
+            echo "Found '${src_update_file##*/}' on '${dev}', moving to '${update_tmpfs_mount}/${UPDATE_IMAGE}'."
+            if ! mv "${src_update_file}" "${update_tmpfs_mount}/${UPDATE_IMAGE}"; then
+                echo "Error, update failed: unable to move ${src_update_file} to ${update_tmpfs_mount}/${UPDATE_IMAGE}."
                 critical_error
                 break
             fi
@@ -414,7 +606,7 @@ find_and_run_update()
         fi
 
         echo "Attempting to mount '${update_tmpfs_mount}/${UPDATE_IMAGE}' to '${UPDATE_IMG_MOUNT}'."
-        if ! mount "${update_tmpfs_mount}/${UPDATE_IMAGE}" ${UPDATE_IMG_MOUNT}; then
+        if ! mount -t squashfs "${update_tmpfs_mount}/${UPDATE_IMAGE}" "${UPDATE_IMG_MOUNT}"; then
             echo "Error, update failed: unable to mount '${update_tmpfs_mount}/${UPDATE_IMAGE}'."
             critical_error
             break;
@@ -447,9 +639,21 @@ find_and_run_update()
             break
         fi
 
-        # After restore do not remove the file and loop endlessly
+        # After dedicated SD restore image, do not remove the file and loop endlessly
         if [ "${SOFTWARE_INSTALL_MODE}" = "restore" ] && [ "${FORCE_REBOOT_AFTER_UPDATE}" = "no" ]; then
            restore_complete_loop
+        fi
+
+        if [ "${keep_update_file}" = "yes" ] && [ -b "${target_storage}p2" ]; then
+            if ! mount "${target_storage}p2" "${ROOT_MOUNT}" 2>/dev/null || \
+               ! touch "${ROOT_MOUNT}/${USB_INSTALL_COMPLETE_FLAG}" || \
+               ! sync || \
+               ! umount "${ROOT_MOUNT}"; then
+                umount "${ROOT_MOUNT}" 2>/dev/null || true
+                echo "Error, update failed: unable to write '${USB_INSTALL_COMPLETE_FLAG}' on '${target_storage}p2'."
+                critical_error
+                break
+            fi
         fi
 
         if ! rm "${update_tmpfs_mount}/${UPDATE_IMAGE:?}"; then
@@ -457,6 +661,17 @@ find_and_run_update()
         fi
 
         restart
+    done
+        update_search_retries="$((update_search_retries - 1))"
+        if [ "${update_search_retries}" -gt 0 ]; then
+            for usb_cfg in /sys/bus/usb/devices/[0-9]*-[0-9]*/bConfigurationValue; do
+                if [ -f "${usb_cfg}" ] && [ -z "$(cat "${usb_cfg}" 2>/dev/null)" ]; then
+                    echo 1 > "${usb_cfg}" 2>/dev/null || true
+                fi
+            done
+            mdev -s 2>/dev/null || true
+            sleep 1
+        fi
     done
     echo "No updates found."
 }
@@ -523,9 +738,6 @@ kernel_mount()
     mount -t sysfs      -o nodev,noexec,nosuid  sysfs   /sys
     if [ -w /sys/class/graphics/fbcon/cursor_blink ]; then
         echo 0 > /sys/class/graphics/fbcon/cursor_blink 2>/dev/null || true
-    fi
-    if [ -w /sys/class/vtconsole/vtcon1/bind ]; then
-        echo 0 > /sys/class/vtconsole/vtcon1/bind 2>/dev/null || true
     fi
 }
 
