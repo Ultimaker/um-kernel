@@ -23,7 +23,7 @@ Because different System-on-Modules (SOMs) rely on distinct vendor BSP kernel tr
 
 * **`configs/`**:
   * `sx8m_defconfig`: Kernel configuration for Congatec i.MX8M Mini (`master/imx8`).
-  * `bcm2711_defconfig`: Kernel configuration for Raspberry Pi CM4 (`master/cm4`), with built-in (`=y`) DRM/VC4/V3D/LVDS (`ti-sn65dsi83`, `panel-lvds`), touchscreen (`edt-ft5x06`, `goodix`), I2C, GPIO expander (`pca953x`, `pca9570`), LED (`leds-pca963x`), EEPROM (`at24`), USB hub (`usb251xb`), SquashFS, and FAT32/exFAT NLS drivers required by the embedded initramfs.
+  * `bcm2711_defconfig`: Kernel configuration for Raspberry Pi CM4 (`master/cm4`), with built-in (`=y`) DRM/VC4/V3D/LVDS (`ti-sn65dsi83`, `panel-lvds`), touchscreen (`edt-ft5x06`, `goodix`), I2C, GPIO expander (`pca953x`, `pca9570`), LED (`leds-pca963x`), EEPROM (`at24`), USB hub (`usb251xb`), SquashFS, NTFS (`ntfs3`), and FAT32/exFAT NLS drivers required by the embedded initramfs.
 * **`dts/`**:
   * **i.MX8 Monolithic Device Trees** (compiled when `UM_ARCH="imx8mm"`):
     * `ulticontroller4.0-lvds-1024x600.dts` (Factor 4, Factor 4+, NGP)
@@ -38,7 +38,8 @@ Because different System-on-Modules (SOMs) rely on distinct vendor BSP kernel tr
   * See [dts/Readme.md](dts/Readme.md) for full details on Device Tree and overlay selection.
 * **`initramfs/`**:
   * `initramfs.lst` & `init.sh`: Embedded early-userspace initramfs bundled directly into the kernel image (`CONFIG_INITRAMFS_SOURCE="initramfs/initramfs.lst"`).
-  * Displays the boot splash (`umsplash.fb` on `/dev/fb0`), dynamically resolves the eMMC device (`/dev/mmcblk0` on CM4 vs `/dev/mmcblk2` on i.MX8) and carrier EEPROM I2C bus (`i2c-3` on CM4 vs `i2c-1` on i.MX8), supports factory USB EEPROM provisioning (`article_number` and `country_code_lock`), and executes boot-time USB/SD firmware updates (`um-update.swu` / `um-restore.swu`).
+  * `usb_prompt.fb.gz`, `starting_update.fb.gz`, `update_failed.fb.gz`: Compressed `1024x600` 32-bpp BGRA framebuffer splash screens installed under `/usr/share/` inside the initramfs for minimal-image USB prompts, update startup feedback, and critical error recovery.
+  * Initializes the display (`umsplash.fb` on `/dev/fb0`, `pca963x` backlight binding, and VT console anti-blanking), dynamically resolves the eMMC device (`/dev/mmcblk0` on CM4 vs `/dev/mmcblk2` on i.MX8) and carrier EEPROM I2C bus (`i2c-3` on CM4 vs `i2c-1` on i.MX8), supports factory USB EEPROM provisioning (`article_number` and `country_code_lock`), executes boot-time USB/SD firmware updates (`um-update.swu` / `um-restore.swu`), and expands shrunk root partitions (`p2`) while creating/formatting the `user` partition (`p3`, `LABEL=user`) on first boot.
 * **`debian/`**:
   * `control`, `preinst`, `postinst`, `triggers`: Debian package scripts.
   * `debian/postinst` reads `article_numbers:` and `som:` from `/etc/ultimaker_firmware`: on CM4 (`som: cm4`), it configures `dtoverlay=<overlay>` in `/boot/config.txt`; on i.MX8, it creates the `/boot/cgtsx8m-ultimain5.dtb` symlink.
@@ -74,5 +75,27 @@ RELEASE_VERSION="498.5.0-dev" ./build_for_ultimaker.sh -a build
 *(Note: When `RELEASE_VERSION` ends with `-dev`, `build.sh` places `-${UM_ARCH}` before `-dev`).*
 * **On `master/imx8`**: `./um-kernel_<ver>-imx8mm_arm64.deb` (or `./um-kernel_<ver>-imx8mm-dev_arm64.deb` for `-dev` builds; also in `_build/`).
 * **On `master/cm4`**: `./um-kernel_<ver>-cm4_arm64.deb` (or `./um-kernel_<ver>-cm4-dev_arm64.deb` for `-dev` builds; also in `_build/`).
+
+---
+
+## 4. Early-Boot Initramfs & USB Update Workflows
+
+Before mounting and switching into the main OS root filesystem (`switch_root`), `initramfs/init.sh` handles display initialization, factory provisioning, firmware updates/restores, and first-boot partition expansion:
+
+* **Supported USB Update / Restore Filesystems**:
+  * USB drives (`/dev/sd[a-z][0-9]*`, `/dev/sd[a-z]`) and SD partitions (`/dev/mmcblk[0-9]p[0-9]`) formatted as **FAT32 (`vfat`)**, **exFAT (`exfat`)**, **NTFS (`ntfs3`, including dirty-volume fallback)**, **ext4**, or **f2fs** are mounted automatically.
+* **Standard vs. Reusable USB Sticks (`KEEP_UM_SWU`)**:
+  * Place `um-update.swu` (standard update) or `um-restore.swu` (full factory restore) in the root of the USB drive.
+  * **Default (One-Time Consume)**: By default, `init.sh` moves (`mv`) the `.swu` archive from the USB stick into RAM (`tmpfs`) so the file is consumed and will not re-install on reboot.
+  * **Reusable USB Stick (`KEEP_UM_SWU`)**: If an empty marker file named `KEEP_UM_SWU` (or `KEEP_UM_RESTORE`, `KEEP_UM_UPDATE`, `KEEP_UM_RECOVERY`) is present in the root of the USB stick (or if the media is read-only), `init.sh` copies (`cp`) the `.swu` archive into `tmpfs` without modifying or renaming files on the USB stick. After installation completes, `init.sh` writes a one-shot `/.usb_install_complete` flag on the newly installed root partition (`p2`) and reboots; on the immediate next boot, `init.sh` clears `/.usb_install_complete` and boots directly into the new OS without entering an infinite reinstall loop.
+* **Shrunk & Minimal SD/eMMC Image Support**:
+  * **Shrunk Full Image (`um-sd-*.img`)**: Shipped with a shrunk `p2` (`root`) and no `p3` partition to minimize image download and flashing time. On first boot (`ensure_user_partition`), `init.sh` expands `p2` (`8 GiB` on $\ge 16\text{ GB}$ eMMC, preserving the DOS `label-id`), runs `resize2fs`, and creates/formats `p3` (`LABEL=user`, mounted at `/var/spool`) across the remaining eMMC space before handing over to `systemd`.
+  * **Minimal Boot-Only Image (`um-sd-*-minimal.img`)**: Contains only the boot partition (`p1`) with the kernel and embedded initramfs. When `p2` is absent, `init.sh` displays `/usr/share/usb_prompt.fb.gz` on the panel, enters `restore` mode, and continuously polls for a USB stick containing `um-update.swu` or `um-restore.swu` to partition and provision the eMMC.
+* **Early-Boot Visual Feedback**:
+  * Displays `/usr/share/usb_prompt.fb.gz` when waiting for a USB stick on a minimal boot-only image.
+  * Displays `/usr/share/starting_update.fb.gz` as soon as an `.swu` file is detected and starts copying/moving into RAM before `jedi-system-update` starts.
+  * Displays `/usr/share/update_failed.fb.gz` if `critical_error()` is triggered during early boot or update execution.
+* **Factory USB EEPROM Provisioning**:
+  * If `/dev/sda1` (or `/dev/sda`) contains `article_number` (4-byte hex BOM number, e.g. `0x00 0x03 0x45 0xCB`) and/or `country_code_lock` (2-byte hex country code), `check_and_set_eeprom_data()` programs the carrier EEPROM (`0x57` on I2C bus 3 for CM4 or bus 1 for i.MX8) during early boot.
 
 For AI agent conventions and code-path invariants, see [AGENTS.md](AGENTS.md).
