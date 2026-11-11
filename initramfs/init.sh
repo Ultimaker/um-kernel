@@ -7,6 +7,8 @@
 
 set -eu
 
+export PATH="/sbin:/usr/sbin:/bin:/usr/bin"
+
 ROOT_MOUNT="/mnt/root"
 UPDATE_IMAGE="um-update.swu"
 RESTORE_TRIGGER_IMAGE="um-restore.swu"
@@ -213,6 +215,7 @@ ensure_user_partition()
     mount --bind /proc "${ROOT_MOUNT}/proc"
     mount --bind /sys "${ROOT_MOUNT}/sys"
 
+    created_user_part="no"
     if [ ! -b "${user_part}" ]; then
         p3_start="$((p2_start + target_p2_size))"
         if [ "${p3_start}" -ge "${total_sectors}" ]; then
@@ -239,11 +242,12 @@ ensure_user_partition()
             } | chroot "${ROOT_MOUNT}" sfdisk --no-reread "${disk_dev}" || true
             chroot "${ROOT_MOUNT}" partx -u "${disk_dev}" || true
             mdev -s 2>/dev/null || true
+            created_user_part="yes"
         fi
     fi
 
     chroot "${ROOT_MOUNT}" resize2fs "${root_device}" || true
-    if [ -b "${user_part}" ] && [ "$(findfs LABEL=user 2>/dev/null || true)" != "${user_part}" ]; then
+    if [ -b "${user_part}" ] && { [ "${created_user_part}" = "yes" ] || [ "$(findfs LABEL=user 2>/dev/null || true)" != "${user_part}" ]; }; then
         chroot "${ROOT_MOUNT}" mkfs.ext4 -F -L user -q "${user_part}" || true
     fi
 
