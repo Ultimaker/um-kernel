@@ -27,6 +27,6 @@ On CM4, VideoCore firmware boots `/boot/kernel8.img` (`uImage-cm4`) with `/boot/
 * **`ulticontroller-800x320.dts` (`ulticontroller-800x320.dtbo` — S6 / S8: `106*`, `107*`)**:
   * Configures 800x320 `panel-lvds` (`vesa-24`, 25.82 MHz pixel clock) and `pca9570@24` GPIO expander on `&i2c0`
 * **`ulticontroller-ngp.dts` (`ulticontroller-ngp.dtbo` — NGP: `109*`)**:
-  * Configures 1024x600 `panel-lvds` with `LVDS_PWR_EN` regulator / `DISP_RST` enable-gpios sequencing, `gt928@5d` (Goodix) and `ft5426@38` touchscreen nodes, and dual `usb2514b@2c` hubs on `&i2c1` and `&i2c3`
+  * Configures 1024x600 `panel-lvds` (`50.0 MHz` pixel clock) with `LVDS_PWR_EN` (`vcc_lvds`) regulator sequencing on the panel, `pca9632@60` backlight, and `24c32@50` EDID EEPROM, `DISP_RST` `enable-gpios`, `gt928@5d` (Goodix) touchscreen node, and dual `usb2514b@2c` hubs on `&i2c1` and `&i2c3`
 * **`ultimainboard5-cm4.dts` (`ultimainboard5-cm4.dtb`)**:
   * Full standalone CM4 board Device Tree including `broadcom/bcm2711-rpi-cm4.dts`
